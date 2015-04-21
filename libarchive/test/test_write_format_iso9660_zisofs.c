@@ -96,7 +96,7 @@ test_write_format_iso9660_zisofs_1(void)
 	unsigned char buff2[1024];
 	unsigned char nullb[1024];
 	struct archive *a;
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	unsigned char *buff;
 	size_t buffsize = 36 * 2048;
 	size_t used;
@@ -110,83 +110,83 @@ test_write_format_iso9660_zisofs_1(void)
 		return;
 
 	/* ISO9660 format: Create a new archive in memory. */
-	assert((a = archive_write_new()) != NULL);
-	assertEqualIntA(a, 0, archive_write_set_format_iso9660(a));
-	assertEqualIntA(a, 0, archive_write_add_filter_none(a));
-	r = archive_write_set_option(a, NULL, "zisofs", "1");
+	assert((a = tk_archive_write_new()) != NULL);
+	assertEqualIntA(a, 0, tk_archive_write_set_format_iso9660(a));
+	assertEqualIntA(a, 0, tk_archive_write_add_filter_none(a));
+	r = tk_archive_write_set_option(a, NULL, "zisofs", "1");
 	if (r == ARCHIVE_FATAL) {
 		skipping("zisofs option not supported on this platform");
-		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+		assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 		free(buff);
 		return;
 	}
-	assertEqualIntA(a, 0, archive_write_set_option(a, NULL, "pad", NULL));
-	assertEqualIntA(a, 0, archive_write_open_memory(a, buff, buffsize, &used));
+	assertEqualIntA(a, 0, tk_archive_write_set_option(a, NULL, "pad", NULL));
+	assertEqualIntA(a, 0, tk_archive_write_open_memory(a, buff, buffsize, &used));
 
 	/*
 	 * "file1" has a bunch of attributes and 256K bytes of null data.
 	 */
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_set_atime(ae, 2, 20);
-	archive_entry_set_birthtime(ae, 3, 30);
-	archive_entry_set_ctime(ae, 4, 40);
-	archive_entry_set_mtime(ae, 5, 50);
-	archive_entry_copy_pathname(ae, "file1");
-	archive_entry_set_mode(ae, S_IFREG | 0755);
-	archive_entry_set_size(ae, 256*1024);
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
-	archive_entry_free(ae);
-	assertEqualIntA(a, 1024, archive_write_data(a, nullb, 1024));
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_atime(ae, 2, 20);
+	tk_archive_entry_set_birthtime(ae, 3, 30);
+	tk_archive_entry_set_ctime(ae, 4, 40);
+	tk_archive_entry_set_mtime(ae, 5, 50);
+	tk_archive_entry_copy_pathname(ae, "file1");
+	tk_archive_entry_set_mode(ae, S_IFREG | 0755);
+	tk_archive_entry_set_size(ae, 256*1024);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_header(a, ae));
+	tk_archive_entry_free(ae);
+	assertEqualIntA(a, 1024, tk_archive_write_data(a, nullb, 1024));
 
 	/*
 	 * "file2" has a bunch of attributes and 2048 bytes of null data.
 	 */
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_set_atime(ae, 2, 20);
-	archive_entry_set_birthtime(ae, 3, 30);
-	archive_entry_set_ctime(ae, 4, 40);
-	archive_entry_set_mtime(ae, 5, 50);
-	archive_entry_copy_pathname(ae, "file2");
-	archive_entry_set_mode(ae, S_IFREG | 0755);
-	archive_entry_set_size(ae, 2048);
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
-	archive_entry_free(ae);
-	assertEqualIntA(a, 1024, archive_write_data(a, nullb, 1024));
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_atime(ae, 2, 20);
+	tk_archive_entry_set_birthtime(ae, 3, 30);
+	tk_archive_entry_set_ctime(ae, 4, 40);
+	tk_archive_entry_set_mtime(ae, 5, 50);
+	tk_archive_entry_copy_pathname(ae, "file2");
+	tk_archive_entry_set_mode(ae, S_IFREG | 0755);
+	tk_archive_entry_set_size(ae, 2048);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_header(a, ae));
+	tk_archive_entry_free(ae);
+	assertEqualIntA(a, 1024, tk_archive_write_data(a, nullb, 1024));
 
 	/*
 	 * "file3" has a bunch of attributes and 2049 bytes of null data.
 	 */
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_set_atime(ae, 2, 20);
-	archive_entry_set_birthtime(ae, 3, 30);
-	archive_entry_set_ctime(ae, 4, 40);
-	archive_entry_set_mtime(ae, 5, 50);
-	archive_entry_copy_pathname(ae, "file3");
-	archive_entry_set_mode(ae, S_IFREG | 0755);
-	archive_entry_set_size(ae, 2049);
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
-	archive_entry_free(ae);
-	assertEqualIntA(a, 1024, archive_write_data(a, nullb, 1024));
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_atime(ae, 2, 20);
+	tk_archive_entry_set_birthtime(ae, 3, 30);
+	tk_archive_entry_set_ctime(ae, 4, 40);
+	tk_archive_entry_set_mtime(ae, 5, 50);
+	tk_archive_entry_copy_pathname(ae, "file3");
+	tk_archive_entry_set_mode(ae, S_IFREG | 0755);
+	tk_archive_entry_set_size(ae, 2049);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_header(a, ae));
+	tk_archive_entry_free(ae);
+	assertEqualIntA(a, 1024, tk_archive_write_data(a, nullb, 1024));
 
 	/*
 	 * "file4" has a bunch of attributes and 24 bytes of zisofs data
 	 * which is compressed from 32K bytes null data.
 	 */
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_set_atime(ae, 2, 20);
-	archive_entry_set_birthtime(ae, 3, 30);
-	archive_entry_set_ctime(ae, 4, 40);
-	archive_entry_set_mtime(ae, 5, 50);
-	archive_entry_copy_pathname(ae, "file4");
-	archive_entry_set_mode(ae, S_IFREG | 0755);
-	archive_entry_set_size(ae, 24);
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
-	archive_entry_free(ae);
-	assertEqualIntA(a, 24, archive_write_data(a, zisofs_data, 24));
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_atime(ae, 2, 20);
+	tk_archive_entry_set_birthtime(ae, 3, 30);
+	tk_archive_entry_set_ctime(ae, 4, 40);
+	tk_archive_entry_set_mtime(ae, 5, 50);
+	tk_archive_entry_copy_pathname(ae, "file4");
+	tk_archive_entry_set_mode(ae, S_IFREG | 0755);
+	tk_archive_entry_set_size(ae, 24);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_header(a, ae));
+	tk_archive_entry_free(ae);
+	assertEqualIntA(a, 24, tk_archive_write_data(a, zisofs_data, 24));
 
 	/* Close out the archive. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_free(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_close(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_free(a));
 
 	failure("The ISO image size should be 71680 bytes.");
 	assertEqualInt(used, 2048 * 35);
@@ -241,84 +241,84 @@ test_write_format_iso9660_zisofs_1(void)
 	/*
 	 * Read ISO image.
 	 */
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, 0, archive_read_support_format_all(a));
-	assertEqualIntA(a, 0, archive_read_support_filter_all(a));
-	assertEqualIntA(a, 0, archive_read_open_memory(a, buff, used));
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, 0, tk_archive_read_support_format_all(a));
+	assertEqualIntA(a, 0, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, 0, tk_archive_read_open_memory(a, buff, used));
 
 	/*
 	 * Read Root Directory
 	 * Root Directory entry must be in ISO image.
 	 */
-	assertEqualIntA(a, 0, archive_read_next_header(a, &ae));
-	assertEqualInt(archive_entry_atime(ae), archive_entry_ctime(ae));
-	assertEqualInt(archive_entry_atime(ae), archive_entry_mtime(ae));
-	assertEqualString(".", archive_entry_pathname(ae));
-	assert((S_IFDIR | 0555) == archive_entry_mode(ae));
-	assertEqualInt(2048, archive_entry_size(ae));
+	assertEqualIntA(a, 0, tk_archive_read_next_header(a, &ae));
+	assertEqualInt(tk_archive_entry_atime(ae), tk_archive_entry_ctime(ae));
+	assertEqualInt(tk_archive_entry_atime(ae), tk_archive_entry_mtime(ae));
+	assertEqualString(".", tk_archive_entry_pathname(ae));
+	assert((S_IFDIR | 0555) == tk_archive_entry_mode(ae));
+	assertEqualInt(2048, tk_archive_entry_size(ae));
 
 	/*
 	 * Read "file1" which has 256K bytes null data.
 	 */
-	assertEqualIntA(a, 0, archive_read_next_header(a, &ae));
-	assertEqualInt(2, archive_entry_atime(ae));
+	assertEqualIntA(a, 0, tk_archive_read_next_header(a, &ae));
+	assertEqualInt(2, tk_archive_entry_atime(ae));
 	/* assertEqualInt(3, archive_entry_birthtime(ae)); */
-	assertEqualInt(4, archive_entry_ctime(ae));
-	assertEqualInt(5, archive_entry_mtime(ae));
-	assertEqualString("file1", archive_entry_pathname(ae));
-	assert((S_IFREG | 0555) == archive_entry_mode(ae));
-	assertEqualInt(256*1024, archive_entry_size(ae));
-	assertEqualIntA(a, 1024, archive_read_data(a, buff2, 1024));
+	assertEqualInt(4, tk_archive_entry_ctime(ae));
+	assertEqualInt(5, tk_archive_entry_mtime(ae));
+	assertEqualString("file1", tk_archive_entry_pathname(ae));
+	assert((S_IFREG | 0555) == tk_archive_entry_mode(ae));
+	assertEqualInt(256*1024, tk_archive_entry_size(ae));
+	assertEqualIntA(a, 1024, tk_archive_read_data(a, buff2, 1024));
 	assertEqualMem(buff2, nullb, 1024);
 
 	/*
 	 * Read "file2" which has 2048 bytes null data.
 	 */
-	assertEqualIntA(a, 0, archive_read_next_header(a, &ae));
-	assertEqualInt(2, archive_entry_atime(ae));
+	assertEqualIntA(a, 0, tk_archive_read_next_header(a, &ae));
+	assertEqualInt(2, tk_archive_entry_atime(ae));
 	/* assertEqualInt(3, archive_entry_birthtime(ae)); */
-	assertEqualInt(4, archive_entry_ctime(ae));
-	assertEqualInt(5, archive_entry_mtime(ae));
-	assertEqualString("file2", archive_entry_pathname(ae));
-	assert((S_IFREG | 0555) == archive_entry_mode(ae));
-	assertEqualInt(2048, archive_entry_size(ae));
-	assertEqualIntA(a, 1024, archive_read_data(a, buff2, 1024));
+	assertEqualInt(4, tk_archive_entry_ctime(ae));
+	assertEqualInt(5, tk_archive_entry_mtime(ae));
+	assertEqualString("file2", tk_archive_entry_pathname(ae));
+	assert((S_IFREG | 0555) == tk_archive_entry_mode(ae));
+	assertEqualInt(2048, tk_archive_entry_size(ae));
+	assertEqualIntA(a, 1024, tk_archive_read_data(a, buff2, 1024));
 	assertEqualMem(buff2, nullb, 1024);
 
 	/*
 	 * Read "file3" which has 2049 bytes null data.
 	 */
-	assertEqualIntA(a, 0, archive_read_next_header(a, &ae));
-	assertEqualInt(2, archive_entry_atime(ae));
+	assertEqualIntA(a, 0, tk_archive_read_next_header(a, &ae));
+	assertEqualInt(2, tk_archive_entry_atime(ae));
 	/* assertEqualInt(3, archive_entry_birthtime(ae)); */
-	assertEqualInt(4, archive_entry_ctime(ae));
-	assertEqualInt(5, archive_entry_mtime(ae));
-	assertEqualString("file3", archive_entry_pathname(ae));
-	assert((S_IFREG | 0555) == archive_entry_mode(ae));
-	assertEqualInt(2049, archive_entry_size(ae));
-	assertEqualIntA(a, 1024, archive_read_data(a, buff2, 1024));
+	assertEqualInt(4, tk_archive_entry_ctime(ae));
+	assertEqualInt(5, tk_archive_entry_mtime(ae));
+	assertEqualString("file3", tk_archive_entry_pathname(ae));
+	assert((S_IFREG | 0555) == tk_archive_entry_mode(ae));
+	assertEqualInt(2049, tk_archive_entry_size(ae));
+	assertEqualIntA(a, 1024, tk_archive_read_data(a, buff2, 1024));
 	assertEqualMem(buff2, nullb, 1024);
 
 	/*
 	 * Read "file4" which has 32K bytes null data.
 	 */
-	assertEqualIntA(a, 0, archive_read_next_header(a, &ae));
-	assertEqualInt(2, archive_entry_atime(ae));
+	assertEqualIntA(a, 0, tk_archive_read_next_header(a, &ae));
+	assertEqualInt(2, tk_archive_entry_atime(ae));
 	/* assertEqualInt(3, archive_entry_birthtime(ae)); */
-	assertEqualInt(4, archive_entry_ctime(ae));
-	assertEqualInt(5, archive_entry_mtime(ae));
-	assertEqualString("file4", archive_entry_pathname(ae));
-	assert((S_IFREG | 0555) == archive_entry_mode(ae));
-	assertEqualInt(32768, archive_entry_size(ae));
-	assertEqualIntA(a, 1024, archive_read_data(a, buff2, 1024));
+	assertEqualInt(4, tk_archive_entry_ctime(ae));
+	assertEqualInt(5, tk_archive_entry_mtime(ae));
+	assertEqualString("file4", tk_archive_entry_pathname(ae));
+	assert((S_IFREG | 0555) == tk_archive_entry_mode(ae));
+	assertEqualInt(32768, tk_archive_entry_size(ae));
+	assertEqualIntA(a, 1024, tk_archive_read_data(a, buff2, 1024));
 	assertEqualMem(buff2, nullb, 1024);
 
 	/*
 	 * Verify the end of the archive.
 	 */
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_free(a));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_free(a));
 
 	free(buff);
 }
@@ -329,7 +329,7 @@ test_write_format_iso9660_zisofs_2(void)
 	unsigned char buff2[1024];
 	unsigned char data[1024];
 	struct archive *a;
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	unsigned char *buff;
 	size_t buffsize = 60 * 2048;
 	size_t used;
@@ -342,32 +342,32 @@ test_write_format_iso9660_zisofs_2(void)
 		return;
 
 	/* ISO9660 format: Create a new archive in memory. */
-	assert((a = archive_write_new()) != NULL);
-	assertEqualIntA(a, 0, archive_write_set_format_iso9660(a));
-	assertEqualIntA(a, 0, archive_write_add_filter_none(a));
-	r = archive_write_set_option(a, NULL, "zisofs", "1");
+	assert((a = tk_archive_write_new()) != NULL);
+	assertEqualIntA(a, 0, tk_archive_write_set_format_iso9660(a));
+	assertEqualIntA(a, 0, tk_archive_write_add_filter_none(a));
+	r = tk_archive_write_set_option(a, NULL, "zisofs", "1");
 	if (r == ARCHIVE_FATAL) {
 		skipping("zisofs option not supported on this platform");
-		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+		assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 		free(buff);
 		return;
 	}
-	assertEqualIntA(a, 0, archive_write_set_option(a, NULL, "pad", NULL));
-	assertEqualIntA(a, 0, archive_write_open_memory(a, buff, buffsize, &used));
+	assertEqualIntA(a, 0, tk_archive_write_set_option(a, NULL, "pad", NULL));
+	assertEqualIntA(a, 0, tk_archive_write_open_memory(a, buff, buffsize, &used));
 
 	/*
 	 * "file1" has a bunch of attributes and 256K bytes of random data.
 	 */
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_set_atime(ae, 2, 20);
-	archive_entry_set_birthtime(ae, 3, 30);
-	archive_entry_set_ctime(ae, 4, 40);
-	archive_entry_set_mtime(ae, 5, 50);
-	archive_entry_copy_pathname(ae, "file1");
-	archive_entry_set_mode(ae, S_IFREG | 0755);
-	archive_entry_set_size(ae, 256*1024);
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
-	archive_entry_free(ae);
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_atime(ae, 2, 20);
+	tk_archive_entry_set_birthtime(ae, 3, 30);
+	tk_archive_entry_set_ctime(ae, 4, 40);
+	tk_archive_entry_set_mtime(ae, 5, 50);
+	tk_archive_entry_copy_pathname(ae, "file1");
+	tk_archive_entry_set_mode(ae, S_IFREG | 0755);
+	tk_archive_entry_set_size(ae, 256*1024);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_header(a, ae));
+	tk_archive_entry_free(ae);
 	for (i = 0; i < 256; i++) {
 		int j;
 		if (i == 0) {
@@ -377,63 +377,63 @@ test_write_format_iso9660_zisofs_2(void)
 			for (j = 0; j < (int)sizeof(data); j++)
 				data[j] ^= i+j;
 		}
-		assertEqualIntA(a, 1024, archive_write_data(a, data, 1024));
+		assertEqualIntA(a, 1024, tk_archive_write_data(a, data, 1024));
 	}
 
 	/*
 	 * "file2" has a bunch of attributes and 2048 bytes data.
 	 */
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_set_atime(ae, 2, 20);
-	archive_entry_set_birthtime(ae, 3, 30);
-	archive_entry_set_ctime(ae, 4, 40);
-	archive_entry_set_mtime(ae, 5, 50);
-	archive_entry_copy_pathname(ae, "file2");
-	archive_entry_set_mode(ae, S_IFREG | 0755);
-	archive_entry_set_size(ae, 2048);
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
-	archive_entry_free(ae);
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_atime(ae, 2, 20);
+	tk_archive_entry_set_birthtime(ae, 3, 30);
+	tk_archive_entry_set_ctime(ae, 4, 40);
+	tk_archive_entry_set_mtime(ae, 5, 50);
+	tk_archive_entry_copy_pathname(ae, "file2");
+	tk_archive_entry_set_mode(ae, S_IFREG | 0755);
+	tk_archive_entry_set_size(ae, 2048);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_header(a, ae));
+	tk_archive_entry_free(ae);
 	memset(data, 'a', sizeof(data));
-	assertEqualIntA(a, 1024, archive_write_data(a, data, 1024));
+	assertEqualIntA(a, 1024, tk_archive_write_data(a, data, 1024));
 	memset(data, 'b', sizeof(data));
-	assertEqualIntA(a, 1024, archive_write_data(a, data, 1024));
+	assertEqualIntA(a, 1024, tk_archive_write_data(a, data, 1024));
 
 	/*
 	 * "file3" has a bunch of attributes and 1024 bytes of 'Z'
 	 *  + 1025 bytes of null data.
 	 */
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_set_atime(ae, 2, 20);
-	archive_entry_set_birthtime(ae, 3, 30);
-	archive_entry_set_ctime(ae, 4, 40);
-	archive_entry_set_mtime(ae, 5, 50);
-	archive_entry_copy_pathname(ae, "file3");
-	archive_entry_set_mode(ae, S_IFREG | 0755);
-	archive_entry_set_size(ae, 2049);
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
-	archive_entry_free(ae);
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_atime(ae, 2, 20);
+	tk_archive_entry_set_birthtime(ae, 3, 30);
+	tk_archive_entry_set_ctime(ae, 4, 40);
+	tk_archive_entry_set_mtime(ae, 5, 50);
+	tk_archive_entry_copy_pathname(ae, "file3");
+	tk_archive_entry_set_mode(ae, S_IFREG | 0755);
+	tk_archive_entry_set_size(ae, 2049);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_header(a, ae));
+	tk_archive_entry_free(ae);
 	memset(data, 'Z', sizeof(data));
-	assertEqualIntA(a, 1024, archive_write_data(a, data, 1024));
+	assertEqualIntA(a, 1024, tk_archive_write_data(a, data, 1024));
 
 	/*
 	 * "file4" has a bunch of attributes and 24 bytes of zisofs data
 	 * which is compressed from 32K bytes null data.
 	 */
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_set_atime(ae, 2, 20);
-	archive_entry_set_birthtime(ae, 3, 30);
-	archive_entry_set_ctime(ae, 4, 40);
-	archive_entry_set_mtime(ae, 5, 50);
-	archive_entry_copy_pathname(ae, "file4");
-	archive_entry_set_mode(ae, S_IFREG | 0755);
-	archive_entry_set_size(ae, 24);
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
-	archive_entry_free(ae);
-	assertEqualIntA(a, 24, archive_write_data(a, zisofs_data, 24));
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_atime(ae, 2, 20);
+	tk_archive_entry_set_birthtime(ae, 3, 30);
+	tk_archive_entry_set_ctime(ae, 4, 40);
+	tk_archive_entry_set_mtime(ae, 5, 50);
+	tk_archive_entry_copy_pathname(ae, "file4");
+	tk_archive_entry_set_mode(ae, S_IFREG | 0755);
+	tk_archive_entry_set_size(ae, 24);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_header(a, ae));
+	tk_archive_entry_free(ae);
+	assertEqualIntA(a, 24, tk_archive_write_data(a, zisofs_data, 24));
 
 	/* Close out the archive. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_free(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_close(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_free(a));
 
 	failure("The ISO image size should be 110592 bytes.");
 	assertEqualInt(used, 2048 * 54);
@@ -492,82 +492,82 @@ test_write_format_iso9660_zisofs_2(void)
 	/*
 	 * Read ISO image.
 	 */
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, 0, archive_read_support_format_all(a));
-	assertEqualIntA(a, 0, archive_read_support_filter_all(a));
-	assertEqualIntA(a, 0, archive_read_open_memory(a, buff, used));
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, 0, tk_archive_read_support_format_all(a));
+	assertEqualIntA(a, 0, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, 0, tk_archive_read_open_memory(a, buff, used));
 
 	/*
 	 * Read Root Directory
 	 * Root Directory entry must be in ISO image.
 	 */
-	assertEqualIntA(a, 0, archive_read_next_header(a, &ae));
-	assertEqualInt(archive_entry_atime(ae), archive_entry_ctime(ae));
-	assertEqualInt(archive_entry_atime(ae), archive_entry_mtime(ae));
-	assertEqualString(".", archive_entry_pathname(ae));
-	assert((S_IFDIR | 0555) == archive_entry_mode(ae));
-	assertEqualInt(2048, archive_entry_size(ae));
+	assertEqualIntA(a, 0, tk_archive_read_next_header(a, &ae));
+	assertEqualInt(tk_archive_entry_atime(ae), tk_archive_entry_ctime(ae));
+	assertEqualInt(tk_archive_entry_atime(ae), tk_archive_entry_mtime(ae));
+	assertEqualString(".", tk_archive_entry_pathname(ae));
+	assert((S_IFDIR | 0555) == tk_archive_entry_mode(ae));
+	assertEqualInt(2048, tk_archive_entry_size(ae));
 
 	/*
 	 * Read "file1" which has 256K bytes random data.
 	 */
-	assertEqualIntA(a, 0, archive_read_next_header(a, &ae));
-	assertEqualInt(2, archive_entry_atime(ae));
-	assertEqualInt(4, archive_entry_ctime(ae));
-	assertEqualInt(5, archive_entry_mtime(ae));
-	assertEqualString("file1", archive_entry_pathname(ae));
-	assert((S_IFREG | 0555) == archive_entry_mode(ae));
-	assertEqualInt(256*1024, archive_entry_size(ae));
-	assertEqualIntA(a, 1024, archive_read_data(a, buff2, 1024));
+	assertEqualIntA(a, 0, tk_archive_read_next_header(a, &ae));
+	assertEqualInt(2, tk_archive_entry_atime(ae));
+	assertEqualInt(4, tk_archive_entry_ctime(ae));
+	assertEqualInt(5, tk_archive_entry_mtime(ae));
+	assertEqualString("file1", tk_archive_entry_pathname(ae));
+	assert((S_IFREG | 0555) == tk_archive_entry_mode(ae));
+	assertEqualInt(256*1024, tk_archive_entry_size(ae));
+	assertEqualIntA(a, 1024, tk_archive_read_data(a, buff2, 1024));
 
 	/*
 	 * Read "file2" which has 2048 bytes data.
 	 */
-	assertEqualIntA(a, 0, archive_read_next_header(a, &ae));
-	assertEqualInt(2, archive_entry_atime(ae));
-	assertEqualInt(4, archive_entry_ctime(ae));
-	assertEqualInt(5, archive_entry_mtime(ae));
-	assertEqualString("file2", archive_entry_pathname(ae));
-	assert((S_IFREG | 0555) == archive_entry_mode(ae));
-	assertEqualInt(2048, archive_entry_size(ae));
-	assertEqualIntA(a, 1024, archive_read_data(a, buff2, 1024));
+	assertEqualIntA(a, 0, tk_archive_read_next_header(a, &ae));
+	assertEqualInt(2, tk_archive_entry_atime(ae));
+	assertEqualInt(4, tk_archive_entry_ctime(ae));
+	assertEqualInt(5, tk_archive_entry_mtime(ae));
+	assertEqualString("file2", tk_archive_entry_pathname(ae));
+	assert((S_IFREG | 0555) == tk_archive_entry_mode(ae));
+	assertEqualInt(2048, tk_archive_entry_size(ae));
+	assertEqualIntA(a, 1024, tk_archive_read_data(a, buff2, 1024));
 	memset(data, 'a', sizeof(data));
 	assertEqualMem(buff2, data, 1024);
 
 	/*
 	 * Read "file3" which has 2049 bytes data.
 	 */
-	assertEqualIntA(a, 0, archive_read_next_header(a, &ae));
-	assertEqualInt(2, archive_entry_atime(ae));
-	assertEqualInt(4, archive_entry_ctime(ae));
-	assertEqualInt(5, archive_entry_mtime(ae));
-	assertEqualString("file3", archive_entry_pathname(ae));
-	assert((S_IFREG | 0555) == archive_entry_mode(ae));
-	assertEqualInt(2049, archive_entry_size(ae));
-	assertEqualIntA(a, 1024, archive_read_data(a, buff2, 1024));
+	assertEqualIntA(a, 0, tk_archive_read_next_header(a, &ae));
+	assertEqualInt(2, tk_archive_entry_atime(ae));
+	assertEqualInt(4, tk_archive_entry_ctime(ae));
+	assertEqualInt(5, tk_archive_entry_mtime(ae));
+	assertEqualString("file3", tk_archive_entry_pathname(ae));
+	assert((S_IFREG | 0555) == tk_archive_entry_mode(ae));
+	assertEqualInt(2049, tk_archive_entry_size(ae));
+	assertEqualIntA(a, 1024, tk_archive_read_data(a, buff2, 1024));
 	memset(data, 'Z', sizeof(data));
 	assertEqualMem(buff2, data, 1024);
 
 	/*
 	 * Read "file4" which has 32K bytes null data.
 	 */
-	assertEqualIntA(a, 0, archive_read_next_header(a, &ae));
-	assertEqualInt(2, archive_entry_atime(ae));
-	assertEqualInt(4, archive_entry_ctime(ae));
-	assertEqualInt(5, archive_entry_mtime(ae));
-	assertEqualString("file4", archive_entry_pathname(ae));
-	assert((S_IFREG | 0555) == archive_entry_mode(ae));
-	assertEqualInt(32768, archive_entry_size(ae));
-	assertEqualIntA(a, 1024, archive_read_data(a, buff2, 1024));
+	assertEqualIntA(a, 0, tk_archive_read_next_header(a, &ae));
+	assertEqualInt(2, tk_archive_entry_atime(ae));
+	assertEqualInt(4, tk_archive_entry_ctime(ae));
+	assertEqualInt(5, tk_archive_entry_mtime(ae));
+	assertEqualString("file4", tk_archive_entry_pathname(ae));
+	assert((S_IFREG | 0555) == tk_archive_entry_mode(ae));
+	assertEqualInt(32768, tk_archive_entry_size(ae));
+	assertEqualIntA(a, 1024, tk_archive_read_data(a, buff2, 1024));
 	memset(data, 0, sizeof(data));
 	assertEqualMem(buff2, data, 1024);
 
 	/*
 	 * Verify the end of the archive.
 	 */
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_free(a));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_free(a));
 
 	free(buff);
 }
@@ -581,7 +581,7 @@ test_write_format_iso9660_zisofs_3(void)
 	unsigned char buff2[1024];
 	unsigned char nullb[2048];
 	struct archive *a;
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	unsigned char *buff;
 	size_t buffsize = 50 * 2048;
 	size_t used;
@@ -595,68 +595,68 @@ test_write_format_iso9660_zisofs_3(void)
 		return;
 
 	/* ISO9660 format: Create a new archive in memory. */
-	assert((a = archive_write_new()) != NULL);
-	assertEqualIntA(a, 0, archive_write_set_format_iso9660(a));
-	assertEqualIntA(a, 0, archive_write_add_filter_none(a));
-	r = archive_write_set_option(a, NULL, "zisofs", "1");
+	assert((a = tk_archive_write_new()) != NULL);
+	assertEqualIntA(a, 0, tk_archive_write_set_format_iso9660(a));
+	assertEqualIntA(a, 0, tk_archive_write_add_filter_none(a));
+	r = tk_archive_write_set_option(a, NULL, "zisofs", "1");
 	if (r == ARCHIVE_FATAL) {
 		skipping("zisofs option not supported on this platform");
-		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+		assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 		free(buff);
 		return;
 	}
-	assertEqualIntA(a, 0, archive_write_set_option(a, NULL, "boot", "boot.img"));
-	assertEqualIntA(a, 0, archive_write_set_option(a, NULL, "pad", NULL));
-	assertEqualIntA(a, 0, archive_write_open_memory(a, buff, buffsize, &used));
+	assertEqualIntA(a, 0, tk_archive_write_set_option(a, NULL, "boot", "boot.img"));
+	assertEqualIntA(a, 0, tk_archive_write_set_option(a, NULL, "pad", NULL));
+	assertEqualIntA(a, 0, tk_archive_write_open_memory(a, buff, buffsize, &used));
 
 	/*
 	 * "file1" has a bunch of attributes and 256K bytes of null data.
 	 */
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_set_atime(ae, 2, 20);
-	archive_entry_set_birthtime(ae, 3, 30);
-	archive_entry_set_ctime(ae, 4, 40);
-	archive_entry_set_mtime(ae, 5, 50);
-	archive_entry_copy_pathname(ae, "boot.img");
-	archive_entry_set_mode(ae, S_IFREG | 0755);
-	archive_entry_set_size(ae, 10*1024);
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
-	archive_entry_free(ae);
-	assertEqualIntA(a, 1024, archive_write_data(a, nullb, 1024));
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_atime(ae, 2, 20);
+	tk_archive_entry_set_birthtime(ae, 3, 30);
+	tk_archive_entry_set_ctime(ae, 4, 40);
+	tk_archive_entry_set_mtime(ae, 5, 50);
+	tk_archive_entry_copy_pathname(ae, "boot.img");
+	tk_archive_entry_set_mode(ae, S_IFREG | 0755);
+	tk_archive_entry_set_size(ae, 10*1024);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_header(a, ae));
+	tk_archive_entry_free(ae);
+	assertEqualIntA(a, 1024, tk_archive_write_data(a, nullb, 1024));
 
 	/*
 	 * "file2" has a bunch of attributes and 2048 bytes of null data.
 	 */
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_set_atime(ae, 2, 20);
-	archive_entry_set_birthtime(ae, 3, 30);
-	archive_entry_set_ctime(ae, 4, 40);
-	archive_entry_set_mtime(ae, 5, 50);
-	archive_entry_copy_pathname(ae, "file2");
-	archive_entry_set_mode(ae, S_IFREG | 0755);
-	archive_entry_set_size(ae, 2048);
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
-	archive_entry_free(ae);
-	assertEqualIntA(a, 1024, archive_write_data(a, nullb, 1024));
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_atime(ae, 2, 20);
+	tk_archive_entry_set_birthtime(ae, 3, 30);
+	tk_archive_entry_set_ctime(ae, 4, 40);
+	tk_archive_entry_set_mtime(ae, 5, 50);
+	tk_archive_entry_copy_pathname(ae, "file2");
+	tk_archive_entry_set_mode(ae, S_IFREG | 0755);
+	tk_archive_entry_set_size(ae, 2048);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_header(a, ae));
+	tk_archive_entry_free(ae);
+	assertEqualIntA(a, 1024, tk_archive_write_data(a, nullb, 1024));
 
 	/*
 	 * "file3" has a bunch of attributes and 2049 bytes of null data.
 	 */
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_set_atime(ae, 2, 20);
-	archive_entry_set_birthtime(ae, 3, 30);
-	archive_entry_set_ctime(ae, 4, 40);
-	archive_entry_set_mtime(ae, 5, 50);
-	archive_entry_copy_pathname(ae, "file3");
-	archive_entry_set_mode(ae, S_IFREG | 0755);
-	archive_entry_set_size(ae, 2049);
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
-	archive_entry_free(ae);
-	assertEqualIntA(a, 1024, archive_write_data(a, nullb, 1024));
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_atime(ae, 2, 20);
+	tk_archive_entry_set_birthtime(ae, 3, 30);
+	tk_archive_entry_set_ctime(ae, 4, 40);
+	tk_archive_entry_set_mtime(ae, 5, 50);
+	tk_archive_entry_copy_pathname(ae, "file3");
+	tk_archive_entry_set_mode(ae, S_IFREG | 0755);
+	tk_archive_entry_set_size(ae, 2049);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_header(a, ae));
+	tk_archive_entry_free(ae);
+	assertEqualIntA(a, 1024, tk_archive_write_data(a, nullb, 1024));
 
 	/* Close out the archive. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_free(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_close(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_free(a));
 
 	failure("The ISO image size should be 81920 bytes.");
 	assertEqualInt(used, 2048 * 40);
@@ -737,85 +737,85 @@ test_write_format_iso9660_zisofs_3(void)
 	/*
 	 * Read ISO image.
 	 */
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, 0, archive_read_support_format_all(a));
-	assertEqualIntA(a, 0, archive_read_support_filter_all(a));
-	assertEqualIntA(a, 0, archive_read_open_memory(a, buff, used));
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, 0, tk_archive_read_support_format_all(a));
+	assertEqualIntA(a, 0, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, 0, tk_archive_read_open_memory(a, buff, used));
 
 	/*
 	 * Read Root Directory
 	 * Root Directory entry must be in ISO image.
 	 */
-	assertEqualIntA(a, 0, archive_read_next_header(a, &ae));
-	assertEqualInt(archive_entry_atime(ae), archive_entry_ctime(ae));
-	assertEqualInt(archive_entry_atime(ae), archive_entry_mtime(ae));
-	assertEqualString(".", archive_entry_pathname(ae));
-	assert((S_IFDIR | 0555) == archive_entry_mode(ae));
-	assertEqualInt(2048, archive_entry_size(ae));
+	assertEqualIntA(a, 0, tk_archive_read_next_header(a, &ae));
+	assertEqualInt(tk_archive_entry_atime(ae), tk_archive_entry_ctime(ae));
+	assertEqualInt(tk_archive_entry_atime(ae), tk_archive_entry_mtime(ae));
+	assertEqualString(".", tk_archive_entry_pathname(ae));
+	assert((S_IFDIR | 0555) == tk_archive_entry_mode(ae));
+	assertEqualInt(2048, tk_archive_entry_size(ae));
 
 	/*
 	 * Read "boot.catalog".
 	 */
-	assertEqualIntA(a, 0, archive_read_next_header(a, &ae));
-	assertEqualString("boot.catalog", archive_entry_pathname(ae));
+	assertEqualIntA(a, 0, tk_archive_read_next_header(a, &ae));
+	assertEqualString("boot.catalog", tk_archive_entry_pathname(ae));
 #if !defined(_WIN32) && !defined(__CYGWIN__)
-	assert((S_IFREG | 0444) == archive_entry_mode(ae));
+	assert((S_IFREG | 0444) == tk_archive_entry_mode(ae));
 #else
 	/* On Windows and CYGWIN, always set all exec bit ON by default. */ 
-	assert((S_IFREG | 0555) == archive_entry_mode(ae));
+	assert((S_IFREG | 0555) == tk_archive_entry_mode(ae));
 #endif
-	assertEqualInt(1, archive_entry_nlink(ae));
-	assertEqualInt(2*1024, archive_entry_size(ae));
-	assertEqualIntA(a, 1024, archive_read_data(a, buff2, 1024));
+	assertEqualInt(1, tk_archive_entry_nlink(ae));
+	assertEqualInt(2*1024, tk_archive_entry_size(ae));
+	assertEqualIntA(a, 1024, tk_archive_read_data(a, buff2, 1024));
 	assertEqualMem(buff2, boot_catalog, 64);
 
 	/*
 	 * Read "boot.img".
 	 */
-	assertEqualIntA(a, 0, archive_read_next_header(a, &ae));
-	assertEqualInt(2, archive_entry_atime(ae));
-	assertEqualInt(3, archive_entry_birthtime(ae));
-	assertEqualInt(4, archive_entry_ctime(ae));
-	assertEqualInt(5, archive_entry_mtime(ae));
-	assertEqualString("boot.img", archive_entry_pathname(ae));
-	assert((S_IFREG | 0555) == archive_entry_mode(ae));
-	assertEqualInt(1, archive_entry_nlink(ae));
-	assertEqualInt(10*1024, archive_entry_size(ae));
-	assertEqualIntA(a, 1024, archive_read_data(a, buff2, 1024));
+	assertEqualIntA(a, 0, tk_archive_read_next_header(a, &ae));
+	assertEqualInt(2, tk_archive_entry_atime(ae));
+	assertEqualInt(3, tk_archive_entry_birthtime(ae));
+	assertEqualInt(4, tk_archive_entry_ctime(ae));
+	assertEqualInt(5, tk_archive_entry_mtime(ae));
+	assertEqualString("boot.img", tk_archive_entry_pathname(ae));
+	assert((S_IFREG | 0555) == tk_archive_entry_mode(ae));
+	assertEqualInt(1, tk_archive_entry_nlink(ae));
+	assertEqualInt(10*1024, tk_archive_entry_size(ae));
+	assertEqualIntA(a, 1024, tk_archive_read_data(a, buff2, 1024));
 	assertEqualMem(buff2, nullb, 1024);
 
 	/*
 	 * Read "file2" which has 2048 bytes null data.
 	 */
-	assertEqualIntA(a, 0, archive_read_next_header(a, &ae));
-	assertEqualInt(2, archive_entry_atime(ae));
-	assertEqualInt(4, archive_entry_ctime(ae));
-	assertEqualInt(5, archive_entry_mtime(ae));
-	assertEqualString("file2", archive_entry_pathname(ae));
-	assert((S_IFREG | 0555) == archive_entry_mode(ae));
-	assertEqualInt(2048, archive_entry_size(ae));
-	assertEqualIntA(a, 1024, archive_read_data(a, buff2, 1024));
+	assertEqualIntA(a, 0, tk_archive_read_next_header(a, &ae));
+	assertEqualInt(2, tk_archive_entry_atime(ae));
+	assertEqualInt(4, tk_archive_entry_ctime(ae));
+	assertEqualInt(5, tk_archive_entry_mtime(ae));
+	assertEqualString("file2", tk_archive_entry_pathname(ae));
+	assert((S_IFREG | 0555) == tk_archive_entry_mode(ae));
+	assertEqualInt(2048, tk_archive_entry_size(ae));
+	assertEqualIntA(a, 1024, tk_archive_read_data(a, buff2, 1024));
 	assertEqualMem(buff2, nullb, 1024);
 
 	/*
 	 * Read "file3" which has 2049 bytes null data.
 	 */
-	assertEqualIntA(a, 0, archive_read_next_header(a, &ae));
-	assertEqualInt(2, archive_entry_atime(ae));
-	assertEqualInt(4, archive_entry_ctime(ae));
-	assertEqualInt(5, archive_entry_mtime(ae));
-	assertEqualString("file3", archive_entry_pathname(ae));
-	assert((S_IFREG | 0555) == archive_entry_mode(ae));
-	assertEqualInt(2049, archive_entry_size(ae));
-	assertEqualIntA(a, 1024, archive_read_data(a, buff2, 1024));
+	assertEqualIntA(a, 0, tk_archive_read_next_header(a, &ae));
+	assertEqualInt(2, tk_archive_entry_atime(ae));
+	assertEqualInt(4, tk_archive_entry_ctime(ae));
+	assertEqualInt(5, tk_archive_entry_mtime(ae));
+	assertEqualString("file3", tk_archive_entry_pathname(ae));
+	assert((S_IFREG | 0555) == tk_archive_entry_mode(ae));
+	assertEqualInt(2049, tk_archive_entry_size(ae));
+	assertEqualIntA(a, 1024, tk_archive_read_data(a, buff2, 1024));
 	assertEqualMem(buff2, nullb, 1024);
 
 	/*
 	 * Verify the end of the archive.
 	 */
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_free(a));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_free(a));
 
 	free(buff);
 }

@@ -31,7 +31,7 @@ static void
 test_ustar_filename_encoding_UTF8_CP866(void)
 {
   	struct archive *a;
-  	struct archive_entry *entry;
+  	struct tk_archive_entry *entry;
 	char buff[4096];
 	size_t used;
 
@@ -44,25 +44,25 @@ test_ustar_filename_encoding_UTF8_CP866(void)
 	 * Verify that UTF-8 filenames are correctly translated into CP866
 	 * and stored with hdrcharset=CP866 option.
 	 */
-	a = archive_write_new();
-	assertEqualInt(ARCHIVE_OK, archive_write_set_format_ustar(a));
-	if (archive_write_set_options(a, "hdrcharset=CP866") != ARCHIVE_OK) {
+	a = tk_archive_write_new();
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_set_format_ustar(a));
+	if (tk_archive_write_set_options(a, "hdrcharset=CP866") != ARCHIVE_OK) {
 		skipping("This system cannot convert character-set"
 		    " from UTF-8 to CP866.");
-		archive_write_free(a);
+		tk_archive_write_free(a);
 		return;
 	}
 	assertEqualInt(ARCHIVE_OK,
-	    archive_write_open_memory(a, buff, sizeof(buff), &used));
+	    tk_archive_write_open_memory(a, buff, sizeof(buff), &used));
 
-	entry = archive_entry_new2(a);
+	entry = tk_archive_entry_new2(a);
 	/* Set a UTF-8 filename. */
-	archive_entry_set_pathname(entry, "\xD0\xBF\xD1\x80\xD0\xB8");
-	archive_entry_set_filetype(entry, AE_IFREG);
-	archive_entry_set_size(entry, 0);
-	assertEqualInt(ARCHIVE_OK, archive_write_header(a, entry));
-	archive_entry_free(entry);
-	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+	tk_archive_entry_set_pathname(entry, "\xD0\xBF\xD1\x80\xD0\xB8");
+	tk_archive_entry_set_filetype(entry, AE_IFREG);
+	tk_archive_entry_set_size(entry, 0);
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_header(a, entry));
+	tk_archive_entry_free(entry);
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 
 	/* Above three characters in UTF-8 should translate to the following
 	 * three characters in CP866. */
@@ -73,7 +73,7 @@ static void
 test_ustar_filename_encoding_KOI8R_UTF8(void)
 {
   	struct archive *a;
-  	struct archive_entry *entry;
+  	struct tk_archive_entry *entry;
 	char buff[4096];
 	size_t used;
 
@@ -86,25 +86,25 @@ test_ustar_filename_encoding_KOI8R_UTF8(void)
 	 * Verify that KOI8-R filenames are correctly translated into UTF-8
 	 * and stored with hdrcharset=UTF-8 option.
 	 */
-	a = archive_write_new();
-	assertEqualInt(ARCHIVE_OK, archive_write_set_format_ustar(a));
-	if (archive_write_set_options(a, "hdrcharset=UTF-8") != ARCHIVE_OK) {
+	a = tk_archive_write_new();
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_set_format_ustar(a));
+	if (tk_archive_write_set_options(a, "hdrcharset=UTF-8") != ARCHIVE_OK) {
 		skipping("This system cannot convert character-set"
 		    " from KOI8-R to UTF-8.");
-		archive_write_free(a);
+		tk_archive_write_free(a);
 		return;
 	}
 	assertEqualInt(ARCHIVE_OK,
-	    archive_write_open_memory(a, buff, sizeof(buff), &used));
+	    tk_archive_write_open_memory(a, buff, sizeof(buff), &used));
 
-	entry = archive_entry_new2(a);
+	entry = tk_archive_entry_new2(a);
 	/* Set a KOI8-R filename. */
-	archive_entry_set_pathname(entry, "\xD0\xD2\xC9");
-	archive_entry_set_filetype(entry, AE_IFREG);
-	archive_entry_set_size(entry, 0);
-	assertEqualInt(ARCHIVE_OK, archive_write_header(a, entry));
-	archive_entry_free(entry);
-	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+	tk_archive_entry_set_pathname(entry, "\xD0\xD2\xC9");
+	tk_archive_entry_set_filetype(entry, AE_IFREG);
+	tk_archive_entry_set_size(entry, 0);
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_header(a, entry));
+	tk_archive_entry_free(entry);
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 
 	/* Above three characters in KOI8-R should translate to the following
 	 * three characters (two bytes each) in UTF-8. */
@@ -115,7 +115,7 @@ static void
 test_ustar_filename_encoding_KOI8R_CP866(void)
 {
   	struct archive *a;
-  	struct archive_entry *entry;
+  	struct tk_archive_entry *entry;
 	char buff[4096];
 	size_t used;
 
@@ -128,25 +128,25 @@ test_ustar_filename_encoding_KOI8R_CP866(void)
 	 * Verify that KOI8-R filenames are correctly translated into CP866
 	 * and stored with hdrcharset=CP866 option.
 	 */
-	a = archive_write_new();
-	assertEqualInt(ARCHIVE_OK, archive_write_set_format_ustar(a));
-	if (archive_write_set_options(a, "hdrcharset=CP866") != ARCHIVE_OK) {
+	a = tk_archive_write_new();
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_set_format_ustar(a));
+	if (tk_archive_write_set_options(a, "hdrcharset=CP866") != ARCHIVE_OK) {
 		skipping("This system cannot convert character-set"
 		    " from KOI8-R to CP866.");
-		archive_write_free(a);
+		tk_archive_write_free(a);
 		return;
 	}
 	assertEqualInt(ARCHIVE_OK,
-	    archive_write_open_memory(a, buff, sizeof(buff), &used));
+	    tk_archive_write_open_memory(a, buff, sizeof(buff), &used));
 
-	entry = archive_entry_new2(a);
+	entry = tk_archive_entry_new2(a);
 	/* Set a KOI8-R filename. */
-	archive_entry_set_pathname(entry, "\xD0\xD2\xC9");
-	archive_entry_set_filetype(entry, AE_IFREG);
-	archive_entry_set_size(entry, 0);
-	assertEqualInt(ARCHIVE_OK, archive_write_header(a, entry));
-	archive_entry_free(entry);
-	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+	tk_archive_entry_set_pathname(entry, "\xD0\xD2\xC9");
+	tk_archive_entry_set_filetype(entry, AE_IFREG);
+	tk_archive_entry_set_size(entry, 0);
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_header(a, entry));
+	tk_archive_entry_free(entry);
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 
 	/* Above three characters in KOI8-R should translate to the following
 	 * three characters in CP866. */
@@ -157,7 +157,7 @@ static void
 test_ustar_filename_encoding_CP1251_UTF8(void)
 {
   	struct archive *a;
-  	struct archive_entry *entry;
+  	struct tk_archive_entry *entry;
 	char buff[4096];
 	size_t used;
 
@@ -171,25 +171,25 @@ test_ustar_filename_encoding_CP1251_UTF8(void)
 	 * Verify that CP1251 filenames are correctly translated into UTF-8
 	 * and stored with hdrcharset=UTF-8 option.
 	 */
-	a = archive_write_new();
-	assertEqualInt(ARCHIVE_OK, archive_write_set_format_ustar(a));
-	if (archive_write_set_options(a, "hdrcharset=UTF-8") != ARCHIVE_OK) {
+	a = tk_archive_write_new();
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_set_format_ustar(a));
+	if (tk_archive_write_set_options(a, "hdrcharset=UTF-8") != ARCHIVE_OK) {
 		skipping("This system cannot convert character-set"
 		    " from KOI8-R to UTF-8.");
-		archive_write_free(a);
+		tk_archive_write_free(a);
 		return;
 	}
 	assertEqualInt(ARCHIVE_OK,
-	    archive_write_open_memory(a, buff, sizeof(buff), &used));
+	    tk_archive_write_open_memory(a, buff, sizeof(buff), &used));
 
-	entry = archive_entry_new2(a);
+	entry = tk_archive_entry_new2(a);
 	/* Set a KOI8-R filename. */
-	archive_entry_set_pathname(entry, "\xEF\xF0\xE8");
-	archive_entry_set_filetype(entry, AE_IFREG);
-	archive_entry_set_size(entry, 0);
-	assertEqualInt(ARCHIVE_OK, archive_write_header(a, entry));
-	archive_entry_free(entry);
-	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+	tk_archive_entry_set_pathname(entry, "\xEF\xF0\xE8");
+	tk_archive_entry_set_filetype(entry, AE_IFREG);
+	tk_archive_entry_set_size(entry, 0);
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_header(a, entry));
+	tk_archive_entry_free(entry);
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 
 	/* Above three characters in CP1251 should translate to the following
 	 * three characters (two bytes each) in UTF-8. */
@@ -203,7 +203,7 @@ static void
 test_ustar_filename_encoding_ru_RU_CP1251(void)
 {
   	struct archive *a;
-  	struct archive_entry *entry;
+  	struct tk_archive_entry *entry;
 	char buff[4096];
 	size_t used;
 
@@ -216,19 +216,19 @@ test_ustar_filename_encoding_ru_RU_CP1251(void)
 	 * Verify that CP1251 filenames are not translated into any
 	 * other character-set, in particular, CP866.
 	 */
-	a = archive_write_new();
-	assertEqualInt(ARCHIVE_OK, archive_write_set_format_ustar(a));
+	a = tk_archive_write_new();
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_set_format_ustar(a));
 	assertEqualInt(ARCHIVE_OK,
-	    archive_write_open_memory(a, buff, sizeof(buff), &used));
+	    tk_archive_write_open_memory(a, buff, sizeof(buff), &used));
 
-	entry = archive_entry_new2(a);
+	entry = tk_archive_entry_new2(a);
 	/* Set a KOI8-R filename. */
-	archive_entry_set_pathname(entry, "\xEF\xF0\xE8");
-	archive_entry_set_filetype(entry, AE_IFREG);
-	archive_entry_set_size(entry, 0);
-	assertEqualInt(ARCHIVE_OK, archive_write_header(a, entry));
-	archive_entry_free(entry);
-	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+	tk_archive_entry_set_pathname(entry, "\xEF\xF0\xE8");
+	tk_archive_entry_set_filetype(entry, AE_IFREG);
+	tk_archive_entry_set_size(entry, 0);
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_header(a, entry));
+	tk_archive_entry_free(entry);
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 
 	/* Above three characters in CP1251 should not translate to
 	 * any other character-set. */
@@ -244,7 +244,7 @@ static void
 test_ustar_filename_encoding_Russian_Russia(void)
 {
   	struct archive *a;
-  	struct archive_entry *entry;
+  	struct tk_archive_entry *entry;
 	char buff[4096];
 	size_t used;
 
@@ -257,19 +257,19 @@ test_ustar_filename_encoding_Russian_Russia(void)
 	 * Verify that Russian_Russia(CP1251) filenames are correctly translated
 	 * to CP866.
 	 */
-	a = archive_write_new();
-	assertEqualInt(ARCHIVE_OK, archive_write_set_format_ustar(a));
+	a = tk_archive_write_new();
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_set_format_ustar(a));
 	assertEqualInt(ARCHIVE_OK,
-	    archive_write_open_memory(a, buff, sizeof(buff), &used));
+	    tk_archive_write_open_memory(a, buff, sizeof(buff), &used));
 
-	entry = archive_entry_new2(a);
+	entry = tk_archive_entry_new2(a);
 	/* Set a CP1251 filename. */
-	archive_entry_set_pathname(entry, "\xEF\xF0\xE8");
-	archive_entry_set_filetype(entry, AE_IFREG);
-	archive_entry_set_size(entry, 0);
-	assertEqualInt(ARCHIVE_OK, archive_write_header(a, entry));
-	archive_entry_free(entry);
-	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+	tk_archive_entry_set_pathname(entry, "\xEF\xF0\xE8");
+	tk_archive_entry_set_filetype(entry, AE_IFREG);
+	tk_archive_entry_set_size(entry, 0);
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_header(a, entry));
+	tk_archive_entry_free(entry);
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 
 	/* Above three characters in CP1251 should translate to the following
 	 * three characters in CP866. */
@@ -280,7 +280,7 @@ static void
 test_ustar_filename_encoding_EUCJP_UTF8(void)
 {
   	struct archive *a;
-  	struct archive_entry *entry;
+  	struct tk_archive_entry *entry;
 	char buff[4096];
 	size_t used;
 
@@ -292,26 +292,26 @@ test_ustar_filename_encoding_EUCJP_UTF8(void)
 	/*
 	 * Verify that EUC-JP filenames are correctly translated to UTF-8.
 	 */
-	a = archive_write_new();
-	assertEqualInt(ARCHIVE_OK, archive_write_set_format_ustar(a));
-	if (archive_write_set_options(a, "hdrcharset=UTF-8") != ARCHIVE_OK) {
+	a = tk_archive_write_new();
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_set_format_ustar(a));
+	if (tk_archive_write_set_options(a, "hdrcharset=UTF-8") != ARCHIVE_OK) {
 		skipping("This system cannot convert character-set"
 		    " from eucJP to UTF-8.");
-		archive_write_free(a);
+		tk_archive_write_free(a);
 		return;
 	}
 	assertEqualInt(ARCHIVE_OK,
-	    archive_write_open_memory(a, buff, sizeof(buff), &used));
+	    tk_archive_write_open_memory(a, buff, sizeof(buff), &used));
 
-	entry = archive_entry_new2(a);
+	entry = tk_archive_entry_new2(a);
 	/* Set an EUC-JP filename. */
-	archive_entry_set_pathname(entry, "\xC9\xBD.txt");
+	tk_archive_entry_set_pathname(entry, "\xC9\xBD.txt");
 	/* Check the Unicode version. */
-	archive_entry_set_filetype(entry, AE_IFREG);
-	archive_entry_set_size(entry, 0);
-	assertEqualInt(ARCHIVE_OK, archive_write_header(a, entry));
-	archive_entry_free(entry);
-	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+	tk_archive_entry_set_filetype(entry, AE_IFREG);
+	tk_archive_entry_set_size(entry, 0);
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_header(a, entry));
+	tk_archive_entry_free(entry);
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 
 	/* Check UTF-8 version. */
 	assertEqualMem(buff, "\xE8\xA1\xA8.txt", 7);
@@ -321,7 +321,7 @@ static void
 test_ustar_filename_encoding_EUCJP_CP932(void)
 {
   	struct archive *a;
-  	struct archive_entry *entry;
+  	struct tk_archive_entry *entry;
 	char buff[4096];
 	size_t used;
 
@@ -333,26 +333,26 @@ test_ustar_filename_encoding_EUCJP_CP932(void)
 	/*
 	 * Verify that EUC-JP filenames are correctly translated to CP932.
 	 */
-	a = archive_write_new();
-	assertEqualInt(ARCHIVE_OK, archive_write_set_format_ustar(a));
-	if (archive_write_set_options(a, "hdrcharset=CP932") != ARCHIVE_OK) {
+	a = tk_archive_write_new();
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_set_format_ustar(a));
+	if (tk_archive_write_set_options(a, "hdrcharset=CP932") != ARCHIVE_OK) {
 		skipping("This system cannot convert character-set"
 		    " from eucJP to CP932.");
-		archive_write_free(a);
+		tk_archive_write_free(a);
 		return;
 	}
 	assertEqualInt(ARCHIVE_OK,
-	    archive_write_open_memory(a, buff, sizeof(buff), &used));
+	    tk_archive_write_open_memory(a, buff, sizeof(buff), &used));
 
-	entry = archive_entry_new2(a);
+	entry = tk_archive_entry_new2(a);
 	/* Set an EUC-JP filename. */
-	archive_entry_set_pathname(entry, "\xC9\xBD.txt");
+	tk_archive_entry_set_pathname(entry, "\xC9\xBD.txt");
 	/* Check the Unicode version. */
-	archive_entry_set_filetype(entry, AE_IFREG);
-	archive_entry_set_size(entry, 0);
-	assertEqualInt(ARCHIVE_OK, archive_write_header(a, entry));
-	archive_entry_free(entry);
-	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+	tk_archive_entry_set_filetype(entry, AE_IFREG);
+	tk_archive_entry_set_size(entry, 0);
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_header(a, entry));
+	tk_archive_entry_free(entry);
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 
 	/* Check CP932 version. */
 	assertEqualMem(buff, "\x95\x5C.txt", 6);
@@ -362,7 +362,7 @@ static void
 test_ustar_filename_encoding_CP932_UTF8(void)
 {
   	struct archive *a;
-  	struct archive_entry *entry;
+  	struct tk_archive_entry *entry;
 	char buff[4096];
 	size_t used;
 
@@ -375,26 +375,26 @@ test_ustar_filename_encoding_CP932_UTF8(void)
 	/*
 	 * Verify that CP932/SJIS filenames are correctly translated to UTF-8.
 	 */
-	a = archive_write_new();
-	assertEqualInt(ARCHIVE_OK, archive_write_set_format_ustar(a));
-	if (archive_write_set_options(a, "hdrcharset=UTF-8") != ARCHIVE_OK) {
+	a = tk_archive_write_new();
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_set_format_ustar(a));
+	if (tk_archive_write_set_options(a, "hdrcharset=UTF-8") != ARCHIVE_OK) {
 		skipping("This system cannot convert character-set"
 		    " from CP932/SJIS to UTF-8.");
-		archive_write_free(a);
+		tk_archive_write_free(a);
 		return;
 	}
 	assertEqualInt(ARCHIVE_OK,
-	    archive_write_open_memory(a, buff, sizeof(buff), &used));
+	    tk_archive_write_open_memory(a, buff, sizeof(buff), &used));
 
-	entry = archive_entry_new2(a);
+	entry = tk_archive_entry_new2(a);
 	/* Set a CP932/SJIS filename. */
-	archive_entry_set_pathname(entry, "\x95\x5C.txt");
+	tk_archive_entry_set_pathname(entry, "\x95\x5C.txt");
 	/* Check the Unicode version. */
-	archive_entry_set_filetype(entry, AE_IFREG);
-	archive_entry_set_size(entry, 0);
-	assertEqualInt(ARCHIVE_OK, archive_write_header(a, entry));
-	archive_entry_free(entry);
-	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+	tk_archive_entry_set_filetype(entry, AE_IFREG);
+	tk_archive_entry_set_size(entry, 0);
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_header(a, entry));
+	tk_archive_entry_free(entry);
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 
 	/* Check UTF-8 version. */
 	assertEqualMem(buff, "\xE8\xA1\xA8.txt", 7);

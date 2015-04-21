@@ -36,18 +36,18 @@
 #include "archive_string.h"
 #include "archive_private.h"
 
-struct archive_write;
+struct tk_archive_write;
 
-struct archive_write_filter {
+struct tk_archive_write_filter {
 	int64_t bytes_written;
 	struct archive *archive; /* Associated archive. */
-	struct archive_write_filter *next_filter; /* Who I write to. */
-	int	(*options)(struct archive_write_filter *,
+	struct tk_archive_write_filter *next_filter; /* Who I write to. */
+	int	(*options)(struct tk_archive_write_filter *,
 	    const char *key, const char *value);
-	int	(*open)(struct archive_write_filter *);
-	int	(*write)(struct archive_write_filter *, const void *, size_t);
-	int	(*close)(struct archive_write_filter *);
-	int	(*free)(struct archive_write_filter *);
+	int	(*open)(struct tk_archive_write_filter *);
+	int	(*write)(struct tk_archive_write_filter *, const void *, size_t);
+	int	(*close)(struct tk_archive_write_filter *);
+	int	(*free)(struct tk_archive_write_filter *);
 	void	 *data;
 	const char *name;
 	int	  code;
@@ -56,18 +56,18 @@ struct archive_write_filter {
 };
 
 #if ARCHIVE_VERSION < 4000000
-void __archive_write_filters_free(struct archive *);
+void __tk_archive_write_filters_free(struct archive *);
 #endif
 
-struct archive_write_filter *__archive_write_allocate_filter(struct archive *);
+struct tk_archive_write_filter *__tk_archive_write_allocate_filter(struct archive *);
 
-int __archive_write_output(struct archive_write *, const void *, size_t);
-int __archive_write_nulls(struct archive_write *, size_t);
-int __archive_write_filter(struct archive_write_filter *, const void *, size_t);
-int __archive_write_open_filter(struct archive_write_filter *);
-int __archive_write_close_filter(struct archive_write_filter *);
+int __tk_archive_write_output(struct tk_archive_write *, const void *, size_t);
+int __tk_archive_write_nulls(struct tk_archive_write *, size_t);
+int __tk_archive_write_filter(struct tk_archive_write_filter *, const void *, size_t);
+int __tk_archive_write_open_filter(struct tk_archive_write_filter *);
+int __tk_archive_write_close_filter(struct tk_archive_write_filter *);
 
-struct archive_write {
+struct tk_archive_write {
 	struct archive	archive;
 
 	/* Dev/ino of the archive being written. */
@@ -80,9 +80,9 @@ struct archive_write {
 	size_t			 null_length;
 
 	/* Callbacks to open/read/write/close archive stream. */
-	archive_open_callback	*client_opener;
-	archive_write_callback	*client_writer;
-	archive_close_callback	*client_closer;
+	tk_archive_open_callback	*client_opener;
+	tk_archive_write_callback	*client_writer;
+	tk_archive_close_callback	*client_closer;
 	void			*client_data;
 
 	/*
@@ -97,8 +97,8 @@ struct archive_write {
 	/*
 	 * First and last write filters in the pipeline.
 	 */
-	struct archive_write_filter *filter_first;
-	struct archive_write_filter *filter_last;
+	struct tk_archive_write_filter *filter_first;
+	struct tk_archive_write_filter *filter_last;
 
 	/*
 	 * Pointers to format-specific functions for writing.  They're
@@ -106,16 +106,16 @@ struct archive_write {
 	 */
 	void	 *format_data;
 	const char *format_name;
-	int	(*format_init)(struct archive_write *);
-	int	(*format_options)(struct archive_write *,
+	int	(*format_init)(struct tk_archive_write *);
+	int	(*format_options)(struct tk_archive_write *,
 		    const char *key, const char *value);
-	int	(*format_finish_entry)(struct archive_write *);
-	int 	(*format_write_header)(struct archive_write *,
-		    struct archive_entry *);
-	ssize_t	(*format_write_data)(struct archive_write *,
+	int	(*format_finish_entry)(struct tk_archive_write *);
+	int 	(*format_write_header)(struct tk_archive_write *,
+		    struct tk_archive_entry *);
+	ssize_t	(*format_write_data)(struct tk_archive_write *,
 		    const void *buff, size_t);
-	int	(*format_close)(struct archive_write *);
-	int	(*format_free)(struct archive_write *);
+	int	(*format_close)(struct tk_archive_write *);
+	int	(*format_free)(struct tk_archive_write *);
 };
 
 /*
@@ -129,17 +129,17 @@ struct archive_write {
  * two very similar formats (ustar and pax).
  */
 int
-__archive_write_format_header_ustar(struct archive_write *, char buff[512],
-    struct archive_entry *, int tartype, int strict,
-    struct archive_string_conv *);
+__tk_archive_write_format_header_ustar(struct tk_archive_write *, char buff[512],
+    struct tk_archive_entry *, int tartype, int strict,
+    struct tk_archive_string_conv *);
 
-struct archive_write_program_data;
-struct archive_write_program_data * __archive_write_program_allocate(void);
-int	__archive_write_program_free(struct archive_write_program_data *);
-int	__archive_write_program_open(struct archive_write_filter *,
-	    struct archive_write_program_data *, const char *);
-int	__archive_write_program_close(struct archive_write_filter *,
-	    struct archive_write_program_data *);
-int	__archive_write_program_write(struct archive_write_filter *,
-	    struct archive_write_program_data *, const void *, size_t);
+struct tk_archive_write_program_data;
+struct tk_archive_write_program_data * __tk_archive_write_program_allocate(void);
+int	__tk_archive_write_program_free(struct tk_archive_write_program_data *);
+int	__tk_archive_write_program_open(struct tk_archive_write_filter *,
+	    struct tk_archive_write_program_data *, const char *);
+int	__tk_archive_write_program_close(struct tk_archive_write_filter *,
+	    struct tk_archive_write_program_data *);
+int	__tk_archive_write_program_write(struct tk_archive_write_filter *,
+	    struct tk_archive_write_program_data *, const void *, size_t);
 #endif

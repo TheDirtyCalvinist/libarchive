@@ -58,7 +58,7 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_write_open_filename.c 191165 200
 
 struct write_file_data {
 	int		fd;
-	struct archive_mstring filename;
+	struct tk_archive_mstring filename;
 };
 
 static int	file_close(struct archive *, void *);
@@ -67,27 +67,27 @@ static ssize_t	file_write(struct archive *, void *, const void *buff, size_t);
 static int	open_filename(struct archive *, int, const void *);
 
 int
-archive_write_open_file(struct archive *a, const char *filename)
+tk_archive_write_open_file(struct archive *a, const char *filename)
 {
-	return (archive_write_open_filename(a, filename));
+	return (tk_archive_write_open_filename(a, filename));
 }
 
 int
-archive_write_open_filename(struct archive *a, const char *filename)
+tk_archive_write_open_filename(struct archive *a, const char *filename)
 {
 
 	if (filename == NULL || filename[0] == '\0')
-		return (archive_write_open_fd(a, 1));
+		return (tk_archive_write_open_fd(a, 1));
 
 	return (open_filename(a, 1, filename));
 }
 
 int
-archive_write_open_filename_w(struct archive *a, const wchar_t *filename)
+tk_archive_write_open_filename_w(struct archive *a, const wchar_t *filename)
 {
 
 	if (filename == NULL || filename[0] == L'\0')
-		return (archive_write_open_fd(a, 1));
+		return (tk_archive_write_open_fd(a, 1));
 
 	return (open_filename(a, 0, filename));
 }
@@ -100,30 +100,30 @@ open_filename(struct archive *a, int mbs_fn, const void *filename)
 
 	mine = (struct write_file_data *)calloc(1, sizeof(*mine));
 	if (mine == NULL) {
-		archive_set_error(a, ENOMEM, "No memory");
+		tk_archive_set_error(a, ENOMEM, "No memory");
 		return (ARCHIVE_FATAL);
 	}
 	if (mbs_fn)
-		r = archive_mstring_copy_mbs(&mine->filename, filename);
+		r = tk_archive_mstring_copy_mbs(&mine->filename, filename);
 	else
-		r = archive_mstring_copy_wcs(&mine->filename, filename);
+		r = tk_archive_mstring_copy_wcs(&mine->filename, filename);
 	if (r < 0) {
 		if (errno == ENOMEM) {
-			archive_set_error(a, ENOMEM, "No memory");
+			tk_archive_set_error(a, ENOMEM, "No memory");
 			return (ARCHIVE_FATAL);
 		}
 		if (mbs_fn)
-			archive_set_error(a, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(a, ARCHIVE_ERRNO_MISC,
 			    "Can't convert '%s' to WCS",
 			    (const char *)filename);
 		else
-			archive_set_error(a, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(a, ARCHIVE_ERRNO_MISC,
 			    "Can't convert '%S' to MBS",
 			    (const wchar_t *)filename);
 		return (ARCHIVE_FAILED);
 	}
 	mine->fd = -1;
-	return (archive_write_open(a, mine,
+	return (tk_archive_write_open(a, mine,
 		file_open, file_write, file_close));
 }
 
@@ -147,12 +147,12 @@ file_open(struct archive *a, void *client_data)
 	 */
 	mbs = NULL; wcs = NULL;
 #if defined(_WIN32) && !defined(__CYGWIN__)
-	if (archive_mstring_get_wcs(a, &mine->filename, &wcs) != 0) {
+	if (tk_archive_mstring_get_wcs(a, &mine->filename, &wcs) != 0) {
 		if (errno == ENOMEM)
-			archive_set_error(a, errno, "No memory");
+			tk_archive_set_error(a, errno, "No memory");
 		else {
-			archive_mstring_get_mbs(a, &mine->filename, &mbs);
-			archive_set_error(a, errno,
+			tk_archive_mstring_get_mbs(a, &mine->filename, &mbs);
+			tk_archive_set_error(a, errno,
 			    "Can't convert '%s' to WCS", mbs);
 		}
 		return (ARCHIVE_FATAL);
@@ -164,46 +164,46 @@ file_open(struct archive *a, void *client_data)
 	} else
 		mine->fd = _wopen(wcs, flags, 0666);
 #else
-	if (archive_mstring_get_mbs(a, &mine->filename, &mbs) != 0) {
+	if (tk_archive_mstring_get_mbs(a, &mine->filename, &mbs) != 0) {
 		if (errno == ENOMEM)
-			archive_set_error(a, errno, "No memory");
+			tk_archive_set_error(a, errno, "No memory");
 		else {
-			archive_mstring_get_wcs(a, &mine->filename, &wcs);
-			archive_set_error(a, errno,
+			tk_archive_mstring_get_wcs(a, &mine->filename, &wcs);
+			tk_archive_set_error(a, errno,
 			    "Can't convert '%S' to MBS", wcs);
 		}
 		return (ARCHIVE_FATAL);
 	}
 	mine->fd = open(mbs, flags, 0666);
-	__archive_ensure_cloexec_flag(mine->fd);
+	__tk_archive_ensure_cloexec_flag(mine->fd);
 #endif
 	if (mine->fd < 0) {
 		if (mbs != NULL)
-			archive_set_error(a, errno, "Failed to open '%s'", mbs);
+			tk_archive_set_error(a, errno, "Failed to open '%s'", mbs);
 		else
-			archive_set_error(a, errno, "Failed to open '%S'", wcs);
+			tk_archive_set_error(a, errno, "Failed to open '%S'", wcs);
 		return (ARCHIVE_FATAL);
 	}
 
 	if (fstat(mine->fd, &st) != 0) {
 		if (mbs != NULL)
-			archive_set_error(a, errno, "Couldn't stat '%s'", mbs);
+			tk_archive_set_error(a, errno, "Couldn't stat '%s'", mbs);
 		else
-			archive_set_error(a, errno, "Couldn't stat '%S'", wcs);
+			tk_archive_set_error(a, errno, "Couldn't stat '%S'", wcs);
 		return (ARCHIVE_FATAL);
 	}
 
 	/*
 	 * Set up default last block handling.
 	 */
-	if (archive_write_get_bytes_in_last_block(a) < 0) {
+	if (tk_archive_write_get_bytes_in_last_block(a) < 0) {
 		if (S_ISCHR(st.st_mode) || S_ISBLK(st.st_mode) ||
 		    S_ISFIFO(st.st_mode))
 			/* Pad last block when writing to device or FIFO. */
-			archive_write_set_bytes_in_last_block(a, 0);
+			tk_archive_write_set_bytes_in_last_block(a, 0);
 		else
 			/* Don't pad last block otherwise. */
-			archive_write_set_bytes_in_last_block(a, 1);
+			tk_archive_write_set_bytes_in_last_block(a, 1);
 	}
 
 	/*
@@ -212,7 +212,7 @@ file_open(struct archive *a, void *client_data)
 	 * entry to the output archive.
 	 */
 	if (S_ISREG(st.st_mode))
-		archive_write_set_skip_file(a, st.st_dev, st.st_ino);
+		tk_archive_write_set_skip_file(a, st.st_dev, st.st_ino);
 
 	return (ARCHIVE_OK);
 }
@@ -230,7 +230,7 @@ file_write(struct archive *a, void *client_data, const void *buff,
 		if (bytesWritten <= 0) {
 			if (errno == EINTR)
 				continue;
-			archive_set_error(a, errno, "Write error");
+			tk_archive_set_error(a, errno, "Write error");
 			return (-1);
 		}
 		return (bytesWritten);
@@ -244,7 +244,7 @@ file_close(struct archive *a, void *client_data)
 
 	(void)a; /* UNUSED */
 	close(mine->fd);
-	archive_mstring_clean(&mine->filename);
+	tk_archive_mstring_clean(&mine->filename);
 	free(mine);
 	return (ARCHIVE_OK);
 }

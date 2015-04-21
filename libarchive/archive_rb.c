@@ -46,7 +46,7 @@
 #define	RB_FLAG_RED		0x1
 #define	RB_FLAG_MASK		(RB_FLAG_POSITION|RB_FLAG_RED)
 #define	RB_FATHER(rb) \
-    ((struct archive_rb_node *)((rb)->rb_info & ~RB_FLAG_MASK))
+    ((struct tk_archive_rb_node *)((rb)->rb_info & ~RB_FLAG_MASK))
 #define	RB_SET_FATHER(rb, father) \
     ((void)((rb)->rb_info = (uintptr_t)(father)|((rb)->rb_info & RB_FLAG_MASK)))
 
@@ -81,10 +81,10 @@
     (b)->rb_info ^= xorinfo; \
   } while (/*CONSTCOND*/ 0)
 
-static void __archive_rb_tree_insert_rebalance(struct archive_rb_tree *,
-    struct archive_rb_node *);
-static void __archive_rb_tree_removal_rebalance(struct archive_rb_tree *,
-    struct archive_rb_node *, unsigned int);
+static void __tk_archive_rb_tree_insert_rebalance(struct tk_archive_rb_tree *,
+    struct tk_archive_rb_node *);
+static void __tk_archive_rb_tree_removal_rebalance(struct tk_archive_rb_tree *,
+    struct tk_archive_rb_node *, unsigned int);
 
 #define	RB_SENTINEL_NODE	NULL
 
@@ -92,18 +92,18 @@ static void __archive_rb_tree_removal_rebalance(struct archive_rb_tree *,
 #define	F	0
 
 void
-__archive_rb_tree_init(struct archive_rb_tree *rbt,
-    const struct archive_rb_tree_ops *ops)
+__tk_archive_rb_tree_init(struct tk_archive_rb_tree *rbt,
+    const struct tk_archive_rb_tree_ops *ops)
 {
 	rbt->rbt_ops = ops;
-	*((struct archive_rb_node **)&rbt->rbt_root) = RB_SENTINEL_NODE;
+	*((struct tk_archive_rb_node **)&rbt->rbt_root) = RB_SENTINEL_NODE;
 }
 
-struct archive_rb_node *
-__archive_rb_tree_find_node(struct archive_rb_tree *rbt, const void *key)
+struct tk_archive_rb_node *
+__tk_archive_rb_tree_find_node(struct tk_archive_rb_tree *rbt, const void *key)
 {
-	archive_rbto_compare_key_fn compare_key = rbt->rbt_ops->rbto_compare_key;
-	struct archive_rb_node *parent = rbt->rbt_root;
+	tk_archive_rbto_compare_key_fn compare_key = rbt->rbt_ops->rbto_compare_key;
+	struct tk_archive_rb_node *parent = rbt->rbt_root;
 
 	while (!RB_SENTINEL_P(parent)) {
 		const signed int diff = (*compare_key)(parent, key);
@@ -115,12 +115,12 @@ __archive_rb_tree_find_node(struct archive_rb_tree *rbt, const void *key)
 	return NULL;
 }
  
-struct archive_rb_node *
-__archive_rb_tree_find_node_geq(struct archive_rb_tree *rbt, const void *key)
+struct tk_archive_rb_node *
+__tk_archive_rb_tree_find_node_geq(struct tk_archive_rb_tree *rbt, const void *key)
 {
-	archive_rbto_compare_key_fn compare_key = rbt->rbt_ops->rbto_compare_key;
-	struct archive_rb_node *parent = rbt->rbt_root;
-	struct archive_rb_node *last = NULL;
+	tk_archive_rbto_compare_key_fn compare_key = rbt->rbt_ops->rbto_compare_key;
+	struct tk_archive_rb_node *parent = rbt->rbt_root;
+	struct tk_archive_rb_node *last = NULL;
 
 	while (!RB_SENTINEL_P(parent)) {
 		const signed int diff = (*compare_key)(parent, key);
@@ -134,12 +134,12 @@ __archive_rb_tree_find_node_geq(struct archive_rb_tree *rbt, const void *key)
 	return last;
 }
  
-struct archive_rb_node *
-__archive_rb_tree_find_node_leq(struct archive_rb_tree *rbt, const void *key)
+struct tk_archive_rb_node *
+__tk_archive_rb_tree_find_node_leq(struct tk_archive_rb_tree *rbt, const void *key)
 {
-	archive_rbto_compare_key_fn compare_key = rbt->rbt_ops->rbto_compare_key;
-	struct archive_rb_node *parent = rbt->rbt_root;
-	struct archive_rb_node *last = NULL;
+	tk_archive_rbto_compare_key_fn compare_key = rbt->rbt_ops->rbto_compare_key;
+	struct tk_archive_rb_node *parent = rbt->rbt_root;
+	struct tk_archive_rb_node *last = NULL;
 
 	while (!RB_SENTINEL_P(parent)) {
 		const signed int diff = (*compare_key)(parent, key);
@@ -154,11 +154,11 @@ __archive_rb_tree_find_node_leq(struct archive_rb_tree *rbt, const void *key)
 }
 
 int
-__archive_rb_tree_insert_node(struct archive_rb_tree *rbt,
-    struct archive_rb_node *self)
+__tk_archive_rb_tree_insert_node(struct tk_archive_rb_tree *rbt,
+    struct tk_archive_rb_node *self)
 {
-	archive_rbto_compare_nodes_fn compare_nodes = rbt->rbt_ops->rbto_compare_nodes;
-	struct archive_rb_node *parent, *tmp;
+	tk_archive_rbto_compare_nodes_fn compare_nodes = rbt->rbt_ops->rbto_compare_nodes;
+	struct tk_archive_rb_node *parent, *tmp;
 	unsigned int position;
 	int rebalance;
 
@@ -171,7 +171,7 @@ __archive_rb_tree_insert_node(struct archive_rb_tree *rbt,
 	 * RB_FATHER(rb_node)->rb_nodes[RB_POSITION(rb_node)] will
 	 * update rbt->rbt_root.
 	 */
-	parent = (struct archive_rb_node *)(void *)&rbt->rbt_root;
+	parent = (struct tk_archive_rb_node *)(void *)&rbt->rbt_root;
 	position = RB_DIR_LEFT;
 
 	/*
@@ -195,7 +195,7 @@ __archive_rb_tree_insert_node(struct archive_rb_tree *rbt,
 	 */
 	RB_SET_FATHER(self, parent);
 	RB_SET_POSITION(self, position);
-	if (parent == (struct archive_rb_node *)(void *)&rbt->rbt_root) {
+	if (parent == (struct tk_archive_rb_node *)(void *)&rbt->rbt_root) {
 		RB_MARK_BLACK(self);		/* root is always black */
 		rebalance = F;
 	} else {
@@ -214,7 +214,7 @@ __archive_rb_tree_insert_node(struct archive_rb_tree *rbt,
 	 * Rebalance tree after insertion
 	 */
 	if (rebalance)
-		__archive_rb_tree_insert_rebalance(rbt, self);
+		__tk_archive_rb_tree_insert_rebalance(rbt, self);
 
 	return T;
 }
@@ -228,14 +228,14 @@ __archive_rb_tree_insert_node(struct archive_rb_tree *rbt,
  */
 /*ARGSUSED*/
 static void
-__archive_rb_tree_reparent_nodes(
-    struct archive_rb_node *old_father, const unsigned int which)
+__tk_archive_rb_tree_reparent_nodes(
+    struct tk_archive_rb_node *old_father, const unsigned int which)
 {
 	const unsigned int other = which ^ RB_DIR_OTHER;
-	struct archive_rb_node * const grandpa = RB_FATHER(old_father);
-	struct archive_rb_node * const old_child = old_father->rb_nodes[which];
-	struct archive_rb_node * const new_father = old_child;
-	struct archive_rb_node * const new_child = old_father;
+	struct tk_archive_rb_node * const grandpa = RB_FATHER(old_father);
+	struct tk_archive_rb_node * const old_child = old_father->rb_nodes[which];
+	struct tk_archive_rb_node * const new_father = old_child;
+	struct tk_archive_rb_node * const new_child = old_father;
 
 	if (new_father == NULL)
 		return;
@@ -270,12 +270,12 @@ __archive_rb_tree_reparent_nodes(
 }
 
 static void
-__archive_rb_tree_insert_rebalance(struct archive_rb_tree *rbt,
-    struct archive_rb_node *self)
+__tk_archive_rb_tree_insert_rebalance(struct tk_archive_rb_tree *rbt,
+    struct tk_archive_rb_node *self)
 {
-	struct archive_rb_node * father = RB_FATHER(self);
-	struct archive_rb_node * grandpa;
-	struct archive_rb_node * uncle;
+	struct tk_archive_rb_node * father = RB_FATHER(self);
+	struct tk_archive_rb_node * grandpa;
+	struct tk_archive_rb_node * uncle;
 	unsigned int which;
 	unsigned int other;
 
@@ -328,7 +328,7 @@ __archive_rb_tree_insert_rebalance(struct archive_rb_tree *rbt,
 		 *   becomes case 3.  Basically our parent becomes our
 		 *   child.
 		 */
-		__archive_rb_tree_reparent_nodes(father, other);
+		__tk_archive_rb_tree_reparent_nodes(father, other);
 	}
 	/*
 	 * Case 3: we are opposite a child of a black uncle.
@@ -336,7 +336,7 @@ __archive_rb_tree_insert_rebalance(struct archive_rb_tree *rbt,
 	 *   is black, our father will become black and our new sibling
 	 *   (former grandparent) will become red.
 	 */
-	__archive_rb_tree_reparent_nodes(grandpa, which);
+	__tk_archive_rb_tree_reparent_nodes(grandpa, which);
 
 	/*
 	 * Final step: Set the root to black.
@@ -345,11 +345,11 @@ __archive_rb_tree_insert_rebalance(struct archive_rb_tree *rbt,
 }
 
 static void
-__archive_rb_tree_prune_node(struct archive_rb_tree *rbt,
-    struct archive_rb_node *self, int rebalance)
+__tk_archive_rb_tree_prune_node(struct tk_archive_rb_tree *rbt,
+    struct tk_archive_rb_node *self, int rebalance)
 {
 	const unsigned int which = RB_POSITION(self);
-	struct archive_rb_node *father = RB_FATHER(self);
+	struct tk_archive_rb_node *father = RB_FATHER(self);
 
 	/*
 	 * Since we are childless, we know that self->rb_left is pointing
@@ -361,20 +361,20 @@ __archive_rb_tree_prune_node(struct archive_rb_tree *rbt,
 	 * Rebalance if requested.
 	 */
 	if (rebalance)
-		__archive_rb_tree_removal_rebalance(rbt, father, which);
+		__tk_archive_rb_tree_removal_rebalance(rbt, father, which);
 }
 
 /*
  * When deleting an interior node
  */
 static void
-__archive_rb_tree_swap_prune_and_rebalance(struct archive_rb_tree *rbt,
-    struct archive_rb_node *self, struct archive_rb_node *standin)
+__tk_archive_rb_tree_swap_prune_and_rebalance(struct tk_archive_rb_tree *rbt,
+    struct tk_archive_rb_node *self, struct tk_archive_rb_node *standin)
 {
 	const unsigned int standin_which = RB_POSITION(standin);
 	unsigned int standin_other = standin_which ^ RB_DIR_OTHER;
-	struct archive_rb_node *standin_son;
-	struct archive_rb_node *standin_father = RB_FATHER(standin);
+	struct tk_archive_rb_node *standin_son;
+	struct tk_archive_rb_node *standin_father = RB_FATHER(standin);
 	int rebalance = RB_BLACK_P(standin);
 
 	if (standin_father == self) {
@@ -460,7 +460,7 @@ __archive_rb_tree_swap_prune_and_rebalance(struct archive_rb_tree *rbt,
 	RB_FATHER(standin)->rb_nodes[RB_POSITION(standin)] = standin;
 
 	if (rebalance)
-		__archive_rb_tree_removal_rebalance(rbt, standin_father, standin_which);
+		__tk_archive_rb_tree_removal_rebalance(rbt, standin_father, standin_which);
 }
 
 /*
@@ -471,11 +471,11 @@ __archive_rb_tree_swap_prune_and_rebalance(struct archive_rb_tree *rbt,
  * But it's more efficient to just evaluate and recolor the child.
  */
 static void
-__archive_rb_tree_prune_blackred_branch(
-    struct archive_rb_node *self, unsigned int which)
+__tk_archive_rb_tree_prune_blackred_branch(
+    struct tk_archive_rb_node *self, unsigned int which)
 {
-	struct archive_rb_node *father = RB_FATHER(self);
-	struct archive_rb_node *son = self->rb_nodes[which];
+	struct tk_archive_rb_node *father = RB_FATHER(self);
+	struct tk_archive_rb_node *son = self->rb_nodes[which];
 
 	/*
 	 * Remove ourselves from the tree and give our former child our
@@ -489,10 +489,10 @@ __archive_rb_tree_prune_blackred_branch(
  *
  */
 void
-__archive_rb_tree_remove_node(struct archive_rb_tree *rbt,
-    struct archive_rb_node *self)
+__tk_archive_rb_tree_remove_node(struct tk_archive_rb_tree *rbt,
+    struct tk_archive_rb_node *self)
 {
-	struct archive_rb_node *standin;
+	struct tk_archive_rb_node *standin;
 	unsigned int which;
 
 	/*
@@ -514,7 +514,7 @@ __archive_rb_tree_remove_node(struct archive_rb_tree *rbt,
 	 */
 	if (RB_CHILDLESS_P(self)) {
 		const int rebalance = RB_BLACK_P(self) && !RB_ROOT_P(rbt, self);
-		__archive_rb_tree_prune_node(rbt, self, rebalance);
+		__tk_archive_rb_tree_prune_node(rbt, self, rebalance);
 		return;
 	}
 	if (!RB_TWOCHILDREN_P(self)) {
@@ -527,7 +527,7 @@ __archive_rb_tree_remove_node(struct archive_rb_tree *rbt,
 		 * |  r      -->    s    -->    *    |
 		 */
 		which = RB_LEFT_SENTINEL_P(self) ? RB_DIR_RIGHT : RB_DIR_LEFT;
-		__archive_rb_tree_prune_blackred_branch(self, which);
+		__tk_archive_rb_tree_prune_blackred_branch(self, which);
 		return;
 	}
 
@@ -541,18 +541,18 @@ __archive_rb_tree_remove_node(struct archive_rb_tree *rbt,
 	 * Let's find the node closes to us opposite of our parent
 	 * Now swap it with ourself, "prune" it, and rebalance, if needed.
 	 */
-	standin = __archive_rb_tree_iterate(rbt, self, which);
-	__archive_rb_tree_swap_prune_and_rebalance(rbt, self, standin);
+	standin = __tk_archive_rb_tree_iterate(rbt, self, which);
+	__tk_archive_rb_tree_swap_prune_and_rebalance(rbt, self, standin);
 }
 
 static void
-__archive_rb_tree_removal_rebalance(struct archive_rb_tree *rbt,
-    struct archive_rb_node *parent, unsigned int which)
+__tk_archive_rb_tree_removal_rebalance(struct tk_archive_rb_tree *rbt,
+    struct tk_archive_rb_node *parent, unsigned int which)
 {
 
 	while (RB_BLACK_P(parent->rb_nodes[which])) {
 		unsigned int other = which ^ RB_DIR_OTHER;
-		struct archive_rb_node *brother = parent->rb_nodes[other];
+		struct tk_archive_rb_node *brother = parent->rb_nodes[other];
 
 		if (brother == NULL)
 			return;/* The tree may be broken. */
@@ -575,7 +575,7 @@ __archive_rb_tree_removal_rebalance(struct archive_rb_tree *rbt,
 				 *  A     d     ->    b     E
 				 *      C   E   ->  A   C
 				 */
-				__archive_rb_tree_reparent_nodes(parent, other);
+				__tk_archive_rb_tree_reparent_nodes(parent, other);
 				brother = parent->rb_nodes[other];
 				if (brother == NULL)
 					return;/* The tree may be broken. */
@@ -635,7 +635,7 @@ __archive_rb_tree_removal_rebalance(struct archive_rb_tree *rbt,
 				 *	|  x     B  -->  x   B    |
 				 *	|      n    -->        n  |
 				 */
-				__archive_rb_tree_reparent_nodes(brother, which);
+				__tk_archive_rb_tree_reparent_nodes(brother, which);
 				brother = parent->rb_nodes[other];
 			}
 			/*
@@ -665,15 +665,15 @@ __archive_rb_tree_removal_rebalance(struct archive_rb_tree *rbt,
 			if (brother->rb_nodes[other] == NULL)
 				return;/* The tree may be broken. */
 			RB_MARK_BLACK(brother->rb_nodes[other]);
-			__archive_rb_tree_reparent_nodes(parent, other);
+			__tk_archive_rb_tree_reparent_nodes(parent, other);
 			break;		/* We're done! */
 		}
 	}
 }
 
-struct archive_rb_node *
-__archive_rb_tree_iterate(struct archive_rb_tree *rbt,
-    struct archive_rb_node *self, const unsigned int direction)
+struct tk_archive_rb_node *
+__tk_archive_rb_tree_iterate(struct tk_archive_rb_tree *rbt,
+    struct tk_archive_rb_node *self, const unsigned int direction)
 {
 	const unsigned int other = direction ^ RB_DIR_OTHER;
 

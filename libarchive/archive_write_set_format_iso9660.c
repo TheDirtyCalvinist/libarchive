@@ -165,15 +165,15 @@ struct isofile {
 	struct isofile		*hlnext;
 	struct isofile		*hardlink_target;
 
-	struct archive_entry	*entry;
+	struct tk_archive_entry	*entry;
 
 	/*
 	 * Used for making a directory tree.
 	 */
-	struct archive_string	 parentdir;
-	struct archive_string	 basename;
-	struct archive_string	 basename_utf16;
-	struct archive_string	 symlink;
+	struct tk_archive_string	 parentdir;
+	struct tk_archive_string	 basename;
+	struct tk_archive_string	 basename_utf16;
+	struct tk_archive_string	 symlink;
 	int			 dircnt;	/* The number of elements of
 						 * its parent directory */
 
@@ -212,7 +212,7 @@ struct isofile {
 
 struct isoent {
 	/* Keep `rbnode' at the first member of struct isoent. */
-	struct archive_rb_node	 rbnode;
+	struct tk_archive_rb_node	 rbnode;
 
 	struct isofile		*file;
 
@@ -223,7 +223,7 @@ struct isoent {
 		struct isoent	**last;
 		int		 cnt;
 	}			 children;
-	struct archive_rb_tree	 rbtree;
+	struct tk_archive_rb_tree	 rbtree;
 
 	/* A list of sub directories.(use drnext) */
 	struct {
@@ -298,7 +298,7 @@ struct isoent {
 };
 
 struct hardlink {
-	struct archive_rb_node	 rbnode;
+	struct tk_archive_rb_node	 rbnode;
 	int			 nlink;
 	struct {
 		struct isofile	*first;
@@ -685,16 +685,16 @@ struct iso9660 {
 
 	struct isofile		*cur_file;
 	struct isoent		*cur_dirent;
-	struct archive_string	 cur_dirstr;
+	struct tk_archive_string	 cur_dirstr;
 	uint64_t		 bytes_remaining;
 	int			 need_multi_extent;
 
 	/* Temporary string buffer for Joliet extension. */ 
-	struct archive_string	 utf16be;
-	struct archive_string	 mbs;
+	struct tk_archive_string	 utf16be;
+	struct tk_archive_string	 mbs;
 
-	struct archive_string_conv *sconv_to_utf16be;
-	struct archive_string_conv *sconv_from_utf16be;
+	struct tk_archive_string_conv *sconv_to_utf16be;
+	struct tk_archive_string_conv *sconv_from_utf16be;
 
 	/* A list of all of struct isofile entries. */
 	struct {
@@ -711,7 +711,7 @@ struct iso9660 {
 	}			 data_file_list;
 
 	/* Used for managing to find hardlinking files. */
-	struct archive_rb_tree	 hardlink_rbtree;
+	struct tk_archive_rb_tree	 hardlink_rbtree;
 
 	/* Used for making the Path Table Record. */
 	struct vdd {
@@ -742,13 +742,13 @@ struct iso9660 {
 	int			 volume_space_size;
 	int			 volume_sequence_number;
 	int			 total_file_block;
-	struct archive_string	 volume_identifier;
-	struct archive_string	 publisher_identifier;
-	struct archive_string	 data_preparer_identifier;
-	struct archive_string	 application_identifier;
-	struct archive_string	 copyright_file_identifier;
-	struct archive_string	 abstract_file_identifier;
-	struct archive_string	 bibliographic_file_identifier;
+	struct tk_archive_string	 volume_identifier;
+	struct tk_archive_string	 publisher_identifier;
+	struct tk_archive_string	 data_preparer_identifier;
+	struct tk_archive_string	 application_identifier;
+	struct tk_archive_string	 copyright_file_identifier;
+	struct tk_archive_string	 abstract_file_identifier;
+	struct tk_archive_string	 bibliographic_file_identifier;
 
 	/* Used for making rockridge extensions. */
 	int			 location_rrip_er;
@@ -807,17 +807,17 @@ struct iso9660 {
 	/* 'El Torito' boot data. */
 	struct {
 		/* boot catalog file */
-		struct archive_string	 catalog_filename;
+		struct tk_archive_string	 catalog_filename;
 		struct isoent		*catalog;
 		/* boot image file */
-		struct archive_string	 boot_filename;
+		struct tk_archive_string	 boot_filename;
 		struct isoent		*boot;
 
 		unsigned char		 platform_id;
 #define BOOT_PLATFORM_X86	0
 #define BOOT_PLATFORM_PPC	1
 #define BOOT_PLATFORM_MAC	2
-		struct archive_string	 id;
+		struct tk_archive_string	 id;
 		unsigned char		 media_type;
 #define BOOT_MEDIA_NO_EMULATION		0
 #define BOOT_MEDIA_1_2M_DISKETTE	1
@@ -869,7 +869,7 @@ enum vdc {
  */
 struct idr {
 	struct idrent {
-		struct archive_rb_node	rbnode;
+		struct tk_archive_rb_node	rbnode;
 		/* Used in wait_list. */
 		struct idrent		*wnext;
 		struct idrent		*avail;
@@ -880,7 +880,7 @@ struct idr {
 		int			 rename_num;
 	} *idrent_pool;
 
-	struct archive_rb_tree		 rbtree;
+	struct tk_archive_rb_tree		 rbtree;
 
 	struct {
 		struct idrent		*first;
@@ -901,25 +901,25 @@ enum char_type {
 };
 
 
-static int	iso9660_options(struct archive_write *,
+static int	iso9660_options(struct tk_archive_write *,
 		    const char *, const char *);
-static int	iso9660_write_header(struct archive_write *,
-		    struct archive_entry *);
-static ssize_t	iso9660_write_data(struct archive_write *,
+static int	iso9660_write_header(struct tk_archive_write *,
+		    struct tk_archive_entry *);
+static ssize_t	iso9660_write_data(struct tk_archive_write *,
 		    const void *, size_t);
-static int	iso9660_finish_entry(struct archive_write *);
-static int	iso9660_close(struct archive_write *);
-static int	iso9660_free(struct archive_write *);
+static int	iso9660_finish_entry(struct tk_archive_write *);
+static int	iso9660_close(struct tk_archive_write *);
+static int	iso9660_free(struct tk_archive_write *);
 
 static void	get_system_identitier(char *, size_t);
 static void	set_str(unsigned char *, const char *, size_t, char,
 		    const char *);
 static inline int joliet_allowed_char(unsigned char, unsigned char);
-static int	set_str_utf16be(struct archive_write *, unsigned char *,
+static int	set_str_utf16be(struct tk_archive_write *, unsigned char *,
 			const char *, size_t, uint16_t, enum vdc);
-static int	set_str_a_characters_bp(struct archive_write *,
+static int	set_str_a_characters_bp(struct tk_archive_write *,
 			unsigned char *, int, int, const char *, enum vdc);
-static int	set_str_d_characters_bp(struct archive_write *,
+static int	set_str_d_characters_bp(struct tk_archive_write *,
 			unsigned char *, int, int, const char *, enum  vdc);
 static void	set_VD_bp(unsigned char *, enum VD_type, unsigned char);
 static inline void set_unused_field_bp(unsigned char *, int, int);
@@ -938,27 +938,27 @@ static int	set_directory_record(unsigned char *, size_t,
 		    enum vdd_type);
 static inline int get_dir_rec_size(struct iso9660 *, struct isoent *,
 		    enum dir_rec_type, enum vdd_type);
-static inline unsigned char *wb_buffptr(struct archive_write *);
-static int	wb_write_out(struct archive_write *);
-static int	wb_consume(struct archive_write *, size_t);
+static inline unsigned char *wb_buffptr(struct tk_archive_write *);
+static int	wb_write_out(struct tk_archive_write *);
+static int	wb_consume(struct tk_archive_write *, size_t);
 #ifdef HAVE_ZLIB_H
-static int	wb_set_offset(struct archive_write *, int64_t);
+static int	wb_set_offset(struct tk_archive_write *, int64_t);
 #endif
-static int	write_null(struct archive_write *, size_t);
-static int	write_VD_terminator(struct archive_write *);
+static int	write_null(struct tk_archive_write *, size_t);
+static int	write_VD_terminator(struct tk_archive_write *);
 static int	set_file_identifier(unsigned char *, int, int, enum vdc,
-		    struct archive_write *, struct vdd *,
-		    struct archive_string *, const char *, int,
+		    struct tk_archive_write *, struct vdd *,
+		    struct tk_archive_string *, const char *, int,
 		    enum char_type);
-static int	write_VD(struct archive_write *, struct vdd *);
-static int	write_VD_boot_record(struct archive_write *);
-static int	write_information_block(struct archive_write *);
-static int	write_path_table(struct archive_write *, int,
+static int	write_VD(struct tk_archive_write *, struct vdd *);
+static int	write_VD_boot_record(struct tk_archive_write *);
+static int	write_information_block(struct tk_archive_write *);
+static int	write_path_table(struct tk_archive_write *, int,
 		    struct vdd *);
-static int	write_directory_descriptors(struct archive_write *,
+static int	write_directory_descriptors(struct tk_archive_write *,
 		    struct vdd *);
-static int	write_file_descriptors(struct archive_write *);
-static int	write_rr_ER(struct archive_write *);
+static int	write_file_descriptors(struct tk_archive_write *);
+static int	write_rr_ER(struct tk_archive_write *);
 static void	calculate_path_table_size(struct vdd *);
 
 static void	isofile_init_entry_list(struct iso9660 *);
@@ -966,27 +966,27 @@ static void	isofile_add_entry(struct iso9660 *, struct isofile *);
 static void	isofile_free_all_entries(struct iso9660 *);
 static void	isofile_init_entry_data_file_list(struct iso9660 *);
 static void	isofile_add_data_file(struct iso9660 *, struct isofile *);
-static struct isofile * isofile_new(struct archive_write *,
-		    struct archive_entry *);
+static struct isofile * isofile_new(struct tk_archive_write *,
+		    struct tk_archive_entry *);
 static void	isofile_free(struct isofile *);
-static int	isofile_gen_utility_names(struct archive_write *,
+static int	isofile_gen_utility_names(struct tk_archive_write *,
 		    struct isofile *);
-static int	isofile_register_hardlink(struct archive_write *,
+static int	isofile_register_hardlink(struct tk_archive_write *,
 		    struct isofile *);
 static void	isofile_connect_hardlink_files(struct iso9660 *);
 static void	isofile_init_hardlinks(struct iso9660 *);
 static void	isofile_free_hardlinks(struct iso9660 *);
 
 static struct isoent *isoent_new(struct isofile *);
-static int	isoent_clone_tree(struct archive_write *,
+static int	isoent_clone_tree(struct tk_archive_write *,
 		    struct isoent **, struct isoent *);
 static void	_isoent_free(struct isoent *isoent);
 static void	isoent_free_all(struct isoent *);
-static struct isoent * isoent_create_virtual_dir(struct archive_write *,
+static struct isoent * isoent_create_virtual_dir(struct tk_archive_write *,
 		    struct iso9660 *, const char *);
-static int	isoent_cmp_node(const struct archive_rb_node *,
-		    const struct archive_rb_node *);
-static int	isoent_cmp_key(const struct archive_rb_node *,
+static int	isoent_cmp_node(const struct tk_archive_rb_node *,
+		    const struct tk_archive_rb_node *);
+static int	isoent_cmp_key(const struct tk_archive_rb_node *,
 		    const void *);
 static int	isoent_add_child_head(struct isoent *, struct isoent *);
 static int	isoent_add_child_tail(struct isoent *, struct isoent *);
@@ -995,66 +995,66 @@ static void	isoent_setup_directory_location(struct iso9660 *,
 		    int, struct vdd *);
 static void	isoent_setup_file_location(struct iso9660 *, int);
 static int	get_path_component(char *, size_t, const char *);
-static int	isoent_tree(struct archive_write *, struct isoent **);
+static int	isoent_tree(struct tk_archive_write *, struct isoent **);
 static struct isoent *isoent_find_child(struct isoent *, const char *);
 static struct isoent *isoent_find_entry(struct isoent *, const char *);
 static void	idr_relaxed_filenames(char *);
 static void	idr_init(struct iso9660 *, struct vdd *, struct idr *);
 static void	idr_cleanup(struct idr *);
-static int	idr_ensure_poolsize(struct archive_write *, struct idr *,
+static int	idr_ensure_poolsize(struct tk_archive_write *, struct idr *,
 		    int);
-static int	idr_start(struct archive_write *, struct idr *,
-		    int, int, int, int, const struct archive_rb_tree_ops *);
+static int	idr_start(struct tk_archive_write *, struct idr *,
+		    int, int, int, int, const struct tk_archive_rb_tree_ops *);
 static void	idr_register(struct idr *, struct isoent *, int,
 		    int);
 static void	idr_extend_identifier(struct idrent *, int, int);
 static void	idr_resolve(struct idr *, void (*)(unsigned char *, int));
 static void	idr_set_num(unsigned char *, int);
 static void	idr_set_num_beutf16(unsigned char *, int);
-static int	isoent_gen_iso9660_identifier(struct archive_write *,
+static int	isoent_gen_iso9660_identifier(struct tk_archive_write *,
 		    struct isoent *, struct idr *);
-static int	isoent_gen_joliet_identifier(struct archive_write *,
+static int	isoent_gen_joliet_identifier(struct tk_archive_write *,
 		    struct isoent *, struct idr *);
 static int	isoent_cmp_iso9660_identifier(const struct isoent *,
 		    const struct isoent *);
-static int	isoent_cmp_node_iso9660(const struct archive_rb_node *,
-		    const struct archive_rb_node *);
-static int	isoent_cmp_key_iso9660(const struct archive_rb_node *,
+static int	isoent_cmp_node_iso9660(const struct tk_archive_rb_node *,
+		    const struct tk_archive_rb_node *);
+static int	isoent_cmp_key_iso9660(const struct tk_archive_rb_node *,
 		    const void *);
 static int	isoent_cmp_joliet_identifier(const struct isoent *,
 		    const struct isoent *);
-static int	isoent_cmp_node_joliet(const struct archive_rb_node *,
-		    const struct archive_rb_node *);
-static int	isoent_cmp_key_joliet(const struct archive_rb_node *,
+static int	isoent_cmp_node_joliet(const struct tk_archive_rb_node *,
+		    const struct tk_archive_rb_node *);
+static int	isoent_cmp_key_joliet(const struct tk_archive_rb_node *,
 		    const void *);
 static inline void path_table_add_entry(struct path_table *, struct isoent *);
 static inline struct isoent * path_table_last_entry(struct path_table *);
-static int	isoent_make_path_table(struct archive_write *);
-static int	isoent_find_out_boot_file(struct archive_write *,
+static int	isoent_make_path_table(struct tk_archive_write *);
+static int	isoent_find_out_boot_file(struct tk_archive_write *,
 		    struct isoent *);
-static int	isoent_create_boot_catalog(struct archive_write *,
+static int	isoent_create_boot_catalog(struct tk_archive_write *,
 		    struct isoent *);
 static size_t	fd_boot_image_size(int);
-static int	make_boot_catalog(struct archive_write *);
-static int	setup_boot_information(struct archive_write *);
+static int	make_boot_catalog(struct tk_archive_write *);
+static int	setup_boot_information(struct tk_archive_write *);
 
-static int	zisofs_init(struct archive_write *, struct isofile *);
-static void	zisofs_detect_magic(struct archive_write *,
+static int	zisofs_init(struct tk_archive_write *, struct isofile *);
+static void	zisofs_detect_magic(struct tk_archive_write *,
 		    const void *, size_t);
-static int	zisofs_write_to_temp(struct archive_write *,
+static int	zisofs_write_to_temp(struct tk_archive_write *,
 		    const void *, size_t);
-static int	zisofs_finish_entry(struct archive_write *);
-static int	zisofs_rewind_boot_file(struct archive_write *);
-static int	zisofs_free(struct archive_write *);
+static int	zisofs_finish_entry(struct tk_archive_write *);
+static int	zisofs_rewind_boot_file(struct tk_archive_write *);
+static int	zisofs_free(struct tk_archive_write *);
 
 int
-archive_write_set_format_iso9660(struct archive *_a)
+tk_archive_write_set_format_iso9660(struct archive *_a)
 {
-	struct archive_write *a = (struct archive_write *)_a;
+	struct tk_archive_write *a = (struct tk_archive_write *)_a;
 	struct iso9660 *iso9660;
 
-	archive_check_magic(_a, ARCHIVE_WRITE_MAGIC,
-	    ARCHIVE_STATE_NEW, "archive_write_set_format_iso9660");
+	tk_archive_check_magic(_a, ARCHIVE_WRITE_MAGIC,
+	    ARCHIVE_STATE_NEW, "tk_archive_write_set_format_iso9660");
 
 	/* If another format was already registered, unregister it. */
 	if (a->format_free != NULL)
@@ -1062,7 +1062,7 @@ archive_write_set_format_iso9660(struct archive *_a)
 
 	iso9660 = calloc(1, sizeof(*iso9660));
 	if (iso9660 == NULL) {
-		archive_set_error(&a->archive, ENOMEM,
+		tk_archive_set_error(&a->archive, ENOMEM,
 		    "Can't allocate iso9660 data");
 		return (ARCHIVE_FATAL);
 	}
@@ -1086,35 +1086,35 @@ archive_write_set_format_iso9660(struct archive *_a)
 	iso9660->wbuff_offset = 0;
 	iso9660->wbuff_written = 0;
 	iso9660->wbuff_tail = 0;
-	archive_string_init(&(iso9660->utf16be));
-	archive_string_init(&(iso9660->mbs));
+	tk_archive_string_init(&(iso9660->utf16be));
+	tk_archive_string_init(&(iso9660->mbs));
 
 	/*
 	 * Init Identifiers used for PVD and SVD.
 	 */
-	archive_string_init(&(iso9660->volume_identifier));
-	archive_strcpy(&(iso9660->volume_identifier), "CDROM");
-	archive_string_init(&(iso9660->publisher_identifier));
-	archive_string_init(&(iso9660->data_preparer_identifier));
-	archive_string_init(&(iso9660->application_identifier));
-	archive_strcpy(&(iso9660->application_identifier),
-	    archive_version_string());
-	archive_string_init(&(iso9660->copyright_file_identifier));
-	archive_string_init(&(iso9660->abstract_file_identifier));
-	archive_string_init(&(iso9660->bibliographic_file_identifier));
+	tk_archive_string_init(&(iso9660->volume_identifier));
+	tk_archive_strcpy(&(iso9660->volume_identifier), "CDROM");
+	tk_archive_string_init(&(iso9660->publisher_identifier));
+	tk_archive_string_init(&(iso9660->data_preparer_identifier));
+	tk_archive_string_init(&(iso9660->application_identifier));
+	tk_archive_strcpy(&(iso9660->application_identifier),
+	    tk_archive_version_string());
+	tk_archive_string_init(&(iso9660->copyright_file_identifier));
+	tk_archive_string_init(&(iso9660->abstract_file_identifier));
+	tk_archive_string_init(&(iso9660->bibliographic_file_identifier));
 
 	/*
 	 * Init El Torito bootable CD variables.
 	 */
-	archive_string_init(&(iso9660->el_torito.catalog_filename));
+	tk_archive_string_init(&(iso9660->el_torito.catalog_filename));
 	iso9660->el_torito.catalog = NULL;
 	/* Set default file name of boot catalog  */
-	archive_strcpy(&(iso9660->el_torito.catalog_filename),
+	tk_archive_strcpy(&(iso9660->el_torito.catalog_filename),
 	    "boot.catalog");
-	archive_string_init(&(iso9660->el_torito.boot_filename));
+	tk_archive_string_init(&(iso9660->el_torito.boot_filename));
 	iso9660->el_torito.boot = NULL;
 	iso9660->el_torito.platform_id = BOOT_PLATFORM_X86;
-	archive_string_init(&(iso9660->el_torito.id));
+	tk_archive_string_init(&(iso9660->el_torito.id));
 	iso9660->el_torito.boot_load_seg = 0;
 	iso9660->el_torito.boot_load_size = BOOT_LOAD_SIZE;
 
@@ -1160,14 +1160,14 @@ archive_write_set_format_iso9660(struct archive *_a)
 	    isoent_create_virtual_dir(a, iso9660, "");
 	if (iso9660->primary.rootent == NULL) {
 		free(iso9660);
-		archive_set_error(&a->archive, ENOMEM,
+		tk_archive_set_error(&a->archive, ENOMEM,
 		    "Can't allocate memory");
 		return (ARCHIVE_FATAL);
 	}
 	iso9660->primary.rootent->parent = iso9660->primary.rootent;
 	iso9660->cur_dirent = iso9660->primary.rootent;
-	archive_string_init(&(iso9660->cur_dirstr));
-	archive_string_ensure(&(iso9660->cur_dirstr), 1);
+	tk_archive_string_init(&(iso9660->cur_dirstr));
+	tk_archive_string_ensure(&(iso9660->cur_dirstr), 1);
 	iso9660->cur_dirstr.s[0] = 0;
 	iso9660->sconv_to_utf16be = NULL;
 	iso9660->sconv_from_utf16be = NULL;
@@ -1180,29 +1180,29 @@ archive_write_set_format_iso9660(struct archive *_a)
 	a->format_finish_entry = iso9660_finish_entry;
 	a->format_close = iso9660_close;
 	a->format_free = iso9660_free;
-	a->archive.archive_format = ARCHIVE_FORMAT_ISO9660;
-	a->archive.archive_format_name = "ISO9660";
+	a->archive.tk_archive_format = ARCHIVE_FORMAT_ISO9660;
+	a->archive.tk_archive_format_name = "ISO9660";
 
 	return (ARCHIVE_OK);
 }
 
 static int
-get_str_opt(struct archive_write *a, struct archive_string *s,
+get_str_opt(struct tk_archive_write *a, struct tk_archive_string *s,
     size_t maxsize, const char *key, const char *value)
 {
 
 	if (strlen(value) > maxsize) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 		    "Value is longer than %zu characters "
 		    "for option ``%s''", maxsize, key);
 		return (ARCHIVE_FATAL);
 	}
-	archive_strcpy(s, value);
+	tk_archive_strcpy(s, value);
 	return (ARCHIVE_OK);
 }
 
 static int
-get_num_opt(struct archive_write *a, int *num, int high, int low,
+get_num_opt(struct tk_archive_write *a, int *num, int high, int low,
     const char *key, const char *value)
 {
 	const char *p = value;
@@ -1210,7 +1210,7 @@ get_num_opt(struct archive_write *a, int *num, int high, int low,
 	int neg = 0;
 
 	if (p == NULL) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 		    "Invalid value(empty) for option ``%s''", key);
 		return (ARCHIVE_FATAL);
 	}
@@ -1222,18 +1222,18 @@ get_num_opt(struct archive_write *a, int *num, int high, int low,
 		if (*p >= '0' && *p <= '9')
 			data = data * 10 + *p - '0';
 		else {
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "Invalid value for option ``%s''", key);
 			return (ARCHIVE_FATAL);
 		}
 		if (data > high) {
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "Invalid value(over %d) for "
 			    "option ``%s''", high, key);
 			return (ARCHIVE_FATAL);
 		}
 		if (data < low) {
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "Invalid value(under %d) for "
 			    "option ``%s''", low, key);
 			return (ARCHIVE_FATAL);
@@ -1248,7 +1248,7 @@ get_num_opt(struct archive_write *a, int *num, int high, int low,
 }
 
 static int
-iso9660_options(struct archive_write *a, const char *key, const char *value)
+iso9660_options(struct tk_archive_write *a, const char *key, const char *value)
 {
 	struct iso9660 *iso9660 = a->format_data;
 	const char *p;
@@ -1288,7 +1288,7 @@ iso9660_options(struct archive_write *a, const char *key, const char *value)
 				iso9660->opt.boot = 0;
 			else {
 				iso9660->opt.boot = 1;
-				archive_strcpy(
+				tk_archive_strcpy(
 				    &(iso9660->el_torito.boot_filename),
 				    value);
 			}
@@ -1327,7 +1327,7 @@ iso9660_options(struct archive_write *a, const char *key, const char *value)
 				else
 					goto invalid_value;
 				if (seg > 0xffff) {
-					archive_set_error(&a->archive,
+					tk_archive_set_error(&a->archive,
 					    ARCHIVE_ERRNO_MISC,
 					    "Invalid value(over 0xffff) for "
 					    "option ``%s''", key);
@@ -1373,7 +1373,7 @@ iso9660_options(struct archive_write *a, const char *key, const char *value)
 			iso9660->opt.compression_level = 1;
                 	return (ARCHIVE_OK);
 #else
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_MISC,
 			    "Option ``%s'' "
 			    "is not supported on this platform.", key);
@@ -1495,7 +1495,7 @@ iso9660_options(struct archive_write *a, const char *key, const char *value)
 #ifdef HAVE_ZLIB_H
 				iso9660->opt.zisofs = OPT_ZISOFS_DIRECT;
 #else
-				archive_set_error(&a->archive,
+				tk_archive_set_error(&a->archive,
 				    ARCHIVE_ERRNO_MISC,
 				    "``zisofs'' "
 				    "is not supported on this platform.");
@@ -1513,13 +1513,13 @@ iso9660_options(struct archive_write *a, const char *key, const char *value)
 	return (ARCHIVE_WARN);
 
 invalid_value:
-	archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+	tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 	    "Invalid value for option ``%s''", key);
 	return (ARCHIVE_FAILED);
 }
 
 static int
-iso9660_write_header(struct archive_write *a, struct archive_entry *entry)
+iso9660_write_header(struct tk_archive_write *a, struct tk_archive_entry *entry)
 {
 	struct iso9660 *iso9660;
 	struct isofile *file;
@@ -1531,17 +1531,17 @@ iso9660_write_header(struct archive_write *a, struct archive_entry *entry)
 	iso9660->cur_file = NULL;
 	iso9660->bytes_remaining = 0;
 	iso9660->need_multi_extent = 0;
-	if (archive_entry_filetype(entry) == AE_IFLNK
+	if (tk_archive_entry_filetype(entry) == AE_IFLNK
 	    && iso9660->opt.rr == OPT_RR_DISABLED) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 		    "Ignore symlink file.");
 		iso9660->cur_file = NULL;
 		return (ARCHIVE_WARN);
 	}
-	if (archive_entry_filetype(entry) == AE_IFREG &&
-	    archive_entry_size(entry) >= MULTI_EXTENT_SIZE) {
+	if (tk_archive_entry_filetype(entry) == AE_IFREG &&
+	    tk_archive_entry_size(entry) >= MULTI_EXTENT_SIZE) {
 		if (iso9660->opt.iso_level < 3) {
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_MISC,
 			    "Ignore over %lld bytes file. "
 			    "This file too large.",
@@ -1554,7 +1554,7 @@ iso9660_write_header(struct archive_write *a, struct archive_entry *entry)
 
 	file = isofile_new(a, entry);
 	if (file == NULL) {
-		archive_set_error(&a->archive, ENOMEM,
+		tk_archive_set_error(&a->archive, ENOMEM,
 		    "Can't allocate data");
 		return (ARCHIVE_FATAL);
 	}
@@ -1570,8 +1570,8 @@ iso9660_write_header(struct archive_write *a, struct archive_entry *entry)
 	 * Ignore a path which looks like the top of directory name
 	 * since we have already made the root directory of an ISO image.
 	 */
-	if (archive_strlen(&(file->parentdir)) == 0 &&
-	    archive_strlen(&(file->basename)) == 0) {
+	if (tk_archive_strlen(&(file->parentdir)) == 0 &&
+	    tk_archive_strlen(&(file->basename)) == 0) {
 		isofile_free(file);
 		return (r);
 	}
@@ -1579,7 +1579,7 @@ iso9660_write_header(struct archive_write *a, struct archive_entry *entry)
 	isofile_add_entry(iso9660, file);
 	isoent = isoent_new(file);
 	if (isoent == NULL) {
-		archive_set_error(&a->archive, ENOMEM,
+		tk_archive_set_error(&a->archive, ENOMEM,
 		    "Can't allocate data");
 		return (ARCHIVE_FATAL);
 	}
@@ -1599,7 +1599,7 @@ iso9660_write_header(struct archive_write *a, struct archive_entry *entry)
 
 	/* Non regular files contents are unneeded to be saved to
 	 * temporary files. */
-	if (archive_entry_filetype(file->entry) != AE_IFREG)
+	if (tk_archive_entry_filetype(file->entry) != AE_IFREG)
 		return (ret);
 
 	/*
@@ -1607,7 +1607,7 @@ iso9660_write_header(struct archive_write *a, struct archive_entry *entry)
 	 */
 	iso9660->cur_file = file;
 
-	if (archive_entry_nlink(file->entry) > 1) {
+	if (tk_archive_entry_nlink(file->entry) > 1) {
 		r = isofile_register_hardlink(a, file);
 		if (r != ARCHIVE_OK)
 			return (ARCHIVE_FATAL);
@@ -1617,9 +1617,9 @@ iso9660_write_header(struct archive_write *a, struct archive_entry *entry)
 	 * Prepare to save the contents of the file.
 	 */
 	if (iso9660->temp_fd < 0) {
-		iso9660->temp_fd = __archive_mktemp(NULL);
+		iso9660->temp_fd = __tk_archive_mktemp(NULL);
 		if (iso9660->temp_fd < 0) {
-			archive_set_error(&a->archive, errno,
+			tk_archive_set_error(&a->archive, errno,
 			    "Couldn't create temporary file");
 			return (ARCHIVE_FATAL);
 		}
@@ -1631,13 +1631,13 @@ iso9660_write_header(struct archive_write *a, struct archive_entry *entry)
 	r = zisofs_init(a, file);
 	if (r < ret)
 		ret = r;
-	iso9660->bytes_remaining =  archive_entry_size(file->entry);
+	iso9660->bytes_remaining =  tk_archive_entry_size(file->entry);
 
 	return (ret);
 }
 
 static int
-write_to_temp(struct archive_write *a, const void *buff, size_t s)
+write_to_temp(struct tk_archive_write *a, const void *buff, size_t s)
 {
 	struct iso9660 *iso9660 = a->format_data;
 	ssize_t written;
@@ -1647,7 +1647,7 @@ write_to_temp(struct archive_write *a, const void *buff, size_t s)
 	while (s) {
 		written = write(iso9660->temp_fd, b, s);
 		if (written < 0) {
-			archive_set_error(&a->archive, errno,
+			tk_archive_set_error(&a->archive, errno,
 			    "Can't write to temporary file");
 			return (ARCHIVE_FATAL);
 		}
@@ -1658,7 +1658,7 @@ write_to_temp(struct archive_write *a, const void *buff, size_t s)
 }
 
 static int
-wb_write_to_temp(struct archive_write *a, const void *buff, size_t s)
+wb_write_to_temp(struct tk_archive_write *a, const void *buff, size_t s)
 {
 	const char *xp = buff;
 	size_t xs = s;
@@ -1693,7 +1693,7 @@ wb_write_to_temp(struct archive_write *a, const void *buff, size_t s)
 }
 
 static int
-wb_write_padding_to_temp(struct archive_write *a, int64_t csize)
+wb_write_padding_to_temp(struct tk_archive_write *a, int64_t csize)
 {
 	size_t ns;
 	int ret;
@@ -1707,13 +1707,13 @@ wb_write_padding_to_temp(struct archive_write *a, int64_t csize)
 }
 
 static ssize_t
-write_iso9660_data(struct archive_write *a, const void *buff, size_t s)
+write_iso9660_data(struct tk_archive_write *a, const void *buff, size_t s)
 {
 	struct iso9660 *iso9660 = a->format_data;
 	size_t ws;
 
 	if (iso9660->temp_fd < 0) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 		    "Couldn't create temporary file");
 		return (ARCHIVE_FATAL);
 	}
@@ -1758,7 +1758,7 @@ write_iso9660_data(struct archive_write *a, const void *buff, size_t s)
 		/* Make a content for next extent. */
 		con = calloc(1, sizeof(*con));
 		if (con == NULL) {
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate content data");
 			return (ARCHIVE_FATAL);
 		}
@@ -1786,14 +1786,14 @@ write_iso9660_data(struct archive_write *a, const void *buff, size_t s)
 }
 
 static ssize_t
-iso9660_write_data(struct archive_write *a, const void *buff, size_t s)
+iso9660_write_data(struct tk_archive_write *a, const void *buff, size_t s)
 {
 	struct iso9660 *iso9660 = a->format_data;
 	ssize_t r;
 
 	if (iso9660->cur_file == NULL)
 		return (0);
-	if (archive_entry_filetype(iso9660->cur_file->entry) != AE_IFREG)
+	if (tk_archive_entry_filetype(iso9660->cur_file->entry) != AE_IFREG)
 		return (0);
 	if (s > iso9660->bytes_remaining)
 		s = (size_t)iso9660->bytes_remaining;
@@ -1807,13 +1807,13 @@ iso9660_write_data(struct archive_write *a, const void *buff, size_t s)
 }
 
 static int
-iso9660_finish_entry(struct archive_write *a)
+iso9660_finish_entry(struct tk_archive_write *a)
 {
 	struct iso9660 *iso9660 = a->format_data;
 
 	if (iso9660->cur_file == NULL)
 		return (ARCHIVE_OK);
-	if (archive_entry_filetype(iso9660->cur_file->entry) != AE_IFREG)
+	if (tk_archive_entry_filetype(iso9660->cur_file->entry) != AE_IFREG)
 		return (ARCHIVE_OK);
 	if (iso9660->cur_file->content.size == 0)
 		return (ARCHIVE_OK);
@@ -1849,7 +1849,7 @@ iso9660_finish_entry(struct archive_write *a)
 }
 
 static int
-iso9660_close(struct archive_write *a)
+iso9660_close(struct tk_archive_write *a)
 {
 	struct iso9660 *iso9660;
 	int ret, blocks;
@@ -1912,13 +1912,13 @@ iso9660_close(struct archive_write *a)
 		 * uninitilized. */
 		if (iso9660->sconv_to_utf16be == NULL) {
 			iso9660->sconv_to_utf16be =
-			    archive_string_conversion_to_charset(
+			    tk_archive_string_conversion_to_charset(
 				&(a->archive), "UTF-16BE", 1);
 			if (iso9660->sconv_to_utf16be == NULL)
 				/* Couldn't allocate memory */
 				return (ARCHIVE_FATAL);
 			iso9660->sconv_from_utf16be =
-			    archive_string_conversion_from_charset(
+			    tk_archive_string_conversion_from_charset(
 				&(a->archive), "UTF-16BE", 1);
 			if (iso9660->sconv_from_utf16be == NULL)
 				/* Couldn't allocate memory */
@@ -2097,9 +2097,9 @@ iso9660_close(struct archive_write *a)
 	}
 
 	if (iso9660->directories_too_deep != NULL) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 		    "%s: Directories too deep.",
-		    archive_entry_pathname(
+		    tk_archive_entry_pathname(
 			iso9660->directories_too_deep->file->entry));
 		return (ARCHIVE_WARN);
 	}
@@ -2111,7 +2111,7 @@ iso9660_close(struct archive_write *a)
 }
 
 static int
-iso9660_free(struct archive_write *a)
+iso9660_free(struct tk_archive_write *a)
 {
 	struct iso9660 *iso9660;
 	int i, ret;
@@ -2142,19 +2142,19 @@ iso9660_free(struct archive_write *a)
 	isofile_free_all_entries(iso9660);
 	isofile_free_hardlinks(iso9660);
 
-	archive_string_free(&(iso9660->cur_dirstr));
-	archive_string_free(&(iso9660->volume_identifier));
-	archive_string_free(&(iso9660->publisher_identifier));
-	archive_string_free(&(iso9660->data_preparer_identifier));
-	archive_string_free(&(iso9660->application_identifier));
-	archive_string_free(&(iso9660->copyright_file_identifier));
-	archive_string_free(&(iso9660->abstract_file_identifier));
-	archive_string_free(&(iso9660->bibliographic_file_identifier));
-	archive_string_free(&(iso9660->el_torito.catalog_filename));
-	archive_string_free(&(iso9660->el_torito.boot_filename));
-	archive_string_free(&(iso9660->el_torito.id));
-	archive_string_free(&(iso9660->utf16be));
-	archive_string_free(&(iso9660->mbs));
+	tk_archive_string_free(&(iso9660->cur_dirstr));
+	tk_archive_string_free(&(iso9660->volume_identifier));
+	tk_archive_string_free(&(iso9660->publisher_identifier));
+	tk_archive_string_free(&(iso9660->data_preparer_identifier));
+	tk_archive_string_free(&(iso9660->application_identifier));
+	tk_archive_string_free(&(iso9660->copyright_file_identifier));
+	tk_archive_string_free(&(iso9660->abstract_file_identifier));
+	tk_archive_string_free(&(iso9660->bibliographic_file_identifier));
+	tk_archive_string_free(&(iso9660->el_torito.catalog_filename));
+	tk_archive_string_free(&(iso9660->el_torito.boot_filename));
+	tk_archive_string_free(&(iso9660->el_torito.id));
+	tk_archive_string_free(&(iso9660->utf16be));
+	tk_archive_string_free(&(iso9660->mbs));
 
 	free(iso9660);
 	a->format_data = NULL;
@@ -2229,7 +2229,7 @@ joliet_allowed_char(unsigned char high, unsigned char low)
 }
 
 static int
-set_str_utf16be(struct archive_write *a, unsigned char *p, const char *s,
+set_str_utf16be(struct tk_archive_write *a, unsigned char *p, const char *s,
     size_t l, uint16_t uf, enum vdc vdc)
 {
 	size_t size, i;
@@ -2244,9 +2244,9 @@ set_str_utf16be(struct archive_write *a, unsigned char *p, const char *s,
 		onepad = 0;
 	if (vdc == VDC_UCS2) {
 		struct iso9660 *iso9660 = a->format_data;
-		if (archive_strncpy_l(&iso9660->utf16be, s, strlen(s),
+		if (tk_archive_strncpy_l(&iso9660->utf16be, s, strlen(s),
 		    iso9660->sconv_to_utf16be) != 0 && errno == ENOMEM) {
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate memory for UTF-16BE");
 			return (ARCHIVE_FATAL);
 		}
@@ -2266,11 +2266,11 @@ set_str_utf16be(struct archive_write *a, unsigned char *p, const char *s,
 	}
 	for (i = 0; i < size; i += 2, p += 2) {
 		if (!joliet_allowed_char(p[0], p[1]))
-			archive_be16enc(p, 0x005F);/* '_' */
+			tk_archive_be16enc(p, 0x005F);/* '_' */
 	}
 	l -= size;
 	while (l > 0) {
-		archive_be16enc(p, uf);
+		tk_archive_be16enc(p, uf);
 		p += 2;
 		l -= 2;
 	}
@@ -2328,7 +2328,7 @@ static const char d1_characters_map[0x80] = {
 };
 
 static int
-set_str_a_characters_bp(struct archive_write *a, unsigned char *bp,
+set_str_a_characters_bp(struct tk_archive_write *a, unsigned char *bp,
     int from, int to, const char *s, enum vdc vdc)
 {
 	int r;
@@ -2356,7 +2356,7 @@ set_str_a_characters_bp(struct archive_write *a, unsigned char *bp,
 }
 
 static int
-set_str_d_characters_bp(struct archive_write *a, unsigned char *bp,
+set_str_d_characters_bp(struct tk_archive_write *a, unsigned char *bp,
     int from, int to, const char *s, enum  vdc vdc)
 {
 	int r;
@@ -2428,7 +2428,7 @@ set_num_712(unsigned char *p, char value)
 static inline void
 set_num_721(unsigned char *p, uint16_t value)
 {
-	archive_le16enc(p, value);
+	tk_archive_le16enc(p, value);
 }
 
 /*
@@ -2438,7 +2438,7 @@ set_num_721(unsigned char *p, uint16_t value)
 static inline void
 set_num_722(unsigned char *p, uint16_t value)
 {
-	archive_be16enc(p, value);
+	tk_archive_be16enc(p, value);
 }
 
 /*
@@ -2448,8 +2448,8 @@ set_num_722(unsigned char *p, uint16_t value)
 static void
 set_num_723(unsigned char *p, uint16_t value)
 {
-	archive_le16enc(p, value);
-	archive_be16enc(p+2, value);
+	tk_archive_le16enc(p, value);
+	tk_archive_be16enc(p+2, value);
 }
 
 /*
@@ -2459,7 +2459,7 @@ set_num_723(unsigned char *p, uint16_t value)
 static inline void
 set_num_731(unsigned char *p, uint32_t value)
 {
-	archive_le32enc(p, value);
+	tk_archive_le32enc(p, value);
 }
 
 /*
@@ -2469,7 +2469,7 @@ set_num_731(unsigned char *p, uint32_t value)
 static inline void
 set_num_732(unsigned char *p, uint32_t value)
 {
-	archive_be32enc(p, value);
+	tk_archive_be32enc(p, value);
 }
 
 /*
@@ -2479,8 +2479,8 @@ set_num_732(unsigned char *p, uint32_t value)
 static inline void
 set_num_733(unsigned char *p, uint32_t value)
 {
-	archive_le32enc(p, value);
-	archive_be32enc(p+4, value);
+	tk_archive_le32enc(p, value);
+	tk_archive_be32enc(p+4, value);
 }
 
 static void
@@ -2811,14 +2811,14 @@ set_directory_record_rr(unsigned char *bp, int dr_len,
 			rr_flag |= RR_USE_PL;
 	} else {
 		rr_flag = RR_USE_PX | RR_USE_NM | RR_USE_TF;
-		if (archive_entry_filetype(file->entry) == AE_IFLNK)
+		if (tk_archive_entry_filetype(file->entry) == AE_IFLNK)
 			rr_flag |= RR_USE_SL;
 		if (isoent->rr_parent != NULL)
 			rr_flag |= RR_USE_RE;
 		if (isoent->rr_child != NULL)
 			rr_flag |= RR_USE_CL;
-		if (archive_entry_filetype(file->entry) == AE_IFCHR ||
-		    archive_entry_filetype(file->entry) == AE_IFBLK)
+		if (tk_archive_entry_filetype(file->entry) == AE_IFCHR ||
+		    tk_archive_entry_filetype(file->entry) == AE_IFBLK)
 			rr_flag |= RR_USE_PN;
 #ifdef COMPAT_MKISOFS
 		/*
@@ -2944,9 +2944,9 @@ set_directory_record_rr(unsigned char *bp, int dr_len,
 			int64_t uid;
 			int64_t gid;
 
-			mode = archive_entry_mode(file->entry);
-			uid = archive_entry_uid(file->entry);
-			gid = archive_entry_gid(file->entry);
+			mode = tk_archive_entry_mode(file->entry);
+			uid = tk_archive_entry_uid(file->entry);
+			gid = tk_archive_entry_gid(file->entry);
 			if (iso9660->opt.rr == OPT_RR_USEFUL) {
 				/*
 				 * This action is simular mkisofs -r option
@@ -2974,7 +2974,7 @@ set_directory_record_rr(unsigned char *bp, int dr_len,
 			set_num_733(bp+5, mode);
 			/* file links (stat.st_nlink) */
 			set_num_733(bp+13,
-			    archive_entry_nlink(file->entry));
+			    tk_archive_entry_nlink(file->entry));
 			set_num_733(bp+21, (uint32_t)uid);
 			set_num_733(bp+29, (uint32_t)gid);
 			/* File Serial Number */
@@ -3205,22 +3205,22 @@ set_directory_record_rr(unsigned char *bp, int dr_len,
 		length = 5;
 		tf_flags = 0;
 #ifndef COMPAT_MKISOFS
-		if (archive_entry_birthtime_is_set(file->entry) &&
-		    archive_entry_birthtime(file->entry) <=
-		    archive_entry_mtime(file->entry)) {
+		if (tk_archive_entry_birthtime_is_set(file->entry) &&
+		    tk_archive_entry_birthtime(file->entry) <=
+		    tk_archive_entry_mtime(file->entry)) {
 			length += 7;
 			tf_flags |= TF_CREATION;
 		}
 #endif
-		if (archive_entry_mtime_is_set(file->entry)) {
+		if (tk_archive_entry_mtime_is_set(file->entry)) {
 			length += 7;
 			tf_flags |= TF_MODIFY;
 		}
-		if (archive_entry_atime_is_set(file->entry)) {
+		if (tk_archive_entry_atime_is_set(file->entry)) {
 			length += 7;
 			tf_flags |= TF_ACCESS;
 		}
-		if (archive_entry_ctime_is_set(file->entry)) {
+		if (tk_archive_entry_ctime_is_set(file->entry)) {
 			length += 7;
 			tf_flags |= TF_ATTRIBUTES;
 		}
@@ -3236,25 +3236,25 @@ set_directory_record_rr(unsigned char *bp, int dr_len,
 			/* Creation time */
 			if (tf_flags & TF_CREATION) {
 				set_time_915(bp+1,
-				    archive_entry_birthtime(file->entry));
+				    tk_archive_entry_birthtime(file->entry));
 				bp += 7;
 			}
 			/* Modification time */
 			if (tf_flags & TF_MODIFY) {
 				set_time_915(bp+1,
-				    archive_entry_mtime(file->entry));
+				    tk_archive_entry_mtime(file->entry));
 				bp += 7;
 			}
 			/* Last Access time */
 			if (tf_flags & TF_ACCESS) {
 				set_time_915(bp+1,
-				    archive_entry_atime(file->entry));
+				    tk_archive_entry_atime(file->entry));
 				bp += 7;
 			}
 			/* Last Attribute Change time */
 			if (tf_flags & TF_ATTRIBUTES) {
 				set_time_915(bp+1,
-				    archive_entry_ctime(file->entry));
+				    tk_archive_entry_ctime(file->entry));
 				bp += 7;
 			}
 		}
@@ -3356,7 +3356,7 @@ set_directory_record_rr(unsigned char *bp, int dr_len,
 			bp[2] = 'N';
 			bp[3] = length;
 			bp[4] = 1;	/* version	*/
-			dev = (uint64_t)archive_entry_rdev(file->entry);
+			dev = (uint64_t)tk_archive_entry_rdev(file->entry);
 			set_num_733(bp + 5, (uint32_t)(dev >> 32));
 			set_num_733(bp + 13, (uint32_t)(dev & 0xFFFFFFFF));
 			bp += length;
@@ -3501,7 +3501,7 @@ set_directory_record(unsigned char *p, size_t n, struct isoent *isoent,
 		 *  seems mkisofs uses stat to get.
 		 */
 		set_time_915(bp+19,
-		    archive_entry_mtime(xisoent->file->entry));
+		    tk_archive_entry_mtime(xisoent->file->entry));
 		/* File Flags */
 		bp[26] = flag;
 		/* File Unit Size */
@@ -3598,7 +3598,7 @@ get_dir_rec_size(struct iso9660 *iso9660, struct isoent *isoent,
 
 
 static inline unsigned char *
-wb_buffptr(struct archive_write *a)
+wb_buffptr(struct tk_archive_write *a)
 {
 	struct iso9660 *iso9660 = (struct iso9660 *)a->format_data;
 
@@ -3607,7 +3607,7 @@ wb_buffptr(struct archive_write *a)
 }
 
 static int
-wb_write_out(struct archive_write *a)
+wb_write_out(struct tk_archive_write *a)
 {
 	struct iso9660 *iso9660 = (struct iso9660 *)a->format_data;
 	size_t wsize, nw;
@@ -3616,7 +3616,7 @@ wb_write_out(struct archive_write *a)
 	wsize = sizeof(iso9660->wbuff) - iso9660->wbuff_remaining;
 	nw = wsize % LOGICAL_BLOCK_SIZE;
 	if (iso9660->wbuff_type == WB_TO_STREAM)
-		r = __archive_write_output(a, iso9660->wbuff, wsize - nw);
+		r = __tk_archive_write_output(a, iso9660->wbuff, wsize - nw);
 	else
 		r = write_to_temp(a, iso9660->wbuff, wsize - nw);
 	/* Increase the offset. */
@@ -3632,13 +3632,13 @@ wb_write_out(struct archive_write *a)
 }
 
 static int
-wb_consume(struct archive_write *a, size_t size)
+wb_consume(struct tk_archive_write *a, size_t size)
 {
 	struct iso9660 *iso9660 = (struct iso9660 *)a->format_data;
 
 	if (size > iso9660->wbuff_remaining ||
 	    iso9660->wbuff_remaining == 0) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 		    "Internal Programing error: iso9660:wb_consume()"
 		    " size=%jd, wbuff_remaining=%jd",
 		    (intmax_t)size, (intmax_t)iso9660->wbuff_remaining);
@@ -3653,13 +3653,13 @@ wb_consume(struct archive_write *a, size_t size)
 #ifdef HAVE_ZLIB_H
 
 static int
-wb_set_offset(struct archive_write *a, int64_t off)
+wb_set_offset(struct tk_archive_write *a, int64_t off)
 {
 	struct iso9660 *iso9660 = (struct iso9660 *)a->format_data;
 	int64_t used, ext_bytes;
 
 	if (iso9660->wbuff_type != WB_TO_TEMP) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 		    "Internal Programing error: iso9660:wb_set_offset()");
 		return (ARCHIVE_FATAL);
 	}
@@ -3711,7 +3711,7 @@ wb_set_offset(struct archive_write *a, int64_t off)
 #endif /* HAVE_ZLIB_H */
 
 static int
-write_null(struct archive_write *a, size_t size)
+write_null(struct tk_archive_write *a, size_t size)
 {
 	size_t remaining;
 	unsigned char *p, *old;
@@ -3749,7 +3749,7 @@ write_null(struct archive_write *a, size_t size)
  * Write Volume Descriptor Set Terminator
  */
 static int
-write_VD_terminator(struct archive_write *a)
+write_VD_terminator(struct tk_archive_write *a)
 {
 	unsigned char *bp;
 
@@ -3762,7 +3762,7 @@ write_VD_terminator(struct archive_write *a)
 
 static int
 set_file_identifier(unsigned char *bp, int from, int to, enum vdc vdc,
-    struct archive_write *a, struct vdd *vdd, struct archive_string *id,
+    struct tk_archive_write *a, struct vdd *vdd, struct tk_archive_string *id,
     const char *label, int leading_under, enum char_type char_type)
 {
 	char identifier[256];
@@ -3782,7 +3782,7 @@ set_file_identifier(unsigned char *bp, int from, int to, enum vdc vdc,
 			ids++;
 		isoent = isoent_find_entry(vdd->rootent, ids);
 		if (isoent == NULL) {
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "Not Found %s `%s'.",
 			    label, ids);
 			return (ARCHIVE_FATAL);
@@ -3820,7 +3820,7 @@ set_file_identifier(unsigned char *bp, int from, int to, enum vdc vdc,
  * Write Primary/Supplementary Volume Descriptor
  */
 static int
-write_VD(struct archive_write *a, struct vdd *vdd)
+write_VD(struct tk_archive_write *a, struct vdd *vdd)
 {
 	struct iso9660 *iso9660;
 	unsigned char *bp;
@@ -3967,7 +3967,7 @@ write_VD(struct archive_write *a, struct vdd *vdd)
  * Write Boot Record Volume Descriptor
  */
 static int
-write_VD_boot_record(struct archive_write *a)
+write_VD_boot_record(struct tk_archive_write *a)
 {
 	struct iso9660 *iso9660;
 	unsigned char *bp;
@@ -3997,7 +3997,7 @@ enum keytype {
 	KEY_HEX,
 };
 static void
-set_option_info(struct archive_string *info, int *opt, const char *key,
+set_option_info(struct tk_archive_string *info, int *opt, const char *key,
     enum keytype type,  ...)
 {
 	va_list ap;
@@ -4010,22 +4010,22 @@ set_option_info(struct archive_string *info, int *opt, const char *key,
 	switch (type) {
 	case KEY_FLG:
 		d = va_arg(ap, int);
-		archive_string_sprintf(info, "%c%s%s",
+		tk_archive_string_sprintf(info, "%c%s%s",
 		    prefix, (d == 0)?"!":"", key);
 		break;
 	case KEY_STR:
 		s = va_arg(ap, const char *);
-		archive_string_sprintf(info, "%c%s=%s",
+		tk_archive_string_sprintf(info, "%c%s=%s",
 		    prefix, key, s);
 		break;
 	case KEY_INT:
 		d = va_arg(ap, int);
-		archive_string_sprintf(info, "%c%s=%d",
+		tk_archive_string_sprintf(info, "%c%s=%d",
 		    prefix, key, d);
 		break;
 	case KEY_HEX:
 		d = va_arg(ap, int);
-		archive_string_sprintf(info, "%c%s=%x",
+		tk_archive_string_sprintf(info, "%c%s=%x",
 		    prefix, key, d);
 		break;
 	}
@@ -4038,13 +4038,13 @@ set_option_info(struct archive_string *info, int *opt, const char *key,
  * Make Non-ISO File System Information
  */
 static int
-write_information_block(struct archive_write *a)
+write_information_block(struct tk_archive_write *a)
 {
 	struct iso9660 *iso9660;
 	char buf[128];
 	const char *v;
 	int opt, r;
-	struct archive_string info;
+	struct tk_archive_string info;
 	size_t info_size = LOGICAL_BLOCK_SIZE *
 			       NON_ISO_FILE_SYSTEM_INFORMATION_BLOCK;
 
@@ -4054,9 +4054,9 @@ write_information_block(struct archive_write *a)
 		if (r != ARCHIVE_OK)
 			return (r);
 	}
-	archive_string_init(&info);
-	if (archive_string_ensure(&info, info_size) == NULL) {
-		archive_set_error(&a->archive, ENOMEM,
+	tk_archive_string_init(&info);
+	if (tk_archive_string_ensure(&info, info_size) == NULL) {
+		tk_archive_set_error(&a->archive, ENOMEM,
 		    "Can't allocate memory");
 		return (ARCHIVE_FATAL);
 	}
@@ -4070,8 +4070,8 @@ write_information_block(struct archive_write *a)
 	strncpy(buf, ctime(&(iso9660->birth_time)), sizeof(buf)-1);
 	buf[sizeof(buf)-1] = '\0';
 #endif
-	archive_string_sprintf(&info,
-	    "INFO %s%s", buf, archive_version_string());
+	tk_archive_string_sprintf(&info,
+	    "INFO %s%s", buf, tk_archive_version_string());
 	if (iso9660->opt.abstract_file != OPT_ABSTRACT_FILE_DEFAULT)
 		set_option_info(&info, &opt, "abstract-file",
 		    KEY_STR, iso9660->abstract_file_identifier.s);
@@ -4158,12 +4158,12 @@ write_information_block(struct archive_write *a)
 		    KEY_FLG, iso9660->opt.zisofs);
 
 	memcpy(wb_buffptr(a), info.s, info_size);
-	archive_string_free(&info);
+	tk_archive_string_free(&info);
 	return (wb_consume(a, info_size));
 }
 
 static int
-write_rr_ER(struct archive_write *a)
+write_rr_ER(struct tk_archive_write *a)
 {
 	unsigned char *p;
 
@@ -4221,7 +4221,7 @@ calculate_path_table_size(struct vdd *vdd)
 }
 
 static int
-_write_path_table(struct archive_write *a, int type_m, int depth,
+_write_path_table(struct tk_archive_write *a, int type_m, int depth,
     struct vdd *vdd)
 {
 	unsigned char *bp, *wb;
@@ -4290,7 +4290,7 @@ _write_path_table(struct archive_write *a, int type_m, int depth,
 }
 
 static int
-write_path_table(struct archive_write *a, int type_m, struct vdd *vdd)
+write_path_table(struct tk_archive_write *a, int type_m, struct vdd *vdd)
 {
 	int depth, r;
 	size_t path_table_size;
@@ -4352,7 +4352,7 @@ calculate_directory_descriptors(struct iso9660 *iso9660, struct vdd *vdd,
 }
 
 static int
-_write_directory_descriptors(struct archive_write *a, struct vdd *vdd,
+_write_directory_descriptors(struct tk_archive_write *a, struct vdd *vdd,
     struct isoent *isoent, int depth)
 {
 	struct iso9660 *iso9660 = a->format_data;
@@ -4405,7 +4405,7 @@ _write_directory_descriptors(struct archive_write *a, struct vdd *vdd,
 }
 
 static int
-write_directory_descriptors(struct archive_write *a, struct vdd *vdd)
+write_directory_descriptors(struct tk_archive_write *a, struct vdd *vdd)
 {
 	struct isoent *np;
 	int depth, r;
@@ -4463,7 +4463,7 @@ write_directory_descriptors(struct archive_write *a, struct vdd *vdd)
  * Read file contents from the temporary file, and write it.
  */
 static int
-write_file_contents(struct archive_write *a, int64_t offset, int64_t size)
+write_file_contents(struct tk_archive_write *a, int64_t offset, int64_t size)
 {
 	struct iso9660 *iso9660 = a->format_data;
 	int r;
@@ -4481,7 +4481,7 @@ write_file_contents(struct archive_write *a, int64_t offset, int64_t size)
 			rsize = (size_t)size;
 		rs = read(iso9660->temp_fd, wb, rsize);
 		if (rs <= 0) {
-			archive_set_error(&a->archive, errno,
+			tk_archive_set_error(&a->archive, errno,
 			    "Can't read temporary file(%jd)", (intmax_t)rs);
 			return (ARCHIVE_FATAL);
 		}
@@ -4494,7 +4494,7 @@ write_file_contents(struct archive_write *a, int64_t offset, int64_t size)
 }
 
 static int
-write_file_descriptors(struct archive_write *a)
+write_file_descriptors(struct tk_archive_write *a)
 {
 	struct iso9660 *iso9660 = a->format_data;
 	struct isofile *file;
@@ -4609,7 +4609,7 @@ isofile_add_data_file(struct iso9660 *iso9660, struct isofile *file)
 
 
 static struct isofile *
-isofile_new(struct archive_write *a, struct archive_entry *entry)
+isofile_new(struct tk_archive_write *a, struct tk_archive_entry *entry)
 {
 	struct isofile *file;
 
@@ -4618,17 +4618,17 @@ isofile_new(struct archive_write *a, struct archive_entry *entry)
 		return (NULL);
 
 	if (entry != NULL)
-		file->entry = archive_entry_clone(entry);
+		file->entry = tk_archive_entry_clone(entry);
 	else
-		file->entry = archive_entry_new2(&a->archive);
+		file->entry = tk_archive_entry_new2(&a->archive);
 	if (file->entry == NULL) {
 		free(file);
 		return (NULL);
 	}
-	archive_string_init(&(file->parentdir));
-	archive_string_init(&(file->basename));
-	archive_string_init(&(file->basename_utf16));
-	archive_string_init(&(file->symlink));
+	tk_archive_string_init(&(file->parentdir));
+	tk_archive_string_init(&(file->basename));
+	tk_archive_string_init(&(file->basename_utf16));
+	tk_archive_string_init(&(file->symlink));
 	file->cur_content = &(file->content);
 
 	return (file);
@@ -4645,11 +4645,11 @@ isofile_free(struct isofile *file)
 		con = con->next;
 		free(tmp);
 	}
-	archive_entry_free(file->entry);
-	archive_string_free(&(file->parentdir));
-	archive_string_free(&(file->basename));
-	archive_string_free(&(file->basename_utf16));
-	archive_string_free(&(file->symlink));
+	tk_archive_entry_free(file->entry);
+	tk_archive_string_free(&(file->parentdir));
+	tk_archive_string_free(&(file->basename));
+	tk_archive_string_free(&(file->basename_utf16));
+	tk_archive_string_free(&(file->symlink));
 	free(file);
 }
 
@@ -4694,7 +4694,7 @@ cleanup_backslash_2(wchar_t *p)
  * Generate a parent directory name and a base name from a pathname.
  */
 static int
-isofile_gen_utility_names(struct archive_write *a, struct isofile *file)
+isofile_gen_utility_names(struct tk_archive_write *a, struct isofile *file)
 {
 	struct iso9660 *iso9660;
 	const char *pathname;
@@ -4704,12 +4704,12 @@ isofile_gen_utility_names(struct archive_write *a, struct isofile *file)
 
 	iso9660 = a->format_data;
 
-	archive_string_empty(&(file->parentdir));
-	archive_string_empty(&(file->basename));
-	archive_string_empty(&(file->basename_utf16));
-	archive_string_empty(&(file->symlink));
+	tk_archive_string_empty(&(file->parentdir));
+	tk_archive_string_empty(&(file->basename));
+	tk_archive_string_empty(&(file->basename_utf16));
+	tk_archive_string_empty(&(file->symlink));
 
-	pathname =  archive_entry_pathname(file->entry);
+	pathname =  tk_archive_entry_pathname(file->entry);
 	if (pathname == NULL || pathname[0] == '\0') {/* virtual root */
 		file->dircnt = 0;
 		return (ret);
@@ -4724,13 +4724,13 @@ isofile_gen_utility_names(struct archive_write *a, struct isofile *file)
 
 		if (iso9660->sconv_to_utf16be == NULL) {
 			iso9660->sconv_to_utf16be =
-			    archive_string_conversion_to_charset(
+			    tk_archive_string_conversion_to_charset(
 				&(a->archive), "UTF-16BE", 1);
 			if (iso9660->sconv_to_utf16be == NULL)
 				/* Couldn't allocate memory */
 				return (ARCHIVE_FATAL);
 			iso9660->sconv_from_utf16be =
-			    archive_string_conversion_from_charset(
+			    tk_archive_string_conversion_from_charset(
 				&(a->archive), "UTF-16BE", 1);
 			if (iso9660->sconv_from_utf16be == NULL)
 				/* Couldn't allocate memory */
@@ -4740,14 +4740,14 @@ isofile_gen_utility_names(struct archive_write *a, struct isofile *file)
 		/*
 		 * Converte a filename to UTF-16BE.
 		 */
-		if (0 > archive_entry_pathname_l(file->entry, &u16, &u16len,
+		if (0 > tk_archive_entry_pathname_l(file->entry, &u16, &u16len,
 		    iso9660->sconv_to_utf16be)) {
 			if (errno == ENOMEM) {
-				archive_set_error(&a->archive, ENOMEM,
+				tk_archive_set_error(&a->archive, ENOMEM,
 				    "Can't allocate memory for UTF-16BE");
 				return (ARCHIVE_FATAL);
 			}
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "A filename cannot be converted to UTF-16BE;"
 			    "You should disable making Joliet extension");
 			ret = ARCHIVE_WARN;
@@ -4790,9 +4790,9 @@ isofile_gen_utility_names(struct archive_write *a, struct isofile *file)
 			u16len --;
 		}
 		ulen_last <<= 1;
-		if (archive_string_ensure(&(file->basename_utf16),
+		if (tk_archive_string_ensure(&(file->basename_utf16),
 		    ulen_last) == NULL) {
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate memory for UTF-16BE");
 			return (ARCHIVE_FATAL);
 		}
@@ -4804,26 +4804,26 @@ isofile_gen_utility_names(struct archive_write *a, struct isofile *file)
 		file->basename_utf16.length = ulen_last;
 	}
 
-	archive_strcpy(&(file->parentdir), pathname);
+	tk_archive_strcpy(&(file->parentdir), pathname);
 #if defined(_WIN32) || defined(__CYGWIN__)
 	/*
 	 * Convert a path-separator from '\' to  '/'
 	 */
 	if (cleanup_backslash_1(file->parentdir.s) != 0) {
-		const wchar_t *wp = archive_entry_pathname_w(file->entry);
-		struct archive_wstring ws;
+		const wchar_t *wp = tk_archive_entry_pathname_w(file->entry);
+		struct tk_archive_wstring ws;
 
 		if (wp != NULL) {
 			int r;
-			archive_string_init(&ws);
-			archive_wstrcpy(&ws, wp);
+			tk_archive_string_init(&ws);
+			tk_archive_wstrcpy(&ws, wp);
 			cleanup_backslash_2(ws.s);
-			archive_string_empty(&(file->parentdir));
-			r = archive_string_append_from_wcs(&(file->parentdir),
+			tk_archive_string_empty(&(file->parentdir));
+			r = tk_archive_string_append_from_wcs(&(file->parentdir),
 			    ws.s, ws.length);
-			archive_wstring_free(&ws);
+			tk_archive_wstring_free(&ws);
 			if (r < 0 && errno == ENOMEM) {
-				archive_set_error(&a->archive, ENOMEM,
+				tk_archive_set_error(&a->archive, ENOMEM,
 				    "Can't allocate memory");
 				return (ARCHIVE_FATAL);
 			}
@@ -4914,32 +4914,32 @@ isofile_gen_utility_names(struct archive_write *a, struct isofile *file)
 	p = dirname;
 	len = strlen(p);
 
-	if (archive_entry_filetype(file->entry) == AE_IFLNK) {
+	if (tk_archive_entry_filetype(file->entry) == AE_IFLNK) {
 		/* Convert symlink name too. */
-		pathname = archive_entry_symlink(file->entry);
-		archive_strcpy(&(file->symlink),  pathname);
+		pathname = tk_archive_entry_symlink(file->entry);
+		tk_archive_strcpy(&(file->symlink),  pathname);
 #if defined(_WIN32) || defined(__CYGWIN__)
 		/*
 		 * Convert a path-separator from '\' to  '/'
 		 */
-		if (archive_strlen(&(file->symlink)) > 0 &&
+		if (tk_archive_strlen(&(file->symlink)) > 0 &&
 		    cleanup_backslash_1(file->symlink.s) != 0) {
 			const wchar_t *wp =
-			    archive_entry_symlink_w(file->entry);
-			struct archive_wstring ws;
+			    tk_archive_entry_symlink_w(file->entry);
+			struct tk_archive_wstring ws;
 
 			if (wp != NULL) {
 				int r;
-				archive_string_init(&ws);
-				archive_wstrcpy(&ws, wp);
+				tk_archive_string_init(&ws);
+				tk_archive_wstrcpy(&ws, wp);
 				cleanup_backslash_2(ws.s);
-				archive_string_empty(&(file->symlink));
-				r = archive_string_append_from_wcs(
+				tk_archive_string_empty(&(file->symlink));
+				r = tk_archive_string_append_from_wcs(
 				    &(file->symlink),
 				    ws.s, ws.length);
-				archive_wstring_free(&ws);
+				tk_archive_wstring_free(&ws);
 				if (r < 0 && errno == ENOMEM) {
-					archive_set_error(&a->archive, ENOMEM,
+					tk_archive_set_error(&a->archive, ENOMEM,
 					    "Can't allocate memory");
 					return (ARCHIVE_FATAL);
 				}
@@ -4962,8 +4962,8 @@ isofile_gen_utility_names(struct archive_write *a, struct isofile *file)
 	if (slash == NULL) {
 		/* The pathname doesn't have a parent directory. */
 		file->parentdir.length = len;
-		archive_string_copy(&(file->basename), &(file->parentdir));
-		archive_string_empty(&(file->parentdir));
+		tk_archive_string_copy(&(file->basename), &(file->parentdir));
+		tk_archive_string_empty(&(file->parentdir));
 		*file->parentdir.s = '\0';
 		return (ret);
 	}
@@ -4971,8 +4971,8 @@ isofile_gen_utility_names(struct archive_write *a, struct isofile *file)
 	/* Make a basename from dirname and slash */
 	*slash  = '\0';
 	file->parentdir.length = slash - dirname;
-	archive_strcpy(&(file->basename),  slash + 1);
-	if (archive_entry_filetype(file->entry) == AE_IFDIR)
+	tk_archive_strcpy(&(file->basename),  slash + 1);
+	if (tk_archive_entry_filetype(file->entry) == AE_IFDIR)
 		file->dircnt ++;
 	return (ret);
 }
@@ -4981,19 +4981,19 @@ isofile_gen_utility_names(struct archive_write *a, struct isofile *file)
  * Register a entry to get a hardlink target.
  */
 static int
-isofile_register_hardlink(struct archive_write *a, struct isofile *file)
+isofile_register_hardlink(struct tk_archive_write *a, struct isofile *file)
 {
 	struct iso9660 *iso9660 = a->format_data;
 	struct hardlink *hl;
 	const char *pathname;
 
-	archive_entry_set_nlink(file->entry, 1);
-	pathname = archive_entry_hardlink(file->entry);
+	tk_archive_entry_set_nlink(file->entry, 1);
+	pathname = tk_archive_entry_hardlink(file->entry);
 	if (pathname == NULL) {
 		/* This `file` is a hardlink target. */
 		hl = malloc(sizeof(*hl));
 		if (hl == NULL) {
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate memory");
 			return (ARCHIVE_FATAL);
 		}
@@ -5002,10 +5002,10 @@ isofile_register_hardlink(struct archive_write *a, struct isofile *file)
 		file->hlnext = NULL;
 		hl->file_list.first = file;
 		hl->file_list.last = &(file->hlnext);
-		__archive_rb_tree_insert_node(&(iso9660->hardlink_rbtree),
-		    (struct archive_rb_node *)hl);
+		__tk_archive_rb_tree_insert_node(&(iso9660->hardlink_rbtree),
+		    (struct tk_archive_rb_node *)hl);
 	} else {
-		hl = (struct hardlink *)__archive_rb_tree_find_node(
+		hl = (struct hardlink *)__tk_archive_rb_tree_find_node(
 		    &(iso9660->hardlink_rbtree), pathname);
 		if (hl != NULL) {
 			/* Insert `file` entry into the tail. */
@@ -5014,7 +5014,7 @@ isofile_register_hardlink(struct archive_write *a, struct isofile *file)
 			hl->file_list.last = &(file->hlnext);
 			hl->nlink++;
 		}
-		archive_entry_unset_size(file->entry);
+		tk_archive_entry_unset_size(file->entry);
 	}
 
 	return (ARCHIVE_OK);
@@ -5028,7 +5028,7 @@ isofile_register_hardlink(struct archive_write *a, struct isofile *file)
 static void
 isofile_connect_hardlink_files(struct iso9660 *iso9660)
 {
-	struct archive_rb_node *n;
+	struct tk_archive_rb_node *n;
 	struct hardlink *hl;
 	struct isofile *target, *nf;
 
@@ -5037,53 +5037,53 @@ isofile_connect_hardlink_files(struct iso9660 *iso9660)
 
 		/* The first entry must be a hardlink target. */
 		target = hl->file_list.first;
-		archive_entry_set_nlink(target->entry, hl->nlink);
+		tk_archive_entry_set_nlink(target->entry, hl->nlink);
 		/* Set a hardlink target to reference entries. */
 		for (nf = target->hlnext;
 		    nf != NULL; nf = nf->hlnext) {
 			nf->hardlink_target = target;
-			archive_entry_set_nlink(nf->entry, hl->nlink);
+			tk_archive_entry_set_nlink(nf->entry, hl->nlink);
 		}
 	}
 }
 
 static int
-isofile_hd_cmp_node(const struct archive_rb_node *n1,
-    const struct archive_rb_node *n2)
+isofile_hd_cmp_node(const struct tk_archive_rb_node *n1,
+    const struct tk_archive_rb_node *n2)
 {
 	const struct hardlink *h1 = (const struct hardlink *)n1;
 	const struct hardlink *h2 = (const struct hardlink *)n2;
 
-	return (strcmp(archive_entry_pathname(h1->file_list.first->entry),
-		       archive_entry_pathname(h2->file_list.first->entry)));
+	return (strcmp(tk_archive_entry_pathname(h1->file_list.first->entry),
+		       tk_archive_entry_pathname(h2->file_list.first->entry)));
 }
 
 static int
-isofile_hd_cmp_key(const struct archive_rb_node *n, const void *key)
+isofile_hd_cmp_key(const struct tk_archive_rb_node *n, const void *key)
 {
 	const struct hardlink *h = (const struct hardlink *)n;
 
-	return (strcmp(archive_entry_pathname(h->file_list.first->entry),
+	return (strcmp(tk_archive_entry_pathname(h->file_list.first->entry),
 		       (const char *)key));
 }
 
 static void
 isofile_init_hardlinks(struct iso9660 *iso9660)
 {
-	static const struct archive_rb_tree_ops rb_ops = {
+	static const struct tk_archive_rb_tree_ops rb_ops = {
 		isofile_hd_cmp_node, isofile_hd_cmp_key,
 	};
 
-	__archive_rb_tree_init(&(iso9660->hardlink_rbtree), &rb_ops);
+	__tk_archive_rb_tree_init(&(iso9660->hardlink_rbtree), &rb_ops);
 }
 
 static void
 isofile_free_hardlinks(struct iso9660 *iso9660)
 {
-	struct archive_rb_node *n, *next;
+	struct tk_archive_rb_node *n, *next;
 
 	for (n = ARCHIVE_RB_TREE_MIN(&(iso9660->hardlink_rbtree)); n;) {
-		next = __archive_rb_tree_iterate(&(iso9660->hardlink_rbtree),
+		next = __tk_archive_rb_tree_iterate(&(iso9660->hardlink_rbtree),
 		    n, ARCHIVE_RB_DIR_RIGHT);
 		free(n);
 		n = next;
@@ -5094,7 +5094,7 @@ static struct isoent *
 isoent_new(struct isofile *file)
 {
 	struct isoent *isoent;
-	static const struct archive_rb_tree_ops rb_ops = {
+	static const struct tk_archive_rb_tree_ops rb_ops = {
 		isoent_cmp_node, isoent_cmp_key,
 	};
 
@@ -5104,13 +5104,13 @@ isoent_new(struct isofile *file)
 	isoent->file = file;
 	isoent->children.first = NULL;
 	isoent->children.last = &(isoent->children.first);
-	__archive_rb_tree_init(&(isoent->rbtree), &rb_ops);
+	__tk_archive_rb_tree_init(&(isoent->rbtree), &rb_ops);
 	isoent->subdirs.first = NULL;
 	isoent->subdirs.last = &(isoent->subdirs.first);
 	isoent->extr_rec_list.first = NULL;
 	isoent->extr_rec_list.last = &(isoent->extr_rec_list.first);
 	isoent->extr_rec_list.current = NULL;
-	if (archive_entry_filetype(file->entry) == AE_IFDIR)
+	if (tk_archive_entry_filetype(file->entry) == AE_IFDIR)
 		isoent->dir = 1;
 
 	return (isoent);
@@ -5172,7 +5172,7 @@ isoent_free_all(struct isoent *isoent)
 }
 
 static struct isoent *
-isoent_create_virtual_dir(struct archive_write *a, struct iso9660 *iso9660, const char *pathname)
+isoent_create_virtual_dir(struct tk_archive_write *a, struct iso9660 *iso9660, const char *pathname)
 {
 	struct isofile *file;
 	struct isoent *isoent;
@@ -5180,14 +5180,14 @@ isoent_create_virtual_dir(struct archive_write *a, struct iso9660 *iso9660, cons
 	file = isofile_new(a, NULL);
 	if (file == NULL)
 		return (NULL);
-	archive_entry_set_pathname(file->entry, pathname);
-	archive_entry_unset_mtime(file->entry);
-	archive_entry_unset_atime(file->entry);
-	archive_entry_unset_ctime(file->entry);
-	archive_entry_set_uid(file->entry, getuid());
-	archive_entry_set_gid(file->entry, getgid());
-	archive_entry_set_mode(file->entry, 0555 | AE_IFDIR);
-	archive_entry_set_nlink(file->entry, 2);
+	tk_archive_entry_set_pathname(file->entry, pathname);
+	tk_archive_entry_unset_mtime(file->entry);
+	tk_archive_entry_unset_atime(file->entry);
+	tk_archive_entry_unset_ctime(file->entry);
+	tk_archive_entry_set_uid(file->entry, getuid());
+	tk_archive_entry_set_gid(file->entry, getgid());
+	tk_archive_entry_set_mode(file->entry, 0555 | AE_IFDIR);
+	tk_archive_entry_set_nlink(file->entry, 2);
 	if (isofile_gen_utility_names(a, file) < ARCHIVE_WARN) {
 		isofile_free(file);
 		return (NULL);
@@ -5204,8 +5204,8 @@ isoent_create_virtual_dir(struct archive_write *a, struct iso9660 *iso9660, cons
 }
 
 static int
-isoent_cmp_node(const struct archive_rb_node *n1,
-    const struct archive_rb_node *n2)
+isoent_cmp_node(const struct tk_archive_rb_node *n1,
+    const struct tk_archive_rb_node *n2)
 {
 	const struct isoent *e1 = (const struct isoent *)n1;
 	const struct isoent *e2 = (const struct isoent *)n2;
@@ -5214,7 +5214,7 @@ isoent_cmp_node(const struct archive_rb_node *n1,
 }
 
 static int
-isoent_cmp_key(const struct archive_rb_node *n, const void *key)
+isoent_cmp_key(const struct tk_archive_rb_node *n, const void *key)
 {
 	const struct isoent *e = (const struct isoent *)n;
 
@@ -5225,8 +5225,8 @@ static int
 isoent_add_child_head(struct isoent *parent, struct isoent *child)
 {
 
-	if (!__archive_rb_tree_insert_node(
-	    &(parent->rbtree), (struct archive_rb_node *)child))
+	if (!__tk_archive_rb_tree_insert_node(
+	    &(parent->rbtree), (struct tk_archive_rb_node *)child))
 		return (0);
 	if ((child->chnext = parent->children.first) == NULL)
 		parent->children.last = &(child->chnext);
@@ -5250,8 +5250,8 @@ static int
 isoent_add_child_tail(struct isoent *parent, struct isoent *child)
 {
 
-	if (!__archive_rb_tree_insert_node(
-	    &(parent->rbtree), (struct archive_rb_node *)child))
+	if (!__tk_archive_rb_tree_insert_node(
+	    &(parent->rbtree), (struct tk_archive_rb_node *)child))
 		return (0);
 	child->chnext = NULL;
 	*parent->children.last = child;
@@ -5293,12 +5293,12 @@ isoent_remove_child(struct isoent *parent, struct isoent *child)
 		parent->subdirs.cnt--;
 	}
 
-	__archive_rb_tree_remove_node(&(parent->rbtree),
-	    (struct archive_rb_node *)child);
+	__tk_archive_rb_tree_remove_node(&(parent->rbtree),
+	    (struct tk_archive_rb_node *)child);
 }
 
 static int
-isoent_clone_tree(struct archive_write *a, struct isoent **nroot,
+isoent_clone_tree(struct tk_archive_write *a, struct isoent **nroot,
     struct isoent *root)
 {
 	struct isoent *np, *xroot, *newent;
@@ -5308,7 +5308,7 @@ isoent_clone_tree(struct archive_write *a, struct isoent **nroot,
 	do {
 		newent = isoent_clone(np);
 		if (newent == NULL) {
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate memory");
 			return (ARCHIVE_FATAL);
 		}
@@ -5405,7 +5405,7 @@ _isoent_file_location(struct iso9660 *iso9660, struct isoent *isoent,
 		file = np->file;
 		if (file->boot || file->hardlink_target != NULL)
 			continue;
-		if (archive_entry_filetype(file->entry) == AE_IFLNK ||
+		if (tk_archive_entry_filetype(file->entry) == AE_IFLNK ||
 		    file->content.size == 0) {
 			/*
 			 * Do not point a valid location.
@@ -5438,7 +5438,7 @@ isoent_setup_file_location(struct iso9660 *iso9660, int location)
 	iso9660->total_file_block = 0;
 	if ((isoent = iso9660->el_torito.catalog) != NULL) {
 		isoent->file->content.location = location;
-		block = (int)((archive_entry_size(isoent->file->entry) +
+		block = (int)((tk_archive_entry_size(isoent->file->entry) +
 		    LOGICAL_BLOCK_SIZE -1) >> LOGICAL_BLOCK_BITS);
 		location += block;
 		iso9660->total_file_block += block;
@@ -5447,7 +5447,7 @@ isoent_setup_file_location(struct iso9660 *iso9660, int location)
 		isoent->file->content.location = location;
 		size = fd_boot_image_size(iso9660->el_torito.media_type);
 		if (size == 0)
-			size = (size_t)archive_entry_size(isoent->file->entry);
+			size = (size_t)tk_archive_entry_size(isoent->file->entry);
 		block = ((int)size + LOGICAL_BLOCK_SIZE -1)
 		    >> LOGICAL_BLOCK_BITS;
 		location += block;
@@ -5533,7 +5533,7 @@ get_path_component(char *name, size_t n, const char *fn)
  * Add a new entry into the tree.
  */
 static int
-isoent_tree(struct archive_write *a, struct isoent **isoentpp)
+isoent_tree(struct tk_archive_write *a, struct isoent **isoentpp)
 {
 #if defined(_WIN32) && !defined(__CYGWIN__)
 	char name[_MAX_FNAME];/* Included null terminator size. */
@@ -5560,11 +5560,11 @@ isoent_tree(struct archive_write *a, struct isoent **isoentpp)
 	 * the same as the path of `cur_dirent', add isoent to
 	 * `cur_dirent'.
 	 */
-	if (archive_strlen(&(iso9660->cur_dirstr))
-	      == archive_strlen(&(isoent->file->parentdir)) &&
+	if (tk_archive_strlen(&(iso9660->cur_dirstr))
+	      == tk_archive_strlen(&(isoent->file->parentdir)) &&
 	    strcmp(iso9660->cur_dirstr.s, fn) == 0) {
 		if (!isoent_add_child_tail(iso9660->cur_dirent, isoent)) {
-			np = (struct isoent *)__archive_rb_tree_find_node(
+			np = (struct isoent *)__tk_archive_rb_tree_find_node(
 			    &(iso9660->cur_dirent->rbtree),
 			    isoent->file->basename.s);
 			goto same_entry;
@@ -5579,7 +5579,7 @@ isoent_tree(struct archive_write *a, struct isoent **isoentpp)
 			break;
 		}
 		if (l < 0) {
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_MISC,
 			    "A name buffer is too small");
 			_isoent_free(isoent);
@@ -5593,11 +5593,11 @@ isoent_tree(struct archive_write *a, struct isoent **isoentpp)
 		/* Find next subdirectory. */
 		if (!np->dir) {
 			/* NOT Directory! */
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_MISC,
 			    "`%s' is not directory, we cannot insert `%s' ",
-			    archive_entry_pathname(np->file->entry),
-			    archive_entry_pathname(isoent->file->entry));
+			    tk_archive_entry_pathname(np->file->entry),
+			    tk_archive_entry_pathname(isoent->file->entry));
 			_isoent_free(isoent);
 			*isoentpp = NULL;
 			return (ARCHIVE_FAILED);
@@ -5613,24 +5613,24 @@ isoent_tree(struct archive_write *a, struct isoent **isoentpp)
 		 */
 		while (fn[0] != '\0') {
 			struct isoent *vp;
-			struct archive_string as;
+			struct tk_archive_string as;
 
-			archive_string_init(&as);
-			archive_strncat(&as, p, fn - p + l);
+			tk_archive_string_init(&as);
+			tk_archive_strncat(&as, p, fn - p + l);
 			if (as.s[as.length-1] == '/') {
 				as.s[as.length-1] = '\0';
 				as.length--;
 			}
 			vp = isoent_create_virtual_dir(a, iso9660, as.s);
 			if (vp == NULL) {
-				archive_string_free(&as);
-				archive_set_error(&a->archive, ENOMEM,
+				tk_archive_string_free(&as);
+				tk_archive_set_error(&a->archive, ENOMEM,
 				    "Can't allocate memory");
 				_isoent_free(isoent);
 				*isoentpp = NULL;
 				return (ARCHIVE_FATAL);
 			}
-			archive_string_free(&as);
+			tk_archive_string_free(&as);
 
 			if (vp->file->dircnt > iso9660->dircnt_max)
 				iso9660->dircnt_max = vp->file->dircnt;
@@ -5642,8 +5642,8 @@ isoent_tree(struct archive_write *a, struct isoent **isoentpp)
 				fn++;
 			l = get_path_component(name, sizeof(name), fn);
 			if (l < 0) {
-				archive_string_free(&as);
-				archive_set_error(&a->archive,
+				tk_archive_string_free(&as);
+				tk_archive_set_error(&a->archive,
 				    ARCHIVE_ERRNO_MISC,
 				    "A name buffer is too small");
 				_isoent_free(isoent);
@@ -5656,25 +5656,25 @@ isoent_tree(struct archive_write *a, struct isoent **isoentpp)
 		/* Found out the parent directory where isoent can be
 		 * inserted. */
 		iso9660->cur_dirent = dent;
-		archive_string_empty(&(iso9660->cur_dirstr));
-		archive_string_ensure(&(iso9660->cur_dirstr),
-		    archive_strlen(&(dent->file->parentdir)) +
-		    archive_strlen(&(dent->file->basename)) + 2);
-		if (archive_strlen(&(dent->file->parentdir)) +
-		    archive_strlen(&(dent->file->basename)) == 0)
+		tk_archive_string_empty(&(iso9660->cur_dirstr));
+		tk_archive_string_ensure(&(iso9660->cur_dirstr),
+		    tk_archive_strlen(&(dent->file->parentdir)) +
+		    tk_archive_strlen(&(dent->file->basename)) + 2);
+		if (tk_archive_strlen(&(dent->file->parentdir)) +
+		    tk_archive_strlen(&(dent->file->basename)) == 0)
 			iso9660->cur_dirstr.s[0] = 0;
 		else {
-			if (archive_strlen(&(dent->file->parentdir)) > 0) {
-				archive_string_copy(&(iso9660->cur_dirstr),
+			if (tk_archive_strlen(&(dent->file->parentdir)) > 0) {
+				tk_archive_string_copy(&(iso9660->cur_dirstr),
 				    &(dent->file->parentdir));
-				archive_strappend_char(&(iso9660->cur_dirstr), '/');
+				tk_archive_strappend_char(&(iso9660->cur_dirstr), '/');
 			}
-			archive_string_concat(&(iso9660->cur_dirstr),
+			tk_archive_string_concat(&(iso9660->cur_dirstr),
 			    &(dent->file->basename));
 		}
 
 		if (!isoent_add_child_tail(dent, isoent)) {
-			np = (struct isoent *)__archive_rb_tree_find_node(
+			np = (struct isoent *)__tk_archive_rb_tree_find_node(
 			    &(dent->rbtree), isoent->file->basename.s);
 			goto same_entry;
 		}
@@ -5691,12 +5691,12 @@ same_entry:
 
 	/* If the file type of entries is different,
 	 * we cannot handle it. */
-	if (archive_entry_filetype(f1->entry) !=
-	    archive_entry_filetype(f2->entry)) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+	if (tk_archive_entry_filetype(f1->entry) !=
+	    tk_archive_entry_filetype(f2->entry)) {
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 		    "Found duplicate entries `%s' and its file type is "
 		    "different",
-		    archive_entry_pathname(f1->entry));
+		    tk_archive_entry_pathname(f1->entry));
 		_isoent_free(isoent);
 		*isoentpp = NULL;
 		return (ARCHIVE_FAILED);
@@ -5720,7 +5720,7 @@ isoent_find_child(struct isoent *isoent, const char *child_name)
 {
 	struct isoent *np;
 
-	np = (struct isoent *)__archive_rb_tree_find_node(
+	np = (struct isoent *)__tk_archive_rb_tree_find_node(
 	    &(isoent->rbtree), child_name);
 	return (np);
 }
@@ -5814,7 +5814,7 @@ idr_cleanup(struct idr *idr)
 }
 
 static int
-idr_ensure_poolsize(struct archive_write *a, struct idr *idr,
+idr_ensure_poolsize(struct tk_archive_write *a, struct idr *idr,
     int cnt)
 {
 
@@ -5826,7 +5826,7 @@ idr_ensure_poolsize(struct archive_write *a, struct idr *idr,
 		psize = (cnt + bk) & ~bk;
 		p = realloc(idr->idrent_pool, sizeof(struct idrent) * psize);
 		if (p == NULL) {
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate memory");
 			return (ARCHIVE_FATAL);
 		}
@@ -5837,8 +5837,8 @@ idr_ensure_poolsize(struct archive_write *a, struct idr *idr,
 }
 
 static int
-idr_start(struct archive_write *a, struct idr *idr, int cnt, int ffmax,
-    int num_size, int null_size, const struct archive_rb_tree_ops *rbt_ops)
+idr_start(struct tk_archive_write *a, struct idr *idr, int cnt, int ffmax,
+    int num_size, int null_size, const struct tk_archive_rb_tree_ops *rbt_ops)
 {
 	int r;
 
@@ -5847,7 +5847,7 @@ idr_start(struct archive_write *a, struct idr *idr, int cnt, int ffmax,
 	r = idr_ensure_poolsize(a, idr, cnt);
 	if (r != ARCHIVE_OK)
 		return (r);
-	__archive_rb_tree_init(&(idr->rbtree), rbt_ops);
+	__tk_archive_rb_tree_init(&(idr->rbtree), rbt_ops);
 	idr->wait_list.first = NULL;
 	idr->wait_list.last = &(idr->wait_list.first);
 	idr->pool_idx = 0;
@@ -5868,8 +5868,8 @@ idr_register(struct idr *idr, struct isoent *isoent, int weight, int noff)
 	idrent->noff = noff;
 	idrent->rename_num = 0;
 
-	if (!__archive_rb_tree_insert_node(&(idr->rbtree), &(idrent->rbnode))) {
-		n = (struct idrent *)__archive_rb_tree_find_node(
+	if (!__tk_archive_rb_tree_insert_node(&(idr->rbtree), &(idrent->rbnode))) {
+		n = (struct idrent *)__tk_archive_rb_tree_find_node(
 		    &(idr->rbtree), idrent->isoent);
 		if (n != NULL) {
 			/* this `idrent' needs to rename. */
@@ -5908,7 +5908,7 @@ idr_resolve(struct idr *idr, void (*fsetnum)(unsigned char *p, int num))
 		p = (unsigned char *)n->isoent->identifier + n->noff;
 		do {
 			fsetnum(p, n->avail->rename_num++);
-		} while (!__archive_rb_tree_insert_node(
+		} while (!__tk_archive_rb_tree_insert_node(
 		    &(idr->rbtree), &(n->rbnode)));
 	}
 }
@@ -5946,18 +5946,18 @@ idr_set_num_beutf16(unsigned char *p, int num)
 #define XDIG_CNT	(sizeof(xdig)/sizeof(xdig[0]))
 
 	num %= XDIG_CNT * XDIG_CNT * XDIG_CNT;
-	archive_be16enc(p, xdig[(num / (XDIG_CNT * XDIG_CNT))]);
+	tk_archive_be16enc(p, xdig[(num / (XDIG_CNT * XDIG_CNT))]);
 	num %= XDIG_CNT * XDIG_CNT;
-	archive_be16enc(p+2, xdig[ (num / XDIG_CNT)]);
+	tk_archive_be16enc(p+2, xdig[ (num / XDIG_CNT)]);
 	num %= XDIG_CNT;
-	archive_be16enc(p+4, xdig[num]);
+	tk_archive_be16enc(p+4, xdig[num]);
 }
 
 /*
  * Generate ISO9660 Identifier.
  */
 static int
-isoent_gen_iso9660_identifier(struct archive_write *a, struct isoent *isoent,
+isoent_gen_iso9660_identifier(struct tk_archive_write *a, struct isoent *isoent,
     struct idr *idr)
 {
 	struct iso9660 *iso9660;
@@ -5967,7 +5967,7 @@ isoent_gen_iso9660_identifier(struct archive_write *a, struct isoent *isoent,
 	const char *char_map;
 	char allow_ldots, allow_multidot, allow_period, allow_vernum;
 	int fnmax, ffmax, dnmax;
-	static const struct archive_rb_tree_ops rb_ops = {
+	static const struct tk_archive_rb_tree_ops rb_ops = {
 		isoent_cmp_node_iso9660, isoent_cmp_key_iso9660
 	};
 
@@ -6021,7 +6021,7 @@ isoent_gen_iso9660_identifier(struct archive_write *a, struct isoent *isoent,
 		l = (int)np->file->basename.length;
 		p = malloc(l+31+2+1);
 		if (p == NULL) {
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate memory");
 			return (ARCHIVE_FATAL);
 		}
@@ -6207,7 +6207,7 @@ isoent_gen_iso9660_identifier(struct archive_write *a, struct isoent *isoent,
  * Generate Joliet Identifier.
  */
 static int
-isoent_gen_joliet_identifier(struct archive_write *a, struct isoent *isoent,
+isoent_gen_joliet_identifier(struct tk_archive_write *a, struct isoent *isoent,
     struct idr *idr)
 {
 	struct iso9660 *iso9660;
@@ -6216,7 +6216,7 @@ isoent_gen_joliet_identifier(struct archive_write *a, struct isoent *isoent,
 	size_t l;
 	int r;
 	int ffmax, parent_len;
-	static const struct archive_rb_tree_ops rb_ops = {
+	static const struct tk_archive_rb_tree_ops rb_ops = {
 		isoent_cmp_node_joliet, isoent_cmp_key_joliet
 	};
 
@@ -6247,7 +6247,7 @@ isoent_gen_joliet_identifier(struct archive_write *a, struct isoent *isoent,
 
 		p = malloc((l+1)*2);
 		if (p == NULL) {
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate memory");
 			return (ARCHIVE_FATAL);
 		}
@@ -6261,7 +6261,7 @@ isoent_gen_joliet_identifier(struct archive_write *a, struct isoent *isoent,
 		weight = 0;
 		while (lt > 0) {
 			if (!joliet_allowed_char(p[0], p[1]))
-				archive_be16enc(p, 0x005F); /* '_' */
+				tk_archive_be16enc(p, 0x005F); /* '_' */
 			else if (p[0] == 0 && p[1] == 0x2E) /* '.' */
 				dot = p;
 			p += 2;
@@ -6276,11 +6276,11 @@ isoent_gen_joliet_identifier(struct archive_write *a, struct isoent *isoent,
 		 * Get a length of MBS of a full-pathname.
 		 */
 		if ((int)np->file->basename_utf16.length > ffmax) {
-			if (archive_strncpy_l(&iso9660->mbs,
+			if (tk_archive_strncpy_l(&iso9660->mbs,
 			    (const char *)np->identifier, l,
 				iso9660->sconv_from_utf16be) != 0 &&
 			    errno == ENOMEM) {
-				archive_set_error(&a->archive, errno,
+				tk_archive_set_error(&a->archive, errno,
 				    "No memory");
 				return (ARCHIVE_FATAL);
 			}
@@ -6293,11 +6293,11 @@ isoent_gen_joliet_identifier(struct archive_write *a, struct isoent *isoent,
 		/* If a length of full-pathname is longer than 240 bytes,
 		 * it violates Joliet extensions regulation. */
 		if (parent_len + np->mb_len > 240) {
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "The regulation of Joliet extensions;"
 			    " A length of a full-pathname of `%s' is "
 			    "longer than 240 bytes, (p=%d, b=%d)",
-			    archive_entry_pathname(np->file->entry),
+			    tk_archive_entry_pathname(np->file->entry),
 			    (int)parent_len, (int)np->mb_len);
 			return (ARCHIVE_FATAL);
 		}
@@ -6398,8 +6398,8 @@ isoent_cmp_iso9660_identifier(const struct isoent *p1, const struct isoent *p2)
 }
 
 static int
-isoent_cmp_node_iso9660(const struct archive_rb_node *n1,
-    const struct archive_rb_node *n2)
+isoent_cmp_node_iso9660(const struct tk_archive_rb_node *n1,
+    const struct tk_archive_rb_node *n2)
 {
 	const struct idrent *e1 = (const struct idrent *)n1;
 	const struct idrent *e2 = (const struct idrent *)n2;
@@ -6408,7 +6408,7 @@ isoent_cmp_node_iso9660(const struct archive_rb_node *n1,
 }
 
 static int
-isoent_cmp_key_iso9660(const struct archive_rb_node *node, const void *key)
+isoent_cmp_key_iso9660(const struct tk_archive_rb_node *node, const void *key)
 {
 	const struct isoent *isoent = (const struct isoent *)key;
 	const struct idrent *idrent = (const struct idrent *)node;
@@ -6485,8 +6485,8 @@ isoent_cmp_joliet_identifier(const struct isoent *p1, const struct isoent *p2)
 }
 
 static int
-isoent_cmp_node_joliet(const struct archive_rb_node *n1,
-    const struct archive_rb_node *n2)
+isoent_cmp_node_joliet(const struct tk_archive_rb_node *n1,
+    const struct tk_archive_rb_node *n2)
 {
 	const struct idrent *e1 = (const struct idrent *)n1;
 	const struct idrent *e2 = (const struct idrent *)n2;
@@ -6495,7 +6495,7 @@ isoent_cmp_node_joliet(const struct archive_rb_node *n1,
 }
 
 static int
-isoent_cmp_key_joliet(const struct archive_rb_node *node, const void *key)
+isoent_cmp_key_joliet(const struct tk_archive_rb_node *node, const void *key)
 {
 	const struct isoent *isoent = (const struct isoent *)key;
 	const struct idrent *idrent = (const struct idrent *)node;
@@ -6504,15 +6504,15 @@ isoent_cmp_key_joliet(const struct archive_rb_node *node, const void *key)
 }
 
 static int
-isoent_make_sorted_files(struct archive_write *a, struct isoent *isoent,
+isoent_make_sorted_files(struct tk_archive_write *a, struct isoent *isoent,
     struct idr *idr)
 {
-	struct archive_rb_node *rn;
+	struct tk_archive_rb_node *rn;
 	struct isoent **children;
 
 	children = malloc(isoent->children.cnt * sizeof(struct isoent *));
 	if (children == NULL) {
-		archive_set_error(&a->archive, ENOMEM,
+		tk_archive_set_error(&a->archive, ENOMEM,
 		    "Can't allocate memory");
 		return (ARCHIVE_FATAL);
 	}
@@ -6530,14 +6530,14 @@ isoent_make_sorted_files(struct archive_write *a, struct isoent *isoent,
  * - Sort files by each directory.
  */
 static int
-isoent_traverse_tree(struct archive_write *a, struct vdd* vdd)
+isoent_traverse_tree(struct tk_archive_write *a, struct vdd* vdd)
 {
 	struct iso9660 *iso9660 = a->format_data;
 	struct isoent *np;
 	struct idr idr;
 	int depth;
 	int r;
-	int (*genid)(struct archive_write *, struct isoent *, struct idr *);
+	int (*genid)(struct tk_archive_write *, struct isoent *, struct idr *);
 
 	idr_init(iso9660, vdd, &idr);
 	np = vdd->rootent;
@@ -6548,13 +6548,13 @@ isoent_traverse_tree(struct archive_write *a, struct vdd* vdd)
 		genid = isoent_gen_iso9660_identifier;
 	do {
 		if (np->virtual &&
-		    !archive_entry_mtime_is_set(np->file->entry)) {
+		    !tk_archive_entry_mtime_is_set(np->file->entry)) {
 			/* Set properly times to virtual directory */
-			archive_entry_set_mtime(np->file->entry,
+			tk_archive_entry_set_mtime(np->file->entry,
 			    iso9660->birth_time, 0);
-			archive_entry_set_atime(np->file->entry,
+			tk_archive_entry_set_atime(np->file->entry,
 			    iso9660->birth_time, 0);
-			archive_entry_set_ctime(np->file->entry,
+			tk_archive_entry_set_ctime(np->file->entry,
 			    iso9660->birth_time, 0);
 		}
 		if (np->children.first != NULL) {
@@ -6640,7 +6640,7 @@ isoent_collect_dirs(struct vdd *vdd, struct isoent *rootent, int depth)
  * large than eight relocate to rr_move directory.
  */
 static int
-isoent_rr_move_dir(struct archive_write *a, struct isoent **rr_moved,
+isoent_rr_move_dir(struct tk_archive_write *a, struct isoent **rr_moved,
     struct isoent *curent, struct isoent **newent)
 {
 	struct iso9660 *iso9660 = a->format_data;
@@ -6653,14 +6653,14 @@ isoent_rr_move_dir(struct archive_write *a, struct isoent **rr_moved,
 		 */
 		rrmoved = isoent_create_virtual_dir(a, iso9660, "rr_moved");
 		if (rrmoved == NULL) {
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate memory");
 			return (ARCHIVE_FATAL);
 		}
 		/* Add "rr_moved" entry to the root entry. */
 		isoent_add_child_head(rootent, rrmoved);
-		archive_entry_set_nlink(rootent->file->entry,
-		    archive_entry_nlink(rootent->file->entry) + 1);
+		tk_archive_entry_set_nlink(rootent->file->entry,
+		    tk_archive_entry_nlink(rootent->file->entry) + 1);
 		/* Register "rr_moved" entry to second level pathtable. */
 		path_table_add_entry(&(iso9660->primary.pathtbl[1]), rrmoved);
 		/* Save rr_moved. */
@@ -6672,7 +6672,7 @@ isoent_rr_move_dir(struct archive_write *a, struct isoent **rr_moved,
 	 */
 	mvent = isoent_clone(curent);
 	if (mvent == NULL) {
-		archive_set_error(&a->archive, ENOMEM,
+		tk_archive_set_error(&a->archive, ENOMEM,
 		    "Can't allocate memory");
 		return (ARCHIVE_FATAL);
 	}
@@ -6706,8 +6706,8 @@ isoent_rr_move_dir(struct archive_write *a, struct isoent **rr_moved,
 	 * The mvent becomes a child of the rr_moved entry.
 	 */
 	isoent_add_child_tail(rrmoved, mvent);
-	archive_entry_set_nlink(rrmoved->file->entry,
-	    archive_entry_nlink(rrmoved->file->entry) + 1);
+	tk_archive_entry_set_nlink(rrmoved->file->entry,
+	    tk_archive_entry_nlink(rrmoved->file->entry) + 1);
 	/*
 	 * This entry which relocated to the rr_moved directory
 	 * has to set the flag as a file.
@@ -6721,7 +6721,7 @@ isoent_rr_move_dir(struct archive_write *a, struct isoent **rr_moved,
 }
 
 static int
-isoent_rr_move(struct archive_write *a)
+isoent_rr_move(struct tk_archive_write *a)
 {
 	struct iso9660 *iso9660 = a->format_data;
 	struct path_table *pt;
@@ -6891,7 +6891,7 @@ path_table_last_entry(struct path_table *pathtbl)
  * and assign directory number to each entries.
  */
 static int
-isoent_make_path_table_2(struct archive_write *a, struct vdd *vdd,
+isoent_make_path_table_2(struct tk_archive_write *a, struct vdd *vdd,
     int depth, int *dir_number)
 {
 	struct isoent *np;
@@ -6906,7 +6906,7 @@ isoent_make_path_table_2(struct archive_write *a, struct vdd *vdd,
 	}
 	enttbl = malloc(pt->cnt * sizeof(struct isoent *));
 	if (enttbl == NULL) {
-		archive_set_error(&a->archive, ENOMEM,
+		tk_archive_set_error(&a->archive, ENOMEM,
 		    "Can't allocate memory");
 		return (ARCHIVE_FATAL);
 	}
@@ -6943,7 +6943,7 @@ isoent_make_path_table_2(struct archive_write *a, struct vdd *vdd,
 }
 
 static int
-isoent_alloc_path_table(struct archive_write *a, struct vdd *vdd,
+isoent_alloc_path_table(struct tk_archive_write *a, struct vdd *vdd,
     int max_depth)
 {
 	int i;
@@ -6951,7 +6951,7 @@ isoent_alloc_path_table(struct archive_write *a, struct vdd *vdd,
 	vdd->max_depth = max_depth;
 	vdd->pathtbl = malloc(sizeof(*vdd->pathtbl) * vdd->max_depth);
 	if (vdd->pathtbl == NULL) {
-		archive_set_error(&a->archive, ENOMEM,
+		tk_archive_set_error(&a->archive, ENOMEM,
 		    "Can't allocate memory");
 		return (ARCHIVE_FATAL);
 	}
@@ -6968,7 +6968,7 @@ isoent_alloc_path_table(struct archive_write *a, struct vdd *vdd,
  * Make Path Tables
  */
 static int
-isoent_make_path_table(struct archive_write *a)
+isoent_make_path_table(struct tk_archive_write *a)
 {
 	struct iso9660 *iso9660 = a->format_data;
 	int depth, r;
@@ -7055,7 +7055,7 @@ isoent_make_path_table(struct archive_write *a)
 		 * the Path Table.
 		 * See also ISO9660 Standard 9.4.
 		 */
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 		    "Too many directories(%d) over 65535.", dir_number);
 		return (ARCHIVE_FATAL);
 	}
@@ -7069,7 +7069,7 @@ isoent_make_path_table(struct archive_write *a)
 }
 
 static int
-isoent_find_out_boot_file(struct archive_write *a, struct isoent *rootent)
+isoent_find_out_boot_file(struct tk_archive_write *a, struct isoent *rootent)
 {
 	struct iso9660 *iso9660 = a->format_data;
 
@@ -7077,7 +7077,7 @@ isoent_find_out_boot_file(struct archive_write *a, struct isoent *rootent)
 	iso9660->el_torito.boot = isoent_find_entry(rootent,
 	    iso9660->el_torito.boot_filename.s);
 	if (iso9660->el_torito.boot == NULL) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 		    "Can't find the boot image file ``%s''",
 		    iso9660->el_torito.boot_filename.s);
 		return (ARCHIVE_FATAL);
@@ -7087,12 +7087,12 @@ isoent_find_out_boot_file(struct archive_write *a, struct isoent *rootent)
 }
 
 static int
-isoent_create_boot_catalog(struct archive_write *a, struct isoent *rootent)
+isoent_create_boot_catalog(struct tk_archive_write *a, struct isoent *rootent)
 {
 	struct iso9660 *iso9660 = a->format_data;
 	struct isofile *file;
 	struct isoent *isoent;
-	struct archive_entry *entry;
+	struct tk_archive_entry *entry;
 
 	(void)rootent; /* UNUSED */
 	/*
@@ -7100,20 +7100,20 @@ isoent_create_boot_catalog(struct archive_write *a, struct isoent *rootent)
 	 */
 	file = isofile_new(a, NULL);
 	if (file == NULL) {
-		archive_set_error(&a->archive, ENOMEM,
+		tk_archive_set_error(&a->archive, ENOMEM,
 		    "Can't allocate memory");
 		return (ARCHIVE_FATAL);
 	}
-	archive_entry_set_pathname(file->entry,
+	tk_archive_entry_set_pathname(file->entry,
 	    iso9660->el_torito.catalog_filename.s);
-	archive_entry_set_size(file->entry, LOGICAL_BLOCK_SIZE);
-	archive_entry_set_mtime(file->entry, iso9660->birth_time, 0);
-	archive_entry_set_atime(file->entry, iso9660->birth_time, 0);
-	archive_entry_set_ctime(file->entry, iso9660->birth_time, 0);
-	archive_entry_set_uid(file->entry, getuid());
-	archive_entry_set_gid(file->entry, getgid());
-	archive_entry_set_mode(file->entry, AE_IFREG | 0444);
-	archive_entry_set_nlink(file->entry, 1);
+	tk_archive_entry_set_size(file->entry, LOGICAL_BLOCK_SIZE);
+	tk_archive_entry_set_mtime(file->entry, iso9660->birth_time, 0);
+	tk_archive_entry_set_atime(file->entry, iso9660->birth_time, 0);
+	tk_archive_entry_set_ctime(file->entry, iso9660->birth_time, 0);
+	tk_archive_entry_set_uid(file->entry, getuid());
+	tk_archive_entry_set_gid(file->entry, getgid());
+	tk_archive_entry_set_mode(file->entry, AE_IFREG | 0444);
+	tk_archive_entry_set_nlink(file->entry, 1);
 
 	if (isofile_gen_utility_names(a, file) < ARCHIVE_WARN) {
 		isofile_free(file);
@@ -7125,7 +7125,7 @@ isoent_create_boot_catalog(struct archive_write *a, struct isoent *rootent)
 
 	isoent = isoent_new(file);
 	if (isoent == NULL) {
-		archive_set_error(&a->archive, ENOMEM,
+		tk_archive_set_error(&a->archive, ENOMEM,
 		    "Can't allocate memory");
 		return (ARCHIVE_FATAL);
 	}
@@ -7144,13 +7144,13 @@ isoent_create_boot_catalog(struct archive_write *a, struct isoent *rootent)
 	case OPT_BOOT_TYPE_AUTO:
 		/* Try detecting a media type of the boot image. */
 		entry = iso9660->el_torito.boot->file->entry;
-		if (archive_entry_size(entry) == FD_1_2M_SIZE)
+		if (tk_archive_entry_size(entry) == FD_1_2M_SIZE)
 			iso9660->el_torito.media_type =
 			    BOOT_MEDIA_1_2M_DISKETTE;
-		else if (archive_entry_size(entry) == FD_1_44M_SIZE)
+		else if (tk_archive_entry_size(entry) == FD_1_44M_SIZE)
 			iso9660->el_torito.media_type =
 			    BOOT_MEDIA_1_44M_DISKETTE;
-		else if (archive_entry_size(entry) == FD_2_88M_SIZE)
+		else if (tk_archive_entry_size(entry) == FD_2_88M_SIZE)
 			iso9660->el_torito.media_type =
 			    BOOT_MEDIA_2_88M_DISKETTE;
 		else
@@ -7167,17 +7167,17 @@ isoent_create_boot_catalog(struct archive_write *a, struct isoent *rootent)
 		break;
 	case OPT_BOOT_TYPE_FD:
 		entry = iso9660->el_torito.boot->file->entry;
-		if (archive_entry_size(entry) <= FD_1_2M_SIZE)
+		if (tk_archive_entry_size(entry) <= FD_1_2M_SIZE)
 			iso9660->el_torito.media_type =
 			    BOOT_MEDIA_1_2M_DISKETTE;
-		else if (archive_entry_size(entry) <= FD_1_44M_SIZE)
+		else if (tk_archive_entry_size(entry) <= FD_1_44M_SIZE)
 			iso9660->el_torito.media_type =
 			    BOOT_MEDIA_1_44M_DISKETTE;
-		else if (archive_entry_size(entry) <= FD_2_88M_SIZE)
+		else if (tk_archive_entry_size(entry) <= FD_2_88M_SIZE)
 			iso9660->el_torito.media_type =
 			    BOOT_MEDIA_2_88M_DISKETTE;
 		else {
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "Boot image file(``%s'') size is too big "
 			    "for fd type.",
 			    iso9660->el_torito.boot_filename.s);
@@ -7197,7 +7197,7 @@ isoent_create_boot_catalog(struct archive_write *a, struct isoent *rootent)
 	 * Get an ID.
 	 */
 	if (iso9660->opt.publisher)
-		archive_string_copy(&(iso9660->el_torito.id),
+		tk_archive_string_copy(&(iso9660->el_torito.id),
 		    &(iso9660->publisher_identifier));
 
 
@@ -7227,7 +7227,7 @@ fd_boot_image_size(int media_type)
  * Make a boot catalog image data.
  */
 static int
-make_boot_catalog(struct archive_write *a)
+make_boot_catalog(struct tk_archive_write *a)
 {
 	struct iso9660 *iso9660 = a->format_data;
 	unsigned char *block;
@@ -7247,7 +7247,7 @@ make_boot_catalog(struct archive_write *a)
 	/* Reserved */
 	p[2] = p[3] = 0;
 	/* ID */
-	if (archive_strlen(&(iso9660->el_torito.id)) > 0)
+	if (tk_archive_strlen(&(iso9660->el_torito.id)) > 0)
 		strncpy((char *)p+4, iso9660->el_torito.id.s, 23);
 	p[27] = 0;
 	/* Checksum */
@@ -7259,7 +7259,7 @@ make_boot_catalog(struct archive_write *a)
 	sum = 0;
 	wp = (uint16_t *)block;
 	while (wp < (uint16_t *)&block[32])
-		sum += archive_le16dec(wp++);
+		sum += tk_archive_le16dec(wp++);
 	set_num_721(&block[28], (~sum) + 1);
 
 	/*
@@ -7294,7 +7294,7 @@ make_boot_catalog(struct archive_write *a)
 }
 
 static int
-setup_boot_information(struct archive_write *a)
+setup_boot_information(struct tk_archive_write *a)
 {
 	struct iso9660 *iso9660 = a->format_data;
 	struct isoent *np;
@@ -7305,9 +7305,9 @@ setup_boot_information(struct archive_write *a)
 	np = iso9660->el_torito.boot;
 	lseek(iso9660->temp_fd,
 	    np->file->content.offset_of_temp + 64, SEEK_SET);
-	size = archive_entry_size(np->file->entry) - 64;
+	size = tk_archive_entry_size(np->file->entry) - 64;
 	if (size <= 0) {
-		archive_set_error(&a->archive, errno,
+		tk_archive_set_error(&a->archive, errno,
 		    "Boot file(%jd) is too small", (intmax_t)size + 64);
 		return (ARCHIVE_FATAL);
 	}
@@ -7323,13 +7323,13 @@ setup_boot_information(struct archive_write *a)
 
 		rs = read(iso9660->temp_fd, buff, rsize);
 		if (rs <= 0) {
-			archive_set_error(&a->archive, errno,
+			tk_archive_set_error(&a->archive, errno,
 			    "Can't read temporary file(%jd)",
 			    (intmax_t)rs);
 			return (ARCHIVE_FATAL);
 		}
 		for (i = 0; i < rs; i += 4)
-			sum += archive_le32dec(buff + i);
+			sum += tk_archive_le32dec(buff + i);
 		size -= rs;
 	}
 	/* Set the location of Primary Volume Descriptor. */
@@ -7339,7 +7339,7 @@ setup_boot_information(struct archive_write *a)
 	/* Set the size of the boot file. */
 	size = fd_boot_image_size(iso9660->el_torito.media_type);
 	if (size == 0)
-		size = archive_entry_size(np->file->entry);
+		size = tk_archive_entry_size(np->file->entry);
 	set_num_731(buff+8, (uint32_t)size);
 	/* Set the sum of the boot file. */
 	set_num_731(buff+12, sum);
@@ -7355,7 +7355,7 @@ setup_boot_information(struct archive_write *a)
 #ifdef HAVE_ZLIB_H
 
 static int
-zisofs_init_zstream(struct archive_write *a)
+zisofs_init_zstream(struct tk_archive_write *a)
 {
 	struct iso9660 *iso9660 = a->format_data;
 	int r;
@@ -7376,17 +7376,17 @@ zisofs_init_zstream(struct archive_write *a)
 		break;
 	default:
 	case Z_STREAM_ERROR:
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 		    "Internal error initializing "
 		    "compression library: invalid setup parameter");
 		return (ARCHIVE_FATAL);
 	case Z_MEM_ERROR:
-		archive_set_error(&a->archive, ENOMEM,
+		tk_archive_set_error(&a->archive, ENOMEM,
 		    "Internal error initializing "
 		    "compression library");
 		return (ARCHIVE_FATAL);
 	case Z_VERSION_ERROR:
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 		    "Internal error initializing "
 		    "compression library: invalid library version");
 		return (ARCHIVE_FATAL);
@@ -7397,7 +7397,7 @@ zisofs_init_zstream(struct archive_write *a)
 #endif /* HAVE_ZLIB_H */
 
 static int
-zisofs_init(struct archive_write *a,  struct isofile *file)
+zisofs_init(struct tk_archive_write *a,  struct isofile *file)
 {
 	struct iso9660 *iso9660 = a->format_data;
 #ifdef HAVE_ZLIB_H
@@ -7412,8 +7412,8 @@ zisofs_init(struct archive_write *a,  struct isofile *file)
 	if (!iso9660->opt.rr || !iso9660->opt.zisofs)
 		return (ARCHIVE_OK);
 
-	if (archive_entry_size(file->entry) >= 24 &&
-	    archive_entry_size(file->entry) < MULTI_EXTENT_SIZE) {
+	if (tk_archive_entry_size(file->entry) >= 24 &&
+	    tk_archive_entry_size(file->entry) < MULTI_EXTENT_SIZE) {
 		/* Acceptable file size for zisofs. */
 		iso9660->zisofs.detect_magic = 1;
 		iso9660->zisofs.magic_cnt = 0;
@@ -7426,7 +7426,7 @@ zisofs_init(struct archive_write *a,  struct isofile *file)
 	 * will use in iso-image file is the same as the number of
 	 * Logical Blocks which zisofs(compressed) data will use
 	 * in ISO-image file. It won't reduce iso-image file size. */
-	if (archive_entry_size(file->entry) <= LOGICAL_BLOCK_SIZE)
+	if (tk_archive_entry_size(file->entry) <= LOGICAL_BLOCK_SIZE)
 		return (ARCHIVE_OK);
 
 	/* Initialize compression library */
@@ -7438,7 +7438,7 @@ zisofs_init(struct archive_write *a,  struct isofile *file)
 	file->zisofs.header_size = ZF_HEADER_SIZE >> 2;
 	file->zisofs.log2_bs = ZF_LOG2_BS;
 	file->zisofs.uncompressed_size =
-		(uint32_t)archive_entry_size(file->entry);
+		(uint32_t)tk_archive_entry_size(file->entry);
 
 	/* Calculate a size of Block Pointers of zisofs. */
 	_ceil = (file->zisofs.uncompressed_size + ZF_BLOCK_SIZE -1)
@@ -7453,7 +7453,7 @@ zisofs_init(struct archive_write *a,  struct isofile *file)
 		free(iso9660->zisofs.block_pointers);
 		iso9660->zisofs.block_pointers = malloc(bpsize);
 		if (iso9660->zisofs.block_pointers == NULL) {
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate data");
 			return (ARCHIVE_FATAL);
 		}
@@ -7472,7 +7472,7 @@ zisofs_init(struct archive_write *a,  struct isofile *file)
 	/*
 	 * Initialize some variables to make zisofs.
 	 */
-	archive_le32enc(&(iso9660->zisofs.block_pointers[0]),
+	tk_archive_le32enc(&(iso9660->zisofs.block_pointers[0]),
 		(uint32_t)tsize);
 	iso9660->zisofs.remaining = file->zisofs.uncompressed_size;
 	iso9660->zisofs.making = 1;
@@ -7486,7 +7486,7 @@ zisofs_init(struct archive_write *a,  struct isofile *file)
 }
 
 static void
-zisofs_detect_magic(struct archive_write *a, const void *buff, size_t s)
+zisofs_detect_magic(struct tk_archive_write *a, const void *buff, size_t s)
 {
 	struct iso9660 *iso9660 = a->format_data;
 	struct isofile *file = iso9660->cur_file;
@@ -7500,7 +7500,7 @@ zisofs_detect_magic(struct archive_write *a, const void *buff, size_t s)
 	int magic_max;
 	int64_t entry_size;
 
-	entry_size = archive_entry_size(file->entry);
+	entry_size = tk_archive_entry_size(file->entry);
 	if ((int64_t)sizeof(iso9660->zisofs.magic_buffer) > entry_size)
 		magic_max = (int)entry_size;
 	else
@@ -7535,7 +7535,7 @@ zisofs_detect_magic(struct archive_write *a, const void *buff, size_t s)
 	p += sizeof(zisofs_magic);
 
 	/* Read a zisofs header. */
-	uncompressed_size = archive_le32dec(p);
+	uncompressed_size = tk_archive_le32dec(p);
 	header_size = p[4];
 	log2_bs = p[5];
 	if (uncompressed_size < 24 || header_size != 4 ||
@@ -7553,11 +7553,11 @@ zisofs_detect_magic(struct archive_write *a, const void *buff, size_t s)
 	p = magic_buff + 16;
 	endp = magic_buff + magic_max;
 	while (_ceil && p + 8 <= endp) {
-		bst = archive_le32dec(p);
+		bst = tk_archive_le32dec(p);
 		if (bst != doff)
 			return;/* Invalid data. */
 		p += 4;
-		bed = archive_le32dec(p);
+		bed = tk_archive_le32dec(p);
 		if (bed < bst || bed > entry_size)
 			return;/* Invalid data. */
 		doff += bed - bst;
@@ -7578,7 +7578,7 @@ zisofs_detect_magic(struct archive_write *a, const void *buff, size_t s)
  * Compress data and write it to a temporary file.
  */
 static int
-zisofs_write_to_temp(struct archive_write *a, const void *buff, size_t s)
+zisofs_write_to_temp(struct tk_archive_write *a, const void *buff, size_t s)
 {
 	struct iso9660 *iso9660 = a->format_data;
 	struct isofile *file = iso9660->cur_file;
@@ -7662,7 +7662,7 @@ zisofs_write_to_temp(struct archive_write *a, const void *buff, size_t s)
 				zstrm->avail_out = (uInt)wb_remaining(a);
 				break;
 			default:
-				archive_set_error(&a->archive,
+				tk_archive_set_error(&a->archive,
 				    ARCHIVE_ERRNO_MISC,
 				    "Compression failed:"
 				    " deflate() call returned status %d",
@@ -7676,7 +7676,7 @@ zisofs_write_to_temp(struct archive_write *a, const void *buff, size_t s)
 			 * Save the information of one zisofs block.
 			 */
 			iso9660->zisofs.block_pointers_idx ++;
-			archive_le32enc(&(iso9660->zisofs.block_pointers[
+			tk_archive_le32enc(&(iso9660->zisofs.block_pointers[
 			    iso9660->zisofs.block_pointers_idx]),
 				(uint32_t)iso9660->zisofs.total_size);
 			r = zisofs_init_zstream(a);
@@ -7691,7 +7691,7 @@ zisofs_write_to_temp(struct archive_write *a, const void *buff, size_t s)
 }
 
 static int
-zisofs_finish_entry(struct archive_write *a)
+zisofs_finish_entry(struct tk_archive_write *a)
 {
 	struct iso9660 *iso9660 = a->format_data;
 	struct isofile *file = iso9660->cur_file;
@@ -7700,7 +7700,7 @@ zisofs_finish_entry(struct archive_write *a)
 	int64_t tail;
 
 	/* Direct temp file stream to zisofs temp file stream. */
-	archive_entry_set_size(file->entry, iso9660->zisofs.total_size);
+	tk_archive_entry_set_size(file->entry, iso9660->zisofs.total_size);
 
 	/*
 	 * Save a file pointer which points the end of current zisofs data.
@@ -7763,7 +7763,7 @@ zisofs_finish_entry(struct archive_write *a)
 }
 
 static int
-zisofs_free(struct archive_write *a)
+zisofs_free(struct tk_archive_write *a)
 {
 	struct iso9660 *iso9660 = a->format_data;
 	int ret = ARCHIVE_OK;
@@ -7771,7 +7771,7 @@ zisofs_free(struct archive_write *a)
 	free(iso9660->zisofs.block_pointers);
 	if (iso9660->zisofs.stream_valid &&
 	    deflateEnd(&(iso9660->zisofs.stream)) != Z_OK) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 		    "Failed to clean up compressor");
 		ret = ARCHIVE_FATAL;
 	}
@@ -7800,7 +7800,7 @@ struct zisofs_extract {
 };
 
 static ssize_t
-zisofs_extract_init(struct archive_write *a, struct zisofs_extract *zisofs,
+zisofs_extract_init(struct tk_archive_write *a, struct zisofs_extract *zisofs,
     const unsigned char *p, size_t bytes)
 {
 	size_t avail = bytes;
@@ -7815,7 +7815,7 @@ zisofs_extract_init(struct archive_write *a, struct zisofs_extract *zisofs,
 		size_t alloc = ((xsize >> 10) + 1) << 10;
 		zisofs->block_pointers = malloc(alloc);
 		if (zisofs->block_pointers == NULL) {
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "No memory for zisofs decompression");
 			return (ARCHIVE_FATAL);
 		}
@@ -7831,7 +7831,7 @@ zisofs_extract_init(struct archive_write *a, struct zisofs_extract *zisofs,
 	if (!zisofs->header_passed) {
 		int err = 0;
 		if (avail < 16) {
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "Illegal zisofs file body");
 			return (ARCHIVE_FATAL);
@@ -7839,12 +7839,12 @@ zisofs_extract_init(struct archive_write *a, struct zisofs_extract *zisofs,
 
 		if (memcmp(p, zisofs_magic, sizeof(zisofs_magic)) != 0)
 			err = 1;
-		else if (archive_le32dec(p + 8) != zisofs->pz_uncompressed_size)
+		else if (tk_archive_le32dec(p + 8) != zisofs->pz_uncompressed_size)
 			err = 1;
 		else if (p[12] != 4 || p[13] != zisofs->pz_log2_bs)
 			err = 1;
 		if (err) {
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "Illegal zisofs file body");
 			return (ARCHIVE_FATAL);
@@ -7881,7 +7881,7 @@ zisofs_extract_init(struct archive_write *a, struct zisofs_extract *zisofs,
 }
 
 static ssize_t
-zisofs_extract(struct archive_write *a, struct zisofs_extract *zisofs,
+zisofs_extract(struct tk_archive_write *a, struct zisofs_extract *zisofs,
     const unsigned char *p, size_t bytes)
 {
 	size_t avail;
@@ -7909,23 +7909,23 @@ zisofs_extract(struct archive_write *a, struct zisofs_extract *zisofs,
 
 		if (zisofs->block_off + 4 >= zisofs->block_pointers_size) {
 			/* There isn't a pair of offsets. */
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "Illegal zisofs block pointers");
 			return (ARCHIVE_FATAL);
 		}
-		bst = archive_le32dec(
+		bst = tk_archive_le32dec(
 		    zisofs->block_pointers + zisofs->block_off);
 		if (bst != zisofs->pz_offset + (bytes - avail)) {
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "Illegal zisofs block pointers(cannot seek)");
 			return (ARCHIVE_FATAL);
 		}
-		bed = archive_le32dec(
+		bed = tk_archive_le32dec(
 		    zisofs->block_pointers + zisofs->block_off + 4);
 		if (bed < bst) {
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "Illegal zisofs block pointers");
 			return (ARCHIVE_FATAL);
@@ -7939,7 +7939,7 @@ zisofs_extract(struct archive_write *a, struct zisofs_extract *zisofs,
 		else
 			r = inflateInit(&zisofs->stream);
 		if (r != Z_OK) {
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "Can't initialize zisofs decompression.");
 			return (ARCHIVE_FATAL);
 		}
@@ -7986,7 +7986,7 @@ zisofs_extract(struct archive_write *a, struct zisofs_extract *zisofs,
 		case Z_STREAM_END: /* Found end of stream. */
 			break;
 		default:
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "zisofs decompression failed (%d)", r);
 			return (ARCHIVE_FATAL);
 		}
@@ -8001,7 +8001,7 @@ zisofs_extract(struct archive_write *a, struct zisofs_extract *zisofs,
 }
 
 static int
-zisofs_rewind_boot_file(struct archive_write *a)
+zisofs_rewind_boot_file(struct tk_archive_write *a)
 {
 	struct iso9660 *iso9660 = a->format_data;
 	struct isofile *file;
@@ -8038,7 +8038,7 @@ zisofs_rewind_boot_file(struct archive_write *a)
 
 	rbuff = malloc(rbuff_size);
 	if (rbuff == NULL) {
-		archive_set_error(&a->archive, ENOMEM, "Can't allocate memory");
+		tk_archive_set_error(&a->archive, ENOMEM, "Can't allocate memory");
 		return (ARCHIVE_FATAL);
 	}
 	while (remaining) {
@@ -8056,7 +8056,7 @@ zisofs_rewind_boot_file(struct archive_write *a)
 			rsize = remaining;
 		rs = read(iso9660->temp_fd, rbuff, rsize);
 		if (rs <= 0) {
-			archive_set_error(&a->archive, errno,
+			tk_archive_set_error(&a->archive, errno,
 			    "Can't read temporary file(%jd)", (intmax_t)rs);
 			ret = ARCHIVE_FATAL;
 			break;
@@ -8081,7 +8081,7 @@ zisofs_rewind_boot_file(struct archive_write *a)
 		 */
 		file->content.offset_of_temp = new_offset;
 		file->content.size = file->zisofs.uncompressed_size;
-		archive_entry_set_size(file->entry, file->content.size);
+		tk_archive_entry_set_size(file->entry, file->content.size);
 		/* Set to be no zisofs. */
 		file->zisofs.header_size = 0;
 		file->zisofs.log2_bs = 0;
@@ -8097,7 +8097,7 @@ zisofs_rewind_boot_file(struct archive_write *a)
 	free(rbuff);
 	free(zext.block_pointers);
 	if (zext.stream_valid && inflateEnd(&(zext.stream)) != Z_OK) {
-        	archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+        	tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 		    "Failed to clean up compressor");
 		ret = ARCHIVE_FATAL;
 	}
@@ -8108,21 +8108,21 @@ zisofs_rewind_boot_file(struct archive_write *a)
 #else
 
 static int
-zisofs_write_to_temp(struct archive_write *a, const void *buff, size_t s)
+zisofs_write_to_temp(struct tk_archive_write *a, const void *buff, size_t s)
 {
 	(void)buff; /* UNUSED */
 	(void)s; /* UNUSED */
-	archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC, "Programing error");
+	tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC, "Programing error");
 	return (ARCHIVE_FATAL);
 }
 
 static int
-zisofs_rewind_boot_file(struct archive_write *a)
+zisofs_rewind_boot_file(struct tk_archive_write *a)
 {
 	struct iso9660 *iso9660 = a->format_data;
 
 	if (iso9660->el_torito.boot->file->zisofs.header_size != 0) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 		    "We cannot extract the zisofs imaged boot file;"
 		    " this may not boot in being zisofs imaged");
 		return (ARCHIVE_FAILED);
@@ -8131,14 +8131,14 @@ zisofs_rewind_boot_file(struct archive_write *a)
 }
 
 static int
-zisofs_finish_entry(struct archive_write *a)
+zisofs_finish_entry(struct tk_archive_write *a)
 {
 	(void)a; /* UNUSED */
 	return (ARCHIVE_OK);
 }
 
 static int
-zisofs_free(struct archive_write *a)
+zisofs_free(struct tk_archive_write *a)
 {
 	(void)a; /* UNUSED */
 	return (ARCHIVE_OK);

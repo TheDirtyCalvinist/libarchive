@@ -42,49 +42,49 @@ DEFINE_TEST(test_read_large)
 	char tmpfilename[] = "test-read_large.XXXXXX";
 	size_t used;
 	struct archive *a;
-	struct archive_entry *entry;
+	struct tk_archive_entry *entry;
 	FILE *f;
 
 	for (i = 0; i < sizeof(testdata); i++)
 		testdata[i] = (unsigned char)(rand());
 
-	assert(NULL != (a = archive_write_new()));
-	assertA(0 == archive_write_set_format_ustar(a));
-	assertA(0 == archive_write_open_memory(a, buff, sizeof(buff), &used));
-	assert(NULL != (entry = archive_entry_new()));
-	archive_entry_set_size(entry, sizeof(testdata));
-	archive_entry_set_mode(entry, S_IFREG | 0777);
-	archive_entry_set_pathname(entry, "test");
-	assertA(0 == archive_write_header(a, entry));
-	archive_entry_free(entry);
-	assertA((int)sizeof(testdata) == archive_write_data(a, testdata, sizeof(testdata)));
-	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+	assert(NULL != (a = tk_archive_write_new()));
+	assertA(0 == tk_archive_write_set_format_ustar(a));
+	assertA(0 == tk_archive_write_open_memory(a, buff, sizeof(buff), &used));
+	assert(NULL != (entry = tk_archive_entry_new()));
+	tk_archive_entry_set_size(entry, sizeof(testdata));
+	tk_archive_entry_set_mode(entry, S_IFREG | 0777);
+	tk_archive_entry_set_pathname(entry, "test");
+	assertA(0 == tk_archive_write_header(a, entry));
+	tk_archive_entry_free(entry);
+	assertA((int)sizeof(testdata) == tk_archive_write_data(a, testdata, sizeof(testdata)));
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 
-	assert(NULL != (a = archive_read_new()));
-	assertA(0 == archive_read_support_format_all(a));
-	assertA(0 == archive_read_support_filter_all(a));
-	assertA(0 == archive_read_open_memory(a, buff, sizeof(buff)));
-	assertA(0 == archive_read_next_header(a, &entry));
+	assert(NULL != (a = tk_archive_read_new()));
+	assertA(0 == tk_archive_read_support_format_all(a));
+	assertA(0 == tk_archive_read_support_filter_all(a));
+	assertA(0 == tk_archive_read_open_memory(a, buff, sizeof(buff)));
+	assertA(0 == tk_archive_read_next_header(a, &entry));
 	assertEqualIntA(a, sizeof(testdatacopy),
-	    archive_read_data(a, testdatacopy, sizeof(testdatacopy)));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	    tk_archive_read_data(a, testdatacopy, sizeof(testdatacopy)));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 	assertEqualMem(testdata, testdatacopy, sizeof(testdata));
 
 
-	assert(NULL != (a = archive_read_new()));
-	assertA(0 == archive_read_support_format_all(a));
-	assertA(0 == archive_read_support_filter_all(a));
-	assertA(0 == archive_read_open_memory(a, buff, sizeof(buff)));
-	assertA(0 == archive_read_next_header(a, &entry));
+	assert(NULL != (a = tk_archive_read_new()));
+	assertA(0 == tk_archive_read_support_format_all(a));
+	assertA(0 == tk_archive_read_support_filter_all(a));
+	assertA(0 == tk_archive_read_open_memory(a, buff, sizeof(buff)));
+	assertA(0 == tk_archive_read_next_header(a, &entry));
 #if defined(__BORLANDC__)
 	tmpfilefd = open(tmpfilename, O_WRONLY | O_CREAT | O_BINARY);
 #else
 	tmpfilefd = open(tmpfilename, O_WRONLY | O_CREAT | O_BINARY, 0755);
 #endif
 	assert(0 < tmpfilefd);
-	assertA(0 == archive_read_data_into_fd(a, tmpfilefd));
+	assertA(0 == tk_archive_read_data_into_fd(a, tmpfilefd));
 	close(tmpfilefd);
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 
 	f = fopen(tmpfilename, "rb");
 	assertEqualInt(sizeof(testdatacopy),

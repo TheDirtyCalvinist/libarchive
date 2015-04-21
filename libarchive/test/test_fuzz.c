@@ -61,7 +61,7 @@ test_fuzz(const struct files *filesets)
 
 	for (n = 0; filesets[n].names != NULL; ++n) {
 		const size_t buffsize = 30000000;
-		struct archive_entry *ae;
+		struct tk_archive_entry *ae;
 		struct archive *a;
 		char *rawimage = NULL, *image = NULL, *tmp = NULL;
 		size_t size = 0, oldsize = 0;
@@ -71,14 +71,14 @@ test_fuzz(const struct files *filesets)
 		if (filesets[n].uncompress) {
 			int r;
 			/* Use format_raw to decompress the data. */
-			assert((a = archive_read_new()) != NULL);
+			assert((a = tk_archive_read_new()) != NULL);
 			assertEqualIntA(a, ARCHIVE_OK,
-			    archive_read_support_filter_all(a));
+			    tk_archive_read_support_filter_all(a));
 			assertEqualIntA(a, ARCHIVE_OK,
-			    archive_read_support_format_raw(a));
-			r = archive_read_open_filenames(a, filesets[n].names, 16384);
+			    tk_archive_read_support_format_raw(a));
+			r = tk_archive_read_open_filenames(a, filesets[n].names, 16384);
 			if (r != ARCHIVE_OK) {
-				archive_read_free(a);
+				tk_archive_read_free(a);
 				if (filesets[n].names[0] == NULL || filesets[n].names[1] == NULL) {
 					skipping("Cannot uncompress fileset");
 				} else {
@@ -87,13 +87,13 @@ test_fuzz(const struct files *filesets)
 				continue;
 			}
 			assertEqualIntA(a, ARCHIVE_OK,
-			    archive_read_next_header(a, &ae));
+			    tk_archive_read_next_header(a, &ae));
 			rawimage = malloc(buffsize);
-			size = archive_read_data(a, rawimage, buffsize);
+			size = tk_archive_read_data(a, rawimage, buffsize);
 			assertEqualIntA(a, ARCHIVE_EOF,
-			    archive_read_next_header(a, &ae));
+			    tk_archive_read_next_header(a, &ae));
 			assertEqualInt(ARCHIVE_OK,
-			    archive_read_free(a));
+			    tk_archive_read_free(a));
 			assert(size > 0);
 			if (filesets[n].names[0] == NULL || filesets[n].names[1] == NULL) {
 				failure("Internal buffer is not big enough for "
@@ -158,21 +158,21 @@ test_fuzz(const struct files *filesets)
 			assertEqualInt((size_t)size, fwrite(image, 1, (size_t)size, f));
 			fclose(f);
 
-			assert((a = archive_read_new()) != NULL);
+			assert((a = tk_archive_read_new()) != NULL);
 			assertEqualIntA(a, ARCHIVE_OK,
-			    archive_read_support_filter_all(a));
+			    tk_archive_read_support_filter_all(a));
 			assertEqualIntA(a, ARCHIVE_OK,
-			    archive_read_support_format_all(a));
+			    tk_archive_read_support_format_all(a));
 
-			if (0 == archive_read_open_memory(a, image, size)) {
-				while(0 == archive_read_next_header(a, &ae)) {
-					while (0 == archive_read_data_block(a,
+			if (0 == tk_archive_read_open_memory(a, image, size)) {
+				while(0 == tk_archive_read_next_header(a, &ae)) {
+					while (0 == tk_archive_read_data_block(a,
 						&blk, &blk_size, &blk_offset))
 						continue;
 				}
-				archive_read_close(a);
+				tk_archive_read_close(a);
 			}
-			archive_read_free(a);
+			tk_archive_read_free(a);
 		}
 		free(image);
 		free(rawimage);

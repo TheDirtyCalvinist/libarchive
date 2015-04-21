@@ -246,7 +246,7 @@ main(int argc, char **argv)
 	if (getenv(COPYFILE_DISABLE_VAR))
 		bsdtar->readdisk_flags &= ~ARCHIVE_READDISK_MAC_COPYFILE;
 #endif
-	bsdtar->matching = archive_match_new();
+	bsdtar->matching = tk_archive_match_new();
 	if (bsdtar->matching == NULL)
 		lafe_errc(1, errno, "Out of memory");
 	bsdtar->cset = cset_new();
@@ -307,7 +307,7 @@ main(int argc, char **argv)
 			bsdtar->readdisk_flags &= ~ARCHIVE_READDISK_MAC_COPYFILE;
 			break;
 		case OPTION_EXCLUDE: /* GNU tar */
-			if (archive_match_exclude_pattern(
+			if (tk_archive_match_exclude_pattern(
 			    bsdtar->matching, bsdtar->argument) != ARCHIVE_OK)
 				lafe_errc(1, 0,
 				    "Couldn't exclude %s\n", bsdtar->argument);
@@ -371,7 +371,7 @@ main(int argc, char **argv)
 			 * no one else needs this to filter entries
 			 * when transforming archives.
 			 */
-			if (archive_match_include_pattern(bsdtar->matching,
+			if (tk_archive_match_include_pattern(bsdtar->matching,
 			    bsdtar->argument) != ARCHIVE_OK)
 				lafe_errc(1, 0,
 				    "Failed to add %s to inclusion list",
@@ -435,32 +435,32 @@ main(int argc, char **argv)
 		 *         on specified file (useful for incremental backups)
 		 */
 		case OPTION_NEWER_CTIME: /* GNU tar */
-			if (archive_match_include_date(bsdtar->matching,
+			if (tk_archive_match_include_date(bsdtar->matching,
 			    ARCHIVE_MATCH_CTIME | ARCHIVE_MATCH_NEWER,
 			    bsdtar->argument) != ARCHIVE_OK)
 				lafe_errc(1, 0, "Error : %s",
-				    archive_error_string(bsdtar->matching));
+				    tk_archive_error_string(bsdtar->matching));
 			break;
 		case OPTION_NEWER_CTIME_THAN:
-			if (archive_match_include_file_time(bsdtar->matching,
+			if (tk_archive_match_include_file_time(bsdtar->matching,
 			    ARCHIVE_MATCH_CTIME | ARCHIVE_MATCH_NEWER,
 			    bsdtar->argument) != ARCHIVE_OK)
 				lafe_errc(1, 0, "Error : %s",
-				    archive_error_string(bsdtar->matching));
+				    tk_archive_error_string(bsdtar->matching));
 			break;
 		case OPTION_NEWER_MTIME: /* GNU tar */
-			if (archive_match_include_date(bsdtar->matching,
+			if (tk_archive_match_include_date(bsdtar->matching,
 			    ARCHIVE_MATCH_MTIME | ARCHIVE_MATCH_NEWER,
 			    bsdtar->argument) != ARCHIVE_OK)
 				lafe_errc(1, 0, "Error : %s",
-				    archive_error_string(bsdtar->matching));
+				    tk_archive_error_string(bsdtar->matching));
 			break;
 		case OPTION_NEWER_MTIME_THAN:
-			if (archive_match_include_file_time(bsdtar->matching,
+			if (tk_archive_match_include_file_time(bsdtar->matching,
 			    ARCHIVE_MATCH_MTIME | ARCHIVE_MATCH_NEWER,
 			    bsdtar->argument) != ARCHIVE_OK)
 				lafe_errc(1, 0, "Error : %s",
-				    archive_error_string(bsdtar->matching));
+				    tk_archive_error_string(bsdtar->matching));
 			break;
 		case OPTION_NODUMP: /* star */
 			bsdtar->readdisk_flags |= ARCHIVE_READDISK_HONOR_NODUMP;
@@ -501,32 +501,32 @@ main(int argc, char **argv)
 		 *         on specified file
 		 */
 		case OPTION_OLDER_CTIME:
-			if (archive_match_include_date(bsdtar->matching,
+			if (tk_archive_match_include_date(bsdtar->matching,
 			    ARCHIVE_MATCH_CTIME | ARCHIVE_MATCH_OLDER,
 			    bsdtar->argument) != ARCHIVE_OK)
 				lafe_errc(1, 0, "Error : %s",
-				    archive_error_string(bsdtar->matching));
+				    tk_archive_error_string(bsdtar->matching));
 			break;
 		case OPTION_OLDER_CTIME_THAN:
-			if (archive_match_include_file_time(bsdtar->matching,
+			if (tk_archive_match_include_file_time(bsdtar->matching,
 			    ARCHIVE_MATCH_CTIME | ARCHIVE_MATCH_OLDER,
 			    bsdtar->argument) != ARCHIVE_OK)
 				lafe_errc(1, 0, "Error : %s",
-				    archive_error_string(bsdtar->matching));
+				    tk_archive_error_string(bsdtar->matching));
 			break;
 		case OPTION_OLDER_MTIME:
-			if (archive_match_include_date(bsdtar->matching,
+			if (tk_archive_match_include_date(bsdtar->matching,
 			    ARCHIVE_MATCH_MTIME | ARCHIVE_MATCH_OLDER,
 			    bsdtar->argument) != ARCHIVE_OK)
 				lafe_errc(1, 0, "Error : %s",
-				    archive_error_string(bsdtar->matching));
+				    tk_archive_error_string(bsdtar->matching));
 			break;
 		case OPTION_OLDER_MTIME_THAN:
-			if (archive_match_include_file_time(bsdtar->matching,
+			if (tk_archive_match_include_file_time(bsdtar->matching,
 			    ARCHIVE_MATCH_MTIME | ARCHIVE_MATCH_OLDER,
 			    bsdtar->argument) != ARCHIVE_OK)
 				lafe_errc(1, 0, "Error : %s",
-				    archive_error_string(bsdtar->matching));
+				    tk_archive_error_string(bsdtar->matching));
 			break;
 		case OPTION_ONE_FILE_SYSTEM: /* GNU tar */
 			bsdtar->readdisk_flags |=
@@ -643,11 +643,11 @@ main(int argc, char **argv)
 			bsdtar->option_interactive = 1;
 			break;
 		case 'X': /* GNU tar */
-			if (archive_match_exclude_pattern_from_file(
+			if (tk_archive_match_exclude_pattern_from_file(
 			    bsdtar->matching, bsdtar->argument, 0)
 			    != ARCHIVE_OK)
 				lafe_errc(1, 0, "Error : %s",
-				    archive_error_string(bsdtar->matching));
+				    tk_archive_error_string(bsdtar->matching));
 			break;
 		case 'x': /* SUSv2 */
 			set_mode(bsdtar, opt);
@@ -805,7 +805,7 @@ main(int argc, char **argv)
 		break;
 	}
 
-	archive_match_free(bsdtar->matching);
+	tk_archive_match_free(bsdtar->matching);
 #if defined(HAVE_REGEX_H) || defined(HAVE_PCREPOSIX_H)
 	cleanup_substitution(bsdtar);
 #endif
@@ -859,7 +859,7 @@ version(void)
 {
 	printf("bsdtar %s - %s\n",
 	    BSDTAR_VERSION_STRING,
-	    archive_version_string());
+	    tk_archive_version_string());
 	exit(0);
 }
 

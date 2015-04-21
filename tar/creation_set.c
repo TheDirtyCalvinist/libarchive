@@ -163,7 +163,7 @@ cset_read_support_filter_program(struct creation_set *cset, struct archive *a)
 
 	for (i = 0; i < cset->filter_count; i++) {
 		if (cset->filters[i].program) {
-			archive_read_support_filter_program(a,
+			tk_archive_read_support_filter_program(a,
 			    cset->filters[i].filter_name);
 			++cnt;
 		}
@@ -179,10 +179,10 @@ cset_write_add_filters(struct creation_set *cset, struct archive *a,
 
 	for (i = 0; i < cset->filter_count; i++) {
 		if (cset->filters[i].program)
-			r = archive_write_add_filter_program(a,
+			r = tk_archive_write_add_filter_program(a,
 				cset->filters[i].filter_name);
 		else
-			r = archive_write_add_filter_by_name(a,
+			r = tk_archive_write_add_filter_by_name(a,
 				cset->filters[i].filter_name);
 		if (r < ARCHIVE_WARN) {
 			*filter_name = cset->filters[i].filter_name;

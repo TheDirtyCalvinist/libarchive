@@ -90,7 +90,7 @@ read_open_memory_internal(struct archive *a, void *buff,
 
 	mine = (struct read_memory_data *)malloc(sizeof(*mine));
 	if (mine == NULL) {
-		archive_set_error(a, ENOMEM, "No memory");
+		tk_archive_set_error(a, ENOMEM, "No memory");
 		return (ARCHIVE_FATAL);
 	}
 	memset(mine, 0, sizeof(*mine));
@@ -104,16 +104,16 @@ read_open_memory_internal(struct archive *a, void *buff,
 
 	switch (level) {
 	case 3:
-		archive_read_set_seek_callback(a, memory_read_seek);
+		tk_archive_read_set_seek_callback(a, memory_read_seek);
 	case 2:
-		archive_read_set_open_callback(a, memory_read_open);
-		archive_read_set_skip_callback(a, memory_read_skip);
+		tk_archive_read_set_open_callback(a, memory_read_open);
+		tk_archive_read_set_skip_callback(a, memory_read_skip);
 	case 1:
-		archive_read_set_read_callback(a, memory_read);
-		archive_read_set_close_callback(a, memory_read_close);
-		archive_read_set_callback_data(a, mine);
+		tk_archive_read_set_read_callback(a, memory_read);
+		tk_archive_read_set_close_callback(a, memory_read_close);
+		tk_archive_read_set_callback_data(a, mine);
 	}
-	return archive_read_open1(a);
+	return tk_archive_read_open1(a);
 }
 
 /*

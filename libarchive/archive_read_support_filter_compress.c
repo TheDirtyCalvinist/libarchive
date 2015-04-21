@@ -131,35 +131,35 @@ struct private_data {
 	unsigned char		 stack[65300];
 };
 
-static int	compress_bidder_bid(struct archive_read_filter_bidder *, struct archive_read_filter *);
-static int	compress_bidder_init(struct archive_read_filter *);
-static int	compress_bidder_free(struct archive_read_filter_bidder *);
+static int	compress_bidder_bid(struct tk_archive_read_filter_bidder *, struct tk_archive_read_filter *);
+static int	compress_bidder_init(struct tk_archive_read_filter *);
+static int	compress_bidder_free(struct tk_archive_read_filter_bidder *);
 
-static ssize_t	compress_filter_read(struct archive_read_filter *, const void **);
-static int	compress_filter_close(struct archive_read_filter *);
+static ssize_t	compress_filter_read(struct tk_archive_read_filter *, const void **);
+static int	compress_filter_close(struct tk_archive_read_filter *);
 
-static int	getbits(struct archive_read_filter *, int n);
-static int	next_code(struct archive_read_filter *);
+static int	getbits(struct tk_archive_read_filter *, int n);
+static int	next_code(struct tk_archive_read_filter *);
 
 #if ARCHIVE_VERSION_NUMBER < 4000000
 /* Deprecated; remove in libarchive 4.0 */
 int
-archive_read_support_compression_compress(struct archive *a)
+tk_archive_read_support_compression_compress(struct archive *a)
 {
-	return archive_read_support_filter_compress(a);
+	return tk_archive_read_support_filter_compress(a);
 }
 #endif
 
 int
-archive_read_support_filter_compress(struct archive *_a)
+tk_archive_read_support_filter_compress(struct archive *_a)
 {
-	struct archive_read *a = (struct archive_read *)_a;
-	struct archive_read_filter_bidder *bidder;
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
+	struct tk_archive_read_filter_bidder *bidder;
 
-	archive_check_magic(_a, ARCHIVE_READ_MAGIC,
-	    ARCHIVE_STATE_NEW, "archive_read_support_filter_compress");
+	tk_archive_check_magic(_a, ARCHIVE_READ_MAGIC,
+	    ARCHIVE_STATE_NEW, "tk_archive_read_support_filter_compress");
 
-	if (__archive_read_get_bidder(a, &bidder) != ARCHIVE_OK)
+	if (__tk_archive_read_get_bidder(a, &bidder) != ARCHIVE_OK)
 		return (ARCHIVE_FATAL);
 
 	bidder->data = NULL;
@@ -176,8 +176,8 @@ archive_read_support_filter_compress(struct archive *_a)
  * This logic returns zero if any part of the signature fails.
  */
 static int
-compress_bidder_bid(struct archive_read_filter_bidder *self,
-    struct archive_read_filter *filter)
+compress_bidder_bid(struct tk_archive_read_filter_bidder *self,
+    struct tk_archive_read_filter *filter)
 {
 	const unsigned char *buffer;
 	ssize_t avail;
@@ -185,7 +185,7 @@ compress_bidder_bid(struct archive_read_filter_bidder *self,
 
 	(void)self; /* UNUSED */
 
-	buffer = __archive_read_filter_ahead(filter, 2, &avail);
+	buffer = __tk_archive_read_filter_ahead(filter, 2, &avail);
 
 	if (buffer == NULL)
 		return (0);
@@ -206,7 +206,7 @@ compress_bidder_bid(struct archive_read_filter_bidder *self,
  * Setup the callbacks.
  */
 static int
-compress_bidder_init(struct archive_read_filter *self)
+compress_bidder_init(struct tk_archive_read_filter *self)
 {
 	struct private_data *state;
 	static const size_t out_block_size = 64 * 1024;
@@ -221,7 +221,7 @@ compress_bidder_init(struct archive_read_filter *self)
 	if (state == NULL || out_block == NULL) {
 		free(out_block);
 		free(state);
-		archive_set_error(&self->archive->archive, ENOMEM,
+		tk_archive_set_error(&self->archive->archive, ENOMEM,
 		    "Can't allocate data for %s decompression",
 		    self->name);
 		return (ARCHIVE_FATAL);
@@ -266,7 +266,7 @@ compress_bidder_init(struct archive_read_filter *self)
  * as necessary.
  */
 static ssize_t
-compress_filter_read(struct archive_read_filter *self, const void **pblock)
+compress_filter_read(struct tk_archive_read_filter *self, const void **pblock)
 {
 	struct private_data *state;
 	unsigned char *p, *start, *end;
@@ -300,7 +300,7 @@ compress_filter_read(struct archive_read_filter *self, const void **pblock)
  * Clean up the reader.
  */
 static int
-compress_bidder_free(struct archive_read_filter_bidder *self)
+compress_bidder_free(struct tk_archive_read_filter_bidder *self)
 {
 	self->data = NULL;
 	return (ARCHIVE_OK);
@@ -310,7 +310,7 @@ compress_bidder_free(struct archive_read_filter_bidder *self)
  * Close and release the filter.
  */
 static int
-compress_filter_close(struct archive_read_filter *self)
+compress_filter_close(struct tk_archive_read_filter *self)
 {
 	struct private_data *state = (struct private_data *)self->data;
 
@@ -325,7 +325,7 @@ compress_filter_close(struct archive_read_filter *self)
  * format error, ARCHIVE_EOF if we hit end of data, ARCHIVE_OK otherwise.
  */
 static int
-next_code(struct archive_read_filter *self)
+next_code(struct tk_archive_read_filter *self)
 {
 	struct private_data *state = (struct private_data *)self->data;
 	int code, newcode;
@@ -370,7 +370,7 @@ next_code(struct archive_read_filter *self)
 
 	if (code > state->free_ent) {
 		/* An invalid code is a fatal error. */
-		archive_set_error(&(self->archive->archive), -1,
+		tk_archive_set_error(&(self->archive->archive), -1,
 		    "Invalid compressed data");
 		return (ARCHIVE_FATAL);
 	}
@@ -415,7 +415,7 @@ next_code(struct archive_read_filter *self)
  * -1 indicates end of available data.
  */
 static int
-getbits(struct archive_read_filter *self, int n)
+getbits(struct tk_archive_read_filter *self, int n)
 {
 	struct private_data *state = (struct private_data *)self->data;
 	int code;
@@ -428,12 +428,12 @@ getbits(struct archive_read_filter *self, int n)
 	while (state->bits_avail < n) {
 		if (state->avail_in <= 0) {
 			if (state->consume_unnotified) {
-				__archive_read_filter_consume(self->upstream,
+				__tk_archive_read_filter_consume(self->upstream,
 					state->consume_unnotified);
 				state->consume_unnotified = 0;
 			}
 			state->next_in
-			    = __archive_read_filter_ahead(self->upstream,
+			    = __tk_archive_read_filter_ahead(self->upstream,
 				1, &ret);
 			if (ret == 0)
 				return (-1);

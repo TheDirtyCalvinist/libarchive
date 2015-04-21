@@ -31,7 +31,7 @@ __FBSDID("$FreeBSD$");
 static void
 test_large(const char *compression_type)
 {
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	struct archive *a;
 	size_t used;
 	size_t buffsize = LARGE_SIZE + 1024 * 256;
@@ -44,45 +44,45 @@ test_large(const char *compression_type)
 	assert((filedata2 = malloc(datasize)) != NULL);
 
 	/* Create a new archive in memory. */
-	assert((a = archive_write_new()) != NULL);
+	assert((a = tk_archive_write_new()) != NULL);
 	if (a == NULL || buff == NULL || filedata == NULL || filedata2 == NULL) {
-		archive_write_free(a);
+		tk_archive_write_free(a);
 		free(buff);
 		free(filedata);
 		free(filedata2);
 		return;
 	}
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_set_format_7zip(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_set_format_7zip(a));
 	if (compression_type != NULL &&
-	    ARCHIVE_OK != archive_write_set_format_option(a, "7zip",
+	    ARCHIVE_OK != tk_archive_write_set_format_option(a, "7zip",
 	    "compression", compression_type)) {
 		skipping("%s writing not fully supported on this platform",
 		   compression_type);
-		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+		assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 		free(buff);
 		free(filedata);
 		free(filedata2);
 		return;
 	}
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_add_filter_none(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_add_filter_none(a));
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_write_open_memory(a, buff, buffsize, &used));
+	    tk_archive_write_open_memory(a, buff, buffsize, &used));
 
 	/*
 	 * Write a large file to it.
 	 */
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_set_mtime(ae, 1, 100);
-	assertEqualInt(1, archive_entry_mtime(ae));
-	assertEqualInt(100, archive_entry_mtime_nsec(ae));
-	archive_entry_copy_pathname(ae, "file");
-	assertEqualString("file", archive_entry_pathname(ae));
-	archive_entry_set_mode(ae, AE_IFREG | 0755);
-	assertEqualInt((AE_IFREG | 0755), archive_entry_mode(ae));
-	archive_entry_set_size(ae, datasize);
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_mtime(ae, 1, 100);
+	assertEqualInt(1, tk_archive_entry_mtime(ae));
+	assertEqualInt(100, tk_archive_entry_mtime_nsec(ae));
+	tk_archive_entry_copy_pathname(ae, "file");
+	assertEqualString("file", tk_archive_entry_pathname(ae));
+	tk_archive_entry_set_mode(ae, AE_IFREG | 0755);
+	assertEqualInt((AE_IFREG | 0755), tk_archive_entry_mode(ae));
+	tk_archive_entry_set_size(ae, datasize);
 
-	assertEqualInt(0, archive_write_header(a, ae));
-	archive_entry_free(ae);
+	assertEqualInt(0, tk_archive_write_header(a, ae));
+	tk_archive_entry_free(ae);
 	if (strcmp(compression_type, "ppmd") == 0) {
 		/* NOTE: PPMd cannot handle random data correctly.*/
 		memset(filedata, 'a', datasize);
@@ -90,11 +90,11 @@ test_large(const char *compression_type)
 		for (i = 0; i < datasize; i++)
 			filedata[i] = (char)rand();
 	}
-	assertEqualInt(datasize, archive_write_data(a, filedata, datasize));
+	assertEqualInt(datasize, tk_archive_write_data(a, filedata, datasize));
 
 	/* Close out the archive. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 
 	/* Verify the initial header. */
 	assertEqualMem(buff, "\x37\x7a\xbc\xaf\x27\x1c\x00\x03", 8);
@@ -103,34 +103,34 @@ test_large(const char *compression_type)
 	 * Now, read the data back.
 	 */
 	/* With the test memory reader -- seeking mode. */
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_filter_all(a));
 	assertEqualIntA(a, ARCHIVE_OK, read_open_memory_seek(a, buff, used, 7));
 
 	/*
 	 * Read and verify a large file.
 	 */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt(1, archive_entry_mtime(ae));
-	assertEqualInt(100, archive_entry_mtime_nsec(ae));
-	assertEqualInt(0, archive_entry_atime(ae));
-	assertEqualInt(0, archive_entry_ctime(ae));
-	assertEqualString("file", archive_entry_pathname(ae));
-	assertEqualInt(AE_IFREG | 0755, archive_entry_mode(ae));
-	assertEqualInt(datasize, archive_entry_size(ae));
-	assertEqualIntA(a, datasize, archive_read_data(a, filedata2, datasize));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt(1, tk_archive_entry_mtime(ae));
+	assertEqualInt(100, tk_archive_entry_mtime_nsec(ae));
+	assertEqualInt(0, tk_archive_entry_atime(ae));
+	assertEqualInt(0, tk_archive_entry_ctime(ae));
+	assertEqualString("file", tk_archive_entry_pathname(ae));
+	assertEqualInt(AE_IFREG | 0755, tk_archive_entry_mode(ae));
+	assertEqualInt(datasize, tk_archive_entry_size(ae));
+	assertEqualIntA(a, datasize, tk_archive_read_data(a, filedata2, datasize));
 	assertEqualMem(filedata, filedata2, datasize);
 
 	/* Verify the end of the archive. */
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
 
 	/* Verify archive format. */
-	assertEqualIntA(a, ARCHIVE_FILTER_NONE, archive_filter_code(a, 0));
-	assertEqualIntA(a, ARCHIVE_FORMAT_7ZIP, archive_format(a));
+	assertEqualIntA(a, ARCHIVE_FILTER_NONE, tk_archive_filter_code(a, 0));
+	assertEqualIntA(a, ARCHIVE_FORMAT_7ZIP, tk_archive_format(a));
 
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 
 	free(buff);
 	free(filedata);

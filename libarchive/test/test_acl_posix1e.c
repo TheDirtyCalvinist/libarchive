@@ -105,13 +105,13 @@ static struct acl_t acls_nfs4[] = {
 };
 
 static void
-set_acls(struct archive_entry *ae, struct acl_t *acls, int n)
+set_acls(struct tk_archive_entry *ae, struct acl_t *acls, int n)
 {
 	int i;
 
-	archive_entry_acl_clear(ae);
+	tk_archive_entry_acl_clear(ae);
 	for (i = 0; i < n; i++) {
-		archive_entry_acl_add_entry(ae,
+		tk_archive_entry_acl_add_entry(ae,
 		    acls[i].type, acls[i].permset, acls[i].tag, acls[i].qual,
 		    acls[i].name);
 	}
@@ -148,7 +148,7 @@ acl_match(struct acl_t *acl, int type, int permset, int tag, int qual, const cha
 }
 
 static void
-compare_acls(struct archive_entry *ae, struct acl_t *acls, int n, int mode)
+compare_acls(struct tk_archive_entry *ae, struct acl_t *acls, int n, int mode)
 {
 	int *marker = malloc(sizeof(marker[0]) * n);
 	int i;
@@ -160,7 +160,7 @@ compare_acls(struct archive_entry *ae, struct acl_t *acls, int n, int mode)
 	for (i = 0; i < n; i++)
 		marker[i] = i;
 
-	while (0 == (r = archive_entry_acl_next(ae,
+	while (0 == (r = tk_archive_entry_acl_next(ae,
 			 ARCHIVE_ENTRY_ACL_TYPE_ACCESS,
 			 &type, &permset, &tag, &qual, &name))) {
 		for (i = 0, matched = 0; i < n && !matched; i++) {
@@ -195,7 +195,7 @@ compare_acls(struct archive_entry *ae, struct acl_t *acls, int n, int mode)
 		}
 	}
 	assertEqualInt(ARCHIVE_EOF, r);
-	assert((mode_t)(mode & 0777) == (archive_entry_mode(ae) & 0777));
+	assert((mode_t)(mode & 0777) == (tk_archive_entry_mode(ae) & 0777));
 	failure("Could not find match for ACL "
 	    "(type=%d,permset=%d,tag=%d,qual=%d,name=``%s'')",
 	    acls[marker[0]].type, acls[marker[0]].permset,
@@ -206,13 +206,13 @@ compare_acls(struct archive_entry *ae, struct acl_t *acls, int n, int mode)
 
 DEFINE_TEST(test_acl_posix1e)
 {
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	int i;
 
 	/* Create a simple archive_entry. */
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_set_pathname(ae, "file");
-        archive_entry_set_mode(ae, S_IFREG | 0777);
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_pathname(ae, "file");
+        tk_archive_entry_set_mode(ae, S_IFREG | 0777);
 
 	/* Basic owner/owning group should just update mode bits. */
 
@@ -225,29 +225,29 @@ DEFINE_TEST(test_acl_posix1e)
 	 */
 	set_acls(ae, acls0, sizeof(acls0)/sizeof(acls0[0]));
 	failure("Basic ACLs shouldn't be stored as extended ACLs");
-	assert(0 == archive_entry_acl_reset(ae, ARCHIVE_ENTRY_ACL_TYPE_ACCESS));
+	assert(0 == tk_archive_entry_acl_reset(ae, ARCHIVE_ENTRY_ACL_TYPE_ACCESS));
 	failure("Basic ACLs should set mode to 0142, not %04o",
-	    archive_entry_mode(ae)&0777);
-	assert((archive_entry_mode(ae) & 0777) == 0142);
+	    tk_archive_entry_mode(ae)&0777);
+	assert((tk_archive_entry_mode(ae) & 0777) == 0142);
 
 
 	/* With any extended ACL entry, we should read back a full set. */
 	set_acls(ae, acls1, sizeof(acls1)/sizeof(acls1[0]));
 	failure("One extended ACL should flag all ACLs to be returned.");
-	assert(4 == archive_entry_acl_reset(ae, ARCHIVE_ENTRY_ACL_TYPE_ACCESS));
+	assert(4 == tk_archive_entry_acl_reset(ae, ARCHIVE_ENTRY_ACL_TYPE_ACCESS));
 	compare_acls(ae, acls1, sizeof(acls1)/sizeof(acls1[0]), 0142);
 	failure("Basic ACLs should set mode to 0142, not %04o",
-	    archive_entry_mode(ae)&0777);
-	assert((archive_entry_mode(ae) & 0777) == 0142);
+	    tk_archive_entry_mode(ae)&0777);
+	assert((tk_archive_entry_mode(ae) & 0777) == 0142);
 
 
 	/* A more extensive set of ACLs. */
 	set_acls(ae, acls2, sizeof(acls2)/sizeof(acls2[0]));
-	assertEqualInt(6, archive_entry_acl_reset(ae, ARCHIVE_ENTRY_ACL_TYPE_ACCESS));
+	assertEqualInt(6, tk_archive_entry_acl_reset(ae, ARCHIVE_ENTRY_ACL_TYPE_ACCESS));
 	compare_acls(ae, acls2, sizeof(acls2)/sizeof(acls2[0]), 0543);
 	failure("Basic ACLs should set mode to 0543, not %04o",
-	    archive_entry_mode(ae)&0777);
-	assert((archive_entry_mode(ae) & 0777) == 0543);
+	    tk_archive_entry_mode(ae)&0777);
+	assert((tk_archive_entry_mode(ae) & 0777) == 0543);
 
 	/*
 	 * Check that clearing ACLs gets rid of them all by repeating
@@ -255,10 +255,10 @@ DEFINE_TEST(test_acl_posix1e)
 	 */
 	set_acls(ae, acls0, sizeof(acls0)/sizeof(acls0[0]));
 	failure("Basic ACLs shouldn't be stored as extended ACLs");
-	assert(0 == archive_entry_acl_reset(ae, ARCHIVE_ENTRY_ACL_TYPE_ACCESS));
+	assert(0 == tk_archive_entry_acl_reset(ae, ARCHIVE_ENTRY_ACL_TYPE_ACCESS));
 	failure("Basic ACLs should set mode to 0142, not %04o",
-	    archive_entry_mode(ae)&0777);
-	assert((archive_entry_mode(ae) & 0777) == 0142);
+	    tk_archive_entry_mode(ae)&0777);
+	assert((tk_archive_entry_mode(ae) & 0777) == 0142);
 
 	/*
 	 * Different types of malformed ACL entries that should
@@ -269,11 +269,11 @@ DEFINE_TEST(test_acl_posix1e)
 		struct acl_t *p = &acls_nfs4[i];
 		failure("Malformed ACL test #%d", i);
 		assertEqualInt(ARCHIVE_FAILED,
-		    archive_entry_acl_add_entry(ae,
+		    tk_archive_entry_acl_add_entry(ae,
 			p->type, p->permset, p->tag, p->qual, p->name));
 		assertEqualInt(6,
-		    archive_entry_acl_reset(ae,
+		    tk_archive_entry_acl_reset(ae,
 			ARCHIVE_ENTRY_ACL_TYPE_ACCESS));
 	}
-	archive_entry_free(ae);
+	tk_archive_entry_free(ae);
 }

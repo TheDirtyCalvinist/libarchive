@@ -38,25 +38,25 @@ __FBSDID("$FreeBSD$");
 #include "archive_cmdline_private.h"
 #include "archive_string.h"
 
-static int cmdline_set_path(struct archive_cmdline *, const char *);
-static int cmdline_add_arg(struct archive_cmdline *, const char *);
+static int cmdline_set_path(struct tk_archive_cmdline *, const char *);
+static int cmdline_add_arg(struct tk_archive_cmdline *, const char *);
 
 static ssize_t
-extract_quotation(struct archive_string *as, const char *p)
+extract_quotation(struct tk_archive_string *as, const char *p)
 {
 	const char *s;
 
 	for (s = p + 1; *s;) {
 		if (*s == '\\') {
 			if (s[1] != '\0') {
-				archive_strappend_char(as, s[1]);
+				tk_archive_strappend_char(as, s[1]);
 				s += 2;
 			} else
 				s++;
 		} else if (*s == '"')
 			break;
 		else {
-			archive_strappend_char(as, s[0]);
+			tk_archive_strappend_char(as, s[0]);
 			s++;
 		}
 	}
@@ -66,11 +66,11 @@ extract_quotation(struct archive_string *as, const char *p)
 }
 
 static ssize_t
-get_argument(struct archive_string *as, const char *p)
+get_argument(struct tk_archive_string *as, const char *p)
 {
 	const char *s = p;
 
-	archive_string_empty(as);
+	tk_archive_string_empty(as);
 
 	/* Skip beginning space characters. */
 	while (*s != '\0' && *s == ' ')
@@ -79,7 +79,7 @@ get_argument(struct archive_string *as, const char *p)
 	while (*s != '\0' && *s != ' ') {
 		if (*s == '\\') {
 			if (s[1] != '\0') {
-				archive_strappend_char(as, s[1]);
+				tk_archive_strappend_char(as, s[1]);
 				s += 2;
 			} else {
 				s++;/* Ignore this character.*/
@@ -91,7 +91,7 @@ get_argument(struct archive_string *as, const char *p)
 				return (ARCHIVE_FAILED);/* Invalid sequence. */
 			s += q;
 		} else {
-			archive_strappend_char(as, s[0]);
+			tk_archive_strappend_char(as, s[0]);
 			s++;
 		}
 	}
@@ -106,14 +106,14 @@ get_argument(struct archive_string *as, const char *p)
  * Returns ARChIVE_FATAL if no memory.
  */
 int
-__archive_cmdline_parse(struct archive_cmdline *data, const char *cmd)
+__tk_archive_cmdline_parse(struct tk_archive_cmdline *data, const char *cmd)
 {
-	struct archive_string as;
+	struct tk_archive_string as;
 	const char *p;
 	ssize_t al;
 	int r;
 
-	archive_string_init(&as);
+	tk_archive_string_init(&as);
 
 	/* Get first argument as a command path. */
 	al = get_argument(&as, cmd);
@@ -121,7 +121,7 @@ __archive_cmdline_parse(struct archive_cmdline *data, const char *cmd)
 		r = ARCHIVE_FAILED;/* Invalid sequence. */
 		goto exit_function;
 	}
-	if (archive_strlen(&as) == 0) {
+	if (tk_archive_strlen(&as) == 0) {
 		r = ARCHIVE_FAILED;/* An empty command path. */
 		goto exit_function;
 	}
@@ -147,7 +147,7 @@ __archive_cmdline_parse(struct archive_cmdline *data, const char *cmd)
 		if (al == 0)
 			break;
 		cmd += al;
-		if (archive_strlen(&as) == 0 && *cmd == '\0')
+		if (tk_archive_strlen(&as) == 0 && *cmd == '\0')
 			break;
 		r = cmdline_add_arg(data, as.s);
 		if (r != ARCHIVE_OK)
@@ -155,7 +155,7 @@ __archive_cmdline_parse(struct archive_cmdline *data, const char *cmd)
 	}
 	r = ARCHIVE_OK;
 exit_function:
-	archive_string_free(&as);
+	tk_archive_string_free(&as);
 	return (r);
 }
 
@@ -163,7 +163,7 @@ exit_function:
  * Set the program path.
  */
 static int
-cmdline_set_path(struct archive_cmdline *data, const char *path)
+cmdline_set_path(struct tk_archive_cmdline *data, const char *path)
 {
 	char *newptr;
 
@@ -179,7 +179,7 @@ cmdline_set_path(struct archive_cmdline *data, const char *path)
  * Add a argument for the program.
  */
 static int
-cmdline_add_arg(struct archive_cmdline *data, const char *arg)
+cmdline_add_arg(struct tk_archive_cmdline *data, const char *arg)
 {
 	char **newargv;
 
@@ -198,18 +198,18 @@ cmdline_add_arg(struct archive_cmdline *data, const char *arg)
 	return (ARCHIVE_OK);
 }
 
-struct archive_cmdline *
-__archive_cmdline_allocate(void)
+struct tk_archive_cmdline *
+__tk_archive_cmdline_allocate(void)
 {
-	return (struct archive_cmdline *)
-		calloc(1, sizeof(struct archive_cmdline));
+	return (struct tk_archive_cmdline *)
+		calloc(1, sizeof(struct tk_archive_cmdline));
 }
 
 /*
  * Release the resources.
  */
 int
-__archive_cmdline_free(struct archive_cmdline *data)
+__tk_archive_cmdline_free(struct tk_archive_cmdline *data)
 {
 
 	if (data) {

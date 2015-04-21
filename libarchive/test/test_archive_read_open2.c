@@ -57,21 +57,21 @@ close_cb(struct archive *a, void *client)
 }
 
 static void
-test(int formatted, archive_open_callback *o, archive_read_callback *r,
-    archive_skip_callback *s, archive_close_callback *c,
+test(int formatted, tk_archive_open_callback *o, tk_archive_read_callback *r,
+    tk_archive_skip_callback *s, tk_archive_close_callback *c,
     int rv, const char *msg)
 {
-	struct archive* a = archive_read_new();
+	struct archive* a = tk_archive_read_new();
 	if (formatted)
 	    assertEqualInt(ARCHIVE_OK,
-		archive_read_support_format_empty(a));
+		tk_archive_read_support_format_empty(a));
 	assertEqualInt(rv,
-	    archive_read_open2(a, NULL, o, r, s, c));
-	assertEqualString(msg, archive_error_string(a));
-	archive_read_free(a);
+	    tk_archive_read_open2(a, NULL, o, r, s, c));
+	assertEqualString(msg, tk_archive_error_string(a));
+	tk_archive_read_free(a);
 }
 
-DEFINE_TEST(test_archive_read_open2)
+DEFINE_TEST(test_tk_archive_read_open2)
 {
 	const char *no_reader =
 	    "No reader function provided to archive_read_open";

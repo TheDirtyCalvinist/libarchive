@@ -34,41 +34,41 @@
 
 #include "archive_string.h"
 
-struct archive_acl_entry {
-	struct archive_acl_entry *next;
+struct tk_archive_acl_entry {
+	struct tk_archive_acl_entry *next;
 	int	type;			/* E.g., access or default */
 	int	tag;			/* E.g., user/group/other/mask */
 	int	permset;		/* r/w/x bits */
 	int	id;			/* uid/gid for user/group */
-	struct archive_mstring name;		/* uname/gname */
+	struct tk_archive_mstring name;		/* uname/gname */
 };
 
-struct archive_acl {
+struct tk_archive_acl {
 	mode_t		mode;
-	struct archive_acl_entry	*acl_head;
-	struct archive_acl_entry	*acl_p;
+	struct tk_archive_acl_entry	*acl_head;
+	struct tk_archive_acl_entry	*acl_p;
 	int		 acl_state;	/* See acl_next for details. */
 	wchar_t		*acl_text_w;
 	char		*acl_text;
 	int		 acl_types;
 };
 
-void archive_acl_clear(struct archive_acl *);
-void archive_acl_copy(struct archive_acl *, struct archive_acl *);
-int archive_acl_count(struct archive_acl *, int);
-int archive_acl_reset(struct archive_acl *, int);
-int archive_acl_next(struct archive *, struct archive_acl *, int,
+void tk_archive_acl_clear(struct tk_archive_acl *);
+void tk_archive_acl_copy(struct tk_archive_acl *, struct tk_archive_acl *);
+int tk_archive_acl_count(struct tk_archive_acl *, int);
+int tk_archive_acl_reset(struct tk_archive_acl *, int);
+int tk_archive_acl_next(struct archive *, struct tk_archive_acl *, int,
     int *, int *, int *, int *, const char **);
 
-int archive_acl_add_entry(struct archive_acl *, int, int, int, int, const char *);
-int archive_acl_add_entry_w_len(struct archive_acl *,
+int tk_archive_acl_add_entry(struct tk_archive_acl *, int, int, int, int, const char *);
+int tk_archive_acl_add_entry_w_len(struct tk_archive_acl *,
     int, int, int, int, const wchar_t *, size_t);
-int archive_acl_add_entry_len(struct archive_acl *,
+int tk_archive_acl_add_entry_len(struct tk_archive_acl *,
     int, int, int, int, const char *, size_t);
 
-const wchar_t *archive_acl_text_w(struct archive *, struct archive_acl *, int);
-int archive_acl_text_l(struct archive_acl *, int, const char **, size_t *,
-    struct archive_string_conv *);
+const wchar_t *tk_archive_acl_text_w(struct archive *, struct tk_archive_acl *, int);
+int tk_archive_acl_text_l(struct tk_archive_acl *, int, const char **, size_t *,
+    struct tk_archive_string_conv *);
 
 /*
  * Private ACL parser.  This is private because it handles some
@@ -78,10 +78,10 @@ int archive_acl_text_l(struct archive_acl *, int, const char **, size_t *,
  * are likely to get added on a regular basis.  Clients who try to use
  * this interface are likely to be surprised when it changes.
  */
-int archive_acl_parse_w(struct archive_acl *,
+int tk_archive_acl_parse_w(struct tk_archive_acl *,
 		    const wchar_t *, int /* type */);
-int archive_acl_parse_l(struct archive_acl *,
+int tk_archive_acl_parse_l(struct tk_archive_acl *,
 		    const char *, int /* type */,
-		    struct archive_string_conv *);
+		    struct tk_archive_string_conv *);
 
 #endif /* ARCHIVE_ENTRY_PRIVATE_H_INCLUDED */

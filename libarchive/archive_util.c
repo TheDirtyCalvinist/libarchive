@@ -56,32 +56,32 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_util.c 201098 2009-12-28 02:58:1
 
 /* Generic initialization of 'struct archive' objects. */
 int
-__archive_clean(struct archive *a)
+__tk_archive_clean(struct archive *a)
 {
-	archive_string_conversion_free(a);
+	tk_archive_string_conversion_free(a);
 	return (ARCHIVE_OK);
 }
 
 int
-archive_version_number(void)
+tk_archive_version_number(void)
 {
 	return (ARCHIVE_VERSION_NUMBER);
 }
 
 const char *
-archive_version_string(void)
+tk_archive_version_string(void)
 {
 	return (ARCHIVE_VERSION_STRING);
 }
 
 int
-archive_errno(struct archive *a)
+tk_archive_errno(struct archive *a)
 {
-	return (a->archive_error_number);
+	return (a->tk_archive_error_number);
 }
 
 const char *
-archive_error_string(struct archive *a)
+tk_archive_error_string(struct archive *a)
 {
 
 	if (a->error != NULL  &&  *a->error != '\0')
@@ -91,34 +91,34 @@ archive_error_string(struct archive *a)
 }
 
 int
-archive_file_count(struct archive *a)
+tk_archive_file_count(struct archive *a)
 {
 	return (a->file_count);
 }
 
 int
-archive_format(struct archive *a)
+tk_archive_format(struct archive *a)
 {
-	return (a->archive_format);
+	return (a->tk_archive_format);
 }
 
 const char *
-archive_format_name(struct archive *a)
+tk_archive_format_name(struct archive *a)
 {
-	return (a->archive_format_name);
+	return (a->tk_archive_format_name);
 }
 
 
 int
-archive_compression(struct archive *a)
+tk_archive_compression(struct archive *a)
 {
-	return archive_filter_code(a, 0);
+	return tk_archive_filter_code(a, 0);
 }
 
 const char *
-archive_compression_name(struct archive *a)
+tk_archive_compression_name(struct archive *a)
 {
-	return archive_filter_name(a, 0);
+	return tk_archive_filter_name(a, 0);
 }
 
 
@@ -126,57 +126,57 @@ archive_compression_name(struct archive *a)
  * Return a count of the number of compressed bytes processed.
  */
 int64_t
-archive_position_compressed(struct archive *a)
+tk_archive_position_compressed(struct archive *a)
 {
-	return archive_filter_bytes(a, -1);
+	return tk_archive_filter_bytes(a, -1);
 }
 
 /*
  * Return a count of the number of uncompressed bytes processed.
  */
 int64_t
-archive_position_uncompressed(struct archive *a)
+tk_archive_position_uncompressed(struct archive *a)
 {
-	return archive_filter_bytes(a, 0);
+	return tk_archive_filter_bytes(a, 0);
 }
 
 void
-archive_clear_error(struct archive *a)
+tk_archive_clear_error(struct archive *a)
 {
-	archive_string_empty(&a->error_string);
+	tk_archive_string_empty(&a->error_string);
 	a->error = NULL;
-	a->archive_error_number = 0;
+	a->tk_archive_error_number = 0;
 }
 
 void
-archive_set_error(struct archive *a, int error_number, const char *fmt, ...)
+tk_archive_set_error(struct archive *a, int error_number, const char *fmt, ...)
 {
 	va_list ap;
 
-	a->archive_error_number = error_number;
+	a->tk_archive_error_number = error_number;
 	if (fmt == NULL) {
 		a->error = NULL;
 		return;
 	}
 
-	archive_string_empty(&(a->error_string));
+	tk_archive_string_empty(&(a->error_string));
 	va_start(ap, fmt);
-	archive_string_vsprintf(&(a->error_string), fmt, ap);
+	tk_archive_string_vsprintf(&(a->error_string), fmt, ap);
 	va_end(ap);
 	a->error = a->error_string.s;
 }
 
 void
-archive_copy_error(struct archive *dest, struct archive *src)
+tk_archive_copy_error(struct archive *dest, struct archive *src)
 {
-	dest->archive_error_number = src->archive_error_number;
+	dest->tk_archive_error_number = src->tk_archive_error_number;
 
-	archive_string_copy(&dest->error_string, &src->error_string);
+	tk_archive_string_copy(&dest->error_string, &src->error_string);
 	dest->error = dest->error_string.s;
 }
 
 void
-__archive_errx(int retvalue, const char *msg)
+__tk_archive_errx(int retvalue, const char *msg)
 {
 	static const char *msg1 = "Fatal Internal Error in libarchive: ";
 	size_t s;
@@ -204,7 +204,7 @@ __archive_errx(int retvalue, const char *msg)
  * are not secure.
  */
 int
-__archive_mktemp(const char *tmpdir)
+__tk_archive_mktemp(const char *tmpdir)
 {
 	static const wchar_t num[] = {
 		L'0', L'1', L'2', L'3', L'4', L'5', L'6', L'7',
@@ -217,7 +217,7 @@ __archive_mktemp(const char *tmpdir)
 		L'u', L'v', L'w', L'x', L'y', L'z'
 	};
 	HCRYPTPROV hProv;
-	struct archive_wstring temp_name;
+	struct tk_archive_wstring temp_name;
 	wchar_t *ws;
 	DWORD attr;
 	wchar_t *xp, *ep;
@@ -226,7 +226,7 @@ __archive_mktemp(const char *tmpdir)
 	hProv = (HCRYPTPROV)NULL;
 	fd = -1;
 	ws = NULL;
-	archive_string_init(&temp_name);
+	tk_archive_string_init(&temp_name);
 
 	/* Get a temporary directory. */
 	if (tmpdir == NULL) {
@@ -244,14 +244,14 @@ __archive_mktemp(const char *tmpdir)
 			goto exit_tmpfile;
 		}
 		GetTempPathW((DWORD)l, tmp);
-		archive_wstrcpy(&temp_name, tmp);
+		tk_archive_wstrcpy(&temp_name, tmp);
 		free(tmp);
 	} else {
-		if (archive_wstring_append_from_mbs(&temp_name, tmpdir,
+		if (tk_archive_wstring_append_from_mbs(&temp_name, tmpdir,
 		    strlen(tmpdir)) < 0)
 			goto exit_tmpfile;
 		if (temp_name.s[temp_name.length-1] != L'/')
-			archive_wstrappend_wchar(&temp_name, L'/');
+			tk_archive_wstrappend_wchar(&temp_name, L'/');
 	}
 
 	/* Check if temp_name is a directory. */
@@ -280,10 +280,10 @@ __archive_mktemp(const char *tmpdir)
 	/*
 	 * Create a temporary file.
 	 */
-	archive_wstrcat(&temp_name, L"libarchive_");
-	xp = temp_name.s + archive_strlen(&temp_name);
-	archive_wstrcat(&temp_name, L"XXXXXXXXXX");
-	ep = temp_name.s + archive_strlen(&temp_name);
+	tk_archive_wstrcat(&temp_name, L"libarchive_");
+	xp = temp_name.s + tk_archive_strlen(&temp_name);
+	tk_archive_wstrcat(&temp_name, L"XXXXXXXXXX");
+	ep = temp_name.s + tk_archive_strlen(&temp_name);
 
 	if (!CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_FULL,
 		CRYPT_VERIFYCONTEXT)) {
@@ -341,14 +341,14 @@ exit_tmpfile:
 	if (hProv != (HCRYPTPROV)NULL)
 		CryptReleaseContext(hProv, 0);
 	free(ws);
-	archive_wstring_free(&temp_name);
+	tk_archive_wstring_free(&temp_name);
 	return (fd);
 }
 
 #else
 
 static int
-get_tempdir(struct archive_string *temppath)
+get_tempdir(struct tk_archive_string *temppath)
 {
 	const char *tmp;
 
@@ -359,9 +359,9 @@ get_tempdir(struct archive_string *temppath)
 #else
                 tmp = "/tmp";
 #endif
-	archive_strcpy(temppath, tmp);
+	tk_archive_strcpy(temppath, tmp);
 	if (temppath->s[temppath->length-1] != '/')
-		archive_strappend_char(temppath, '/');
+		tk_archive_strappend_char(temppath, '/');
 	return (ARCHIVE_OK);
 }
 
@@ -372,28 +372,28 @@ get_tempdir(struct archive_string *temppath)
  */
 
 int
-__archive_mktemp(const char *tmpdir)
+__tk_archive_mktemp(const char *tmpdir)
 {
-	struct archive_string temp_name;
+	struct tk_archive_string temp_name;
 	int fd = -1;
 
-	archive_string_init(&temp_name);
+	tk_archive_string_init(&temp_name);
 	if (tmpdir == NULL) {
 		if (get_tempdir(&temp_name) != ARCHIVE_OK)
 			goto exit_tmpfile;
 	} else {
-		archive_strcpy(&temp_name, tmpdir);
+		tk_archive_strcpy(&temp_name, tmpdir);
 		if (temp_name.s[temp_name.length-1] != '/')
-			archive_strappend_char(&temp_name, '/');
+			tk_archive_strappend_char(&temp_name, '/');
 	}
-	archive_strcat(&temp_name, "libarchive_XXXXXX");
+	tk_archive_strcat(&temp_name, "libarchive_XXXXXX");
 	fd = mkstemp(temp_name.s);
 	if (fd < 0)
 		goto exit_tmpfile;
-	__archive_ensure_cloexec_flag(fd);
+	__tk_archive_ensure_cloexec_flag(fd);
 	unlink(temp_name.s);
 exit_tmpfile:
-	archive_string_free(&temp_name);
+	tk_archive_string_free(&temp_name);
 	return (fd);
 }
 
@@ -404,7 +404,7 @@ exit_tmpfile:
  */
 
 int
-__archive_mktemp(const char *tmpdir)
+__tk_archive_mktemp(const char *tmpdir)
 {
         static const char num[] = {
 		'0', '1', '2', '3', '4', '5', '6', '7',
@@ -416,19 +416,19 @@ __archive_mktemp(const char *tmpdir)
 		'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
 		'u', 'v', 'w', 'x', 'y', 'z'
         };
-	struct archive_string temp_name;
+	struct tk_archive_string temp_name;
 	struct stat st;
 	int fd;
 	char *tp, *ep;
 	unsigned seed;
 
 	fd = -1;
-	archive_string_init(&temp_name);
+	tk_archive_string_init(&temp_name);
 	if (tmpdir == NULL) {
 		if (get_tempdir(&temp_name) != ARCHIVE_OK)
 			goto exit_tmpfile;
 	} else
-		archive_strcpy(&temp_name, tmpdir);
+		tk_archive_strcpy(&temp_name, tmpdir);
 	if (temp_name.s[temp_name.length-1] == '/') {
 		temp_name.s[temp_name.length-1] = '\0';
 		temp_name.length --;
@@ -439,13 +439,13 @@ __archive_mktemp(const char *tmpdir)
 		errno = ENOTDIR;
 		goto exit_tmpfile;
 	}
-	archive_strcat(&temp_name, "/libarchive_");
-	tp = temp_name.s + archive_strlen(&temp_name);
-	archive_strcat(&temp_name, "XXXXXXXXXX");
-	ep = temp_name.s + archive_strlen(&temp_name);
+	tk_archive_strcat(&temp_name, "/libarchive_");
+	tp = temp_name.s + tk_archive_strlen(&temp_name);
+	tk_archive_strcat(&temp_name, "XXXXXXXXXX");
+	ep = temp_name.s + tk_archive_strlen(&temp_name);
 
 	fd = open("/dev/random", O_RDONLY | O_CLOEXEC);
-	__archive_ensure_cloexec_flag(fd);
+	__tk_archive_ensure_cloexec_flag(fd);
 	if (fd < 0)
 		seed = time(NULL);
 	else {
@@ -464,10 +464,10 @@ __archive_mktemp(const char *tmpdir)
 	} while (fd < 0 && errno == EEXIST);
 	if (fd < 0)
 		goto exit_tmpfile;
-	__archive_ensure_cloexec_flag(fd);
+	__tk_archive_ensure_cloexec_flag(fd);
 	unlink(temp_name.s);
 exit_tmpfile:
-	archive_string_free(&temp_name);
+	tk_archive_string_free(&temp_name);
 	return (fd);
 }
 
@@ -485,7 +485,7 @@ exit_tmpfile:
  * merely declares those macros, especially Linux 2.6.18 - 2.6.24 do it.
  */
 void
-__archive_ensure_cloexec_flag(int fd)
+__tk_archive_ensure_cloexec_flag(int fd)
 {
 #if defined(_WIN32) && !defined(__CYGWIN__)
 	(void)fd; /* UNSED */

@@ -41,34 +41,34 @@ DEFINE_TEST(test_read_format_gtar_lzma)
 {
 	int r;
 
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	struct archive *a;
-	assert((a = archive_read_new()) != NULL);
+	assert((a = tk_archive_read_new()) != NULL);
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_support_filter_all(a));
-	r = archive_read_support_filter_lzma(a);
+	    tk_archive_read_support_filter_all(a));
+	r = tk_archive_read_support_filter_lzma(a);
 	if (r == ARCHIVE_WARN) {
 		skipping("lzma reading not fully supported on this platform");
-		assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+		assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 		return;
 	}
 
 	assertEqualIntA(a, ARCHIVE_OK, r);
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_support_format_all(a));
-	r = archive_read_open_memory2(a, archive, sizeof(archive), 3);
+	    tk_archive_read_support_format_all(a));
+	r = tk_archive_read_open_memory2(a, archive, sizeof(archive), 3);
 	if (r != ARCHIVE_OK) {
 		skipping("Skipping LZMA compression check: %s",
-		    archive_error_string(a));
+		    tk_archive_error_string(a));
 		goto finish;
 	}
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_next_header(a, &ae));
-	assertEqualInt(archive_filter_code(a, 0), ARCHIVE_FILTER_LZMA);
-	assertEqualInt(archive_format(a), ARCHIVE_FORMAT_TAR_GNUTAR);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
+	    tk_archive_read_next_header(a, &ae));
+	assertEqualInt(tk_archive_filter_code(a, 0), ARCHIVE_FILTER_LZMA);
+	assertEqualInt(tk_archive_format(a), ARCHIVE_FORMAT_TAR_GNUTAR);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_close(a));
 finish:
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 

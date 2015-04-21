@@ -50,7 +50,7 @@ static const unsigned char terminator_id[] = {
 DEFINE_TEST(test_write_format_iso9660_empty)
 {
 	struct archive *a;
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	unsigned char *buff;
 	size_t buffsize = 190 * 2048;
 	size_t used;
@@ -62,76 +62,76 @@ DEFINE_TEST(test_write_format_iso9660_empty)
 		return;
 
 	/* ISO9660 format: Create a new archive in memory. */
-	assert((a = archive_write_new()) != NULL);
-	assertA(0 == archive_write_set_format_iso9660(a));
-	assertA(0 == archive_write_add_filter_none(a));
-	assertA(0 == archive_write_set_bytes_per_block(a, 1));
-	assertA(0 == archive_write_set_bytes_in_last_block(a, 1));
-	assertA(0 == archive_write_open_memory(a, buff, buffsize, &used));
+	assert((a = tk_archive_write_new()) != NULL);
+	assertA(0 == tk_archive_write_set_format_iso9660(a));
+	assertA(0 == tk_archive_write_add_filter_none(a));
+	assertA(0 == tk_archive_write_set_bytes_per_block(a, 1));
+	assertA(0 == tk_archive_write_set_bytes_in_last_block(a, 1));
+	assertA(0 == tk_archive_write_open_memory(a, buff, buffsize, &used));
 
 	/* Add "." entry which must be ignored. */ 
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_set_atime(ae, 2, 0);
-	archive_entry_set_ctime(ae, 4, 0);
-	archive_entry_set_mtime(ae, 5, 0);
-	archive_entry_copy_pathname(ae, ".");
-	archive_entry_set_mode(ae, S_IFDIR | 0755);
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
-	archive_entry_free(ae);
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_atime(ae, 2, 0);
+	tk_archive_entry_set_ctime(ae, 4, 0);
+	tk_archive_entry_set_mtime(ae, 5, 0);
+	tk_archive_entry_copy_pathname(ae, ".");
+	tk_archive_entry_set_mode(ae, S_IFDIR | 0755);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_header(a, ae));
+	tk_archive_entry_free(ae);
 
 	/* Add ".." entry which must be ignored. */ 
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_set_atime(ae, 2, 0);
-	archive_entry_set_ctime(ae, 4, 0);
-	archive_entry_set_mtime(ae, 5, 0);
-	archive_entry_copy_pathname(ae, "..");
-	archive_entry_set_mode(ae, S_IFDIR | 0755);
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
-	archive_entry_free(ae);
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_atime(ae, 2, 0);
+	tk_archive_entry_set_ctime(ae, 4, 0);
+	tk_archive_entry_set_mtime(ae, 5, 0);
+	tk_archive_entry_copy_pathname(ae, "..");
+	tk_archive_entry_set_mode(ae, S_IFDIR | 0755);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_header(a, ae));
+	tk_archive_entry_free(ae);
 
 	/* Add "/" entry which must be ignored. */ 
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_set_atime(ae, 2, 0);
-	archive_entry_set_ctime(ae, 4, 0);
-	archive_entry_set_mtime(ae, 5, 0);
-	archive_entry_copy_pathname(ae, "/");
-	archive_entry_set_mode(ae, S_IFDIR | 0755);
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
-	archive_entry_free(ae);
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_atime(ae, 2, 0);
+	tk_archive_entry_set_ctime(ae, 4, 0);
+	tk_archive_entry_set_mtime(ae, 5, 0);
+	tk_archive_entry_copy_pathname(ae, "/");
+	tk_archive_entry_set_mode(ae, S_IFDIR | 0755);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_header(a, ae));
+	tk_archive_entry_free(ae);
 
 	/* Add "../" entry which must be ignored. */ 
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_set_atime(ae, 2, 0);
-	archive_entry_set_ctime(ae, 4, 0);
-	archive_entry_set_mtime(ae, 5, 0);
-	archive_entry_copy_pathname(ae, "../");
-	archive_entry_set_mode(ae, S_IFDIR | 0755);
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
-	archive_entry_free(ae);
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_atime(ae, 2, 0);
+	tk_archive_entry_set_ctime(ae, 4, 0);
+	tk_archive_entry_set_mtime(ae, 5, 0);
+	tk_archive_entry_copy_pathname(ae, "../");
+	tk_archive_entry_set_mode(ae, S_IFDIR | 0755);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_header(a, ae));
+	tk_archive_entry_free(ae);
 
 	/* Add "../../." entry which must be ignored. */ 
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_set_atime(ae, 2, 0);
-	archive_entry_set_ctime(ae, 4, 0);
-	archive_entry_set_mtime(ae, 5, 0);
-	archive_entry_copy_pathname(ae, "../../.");
-	archive_entry_set_mode(ae, S_IFDIR | 0755);
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
-	archive_entry_free(ae);
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_atime(ae, 2, 0);
+	tk_archive_entry_set_ctime(ae, 4, 0);
+	tk_archive_entry_set_mtime(ae, 5, 0);
+	tk_archive_entry_copy_pathname(ae, "../../.");
+	tk_archive_entry_set_mode(ae, S_IFDIR | 0755);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_header(a, ae));
+	tk_archive_entry_free(ae);
 
 	/* Add "..//.././" entry which must be ignored. */ 
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_set_atime(ae, 2, 0);
-	archive_entry_set_ctime(ae, 4, 0);
-	archive_entry_set_mtime(ae, 5, 0);
-	archive_entry_copy_pathname(ae, "..//.././");
-	archive_entry_set_mode(ae, S_IFDIR | 0755);
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
-	archive_entry_free(ae);
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_atime(ae, 2, 0);
+	tk_archive_entry_set_ctime(ae, 4, 0);
+	tk_archive_entry_set_mtime(ae, 5, 0);
+	tk_archive_entry_copy_pathname(ae, "..//.././");
+	tk_archive_entry_set_mode(ae, S_IFDIR | 0755);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_header(a, ae));
+	tk_archive_entry_free(ae);
 
 	/* Close out the archive. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_free(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_close(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_free(a));
 
 	assert(used == 2048 * 181);
 	/* Check System Area. */
@@ -177,28 +177,28 @@ DEFINE_TEST(test_write_format_iso9660_empty)
 	/*
 	 * Read ISO image.
 	 */
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, 0, archive_read_support_format_all(a));
-	assertEqualIntA(a, 0, archive_read_support_filter_all(a));
-	assertEqualIntA(a, 0, archive_read_open_memory(a, buff, used));
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, 0, tk_archive_read_support_format_all(a));
+	assertEqualIntA(a, 0, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, 0, tk_archive_read_open_memory(a, buff, used));
 
 	/*
 	 * Read Root Directory
 	 * Root Directory entry must be in ISO image.
 	 */
-	assertEqualIntA(a, 0, archive_read_next_header(a, &ae));
-	assertEqualInt(archive_entry_atime(ae), archive_entry_ctime(ae));
-	assertEqualInt(archive_entry_atime(ae), archive_entry_mtime(ae));
-	assertEqualString(".", archive_entry_pathname(ae));
-	assert((S_IFDIR | 0555) == archive_entry_mode(ae));
-	assertEqualInt(2048, archive_entry_size(ae));
+	assertEqualIntA(a, 0, tk_archive_read_next_header(a, &ae));
+	assertEqualInt(tk_archive_entry_atime(ae), tk_archive_entry_ctime(ae));
+	assertEqualInt(tk_archive_entry_atime(ae), tk_archive_entry_mtime(ae));
+	assertEqualString(".", tk_archive_entry_pathname(ae));
+	assert((S_IFDIR | 0555) == tk_archive_entry_mode(ae));
+	assertEqualInt(2048, tk_archive_entry_size(ae));
 
 	/*
 	 * Verify the end of the archive.
 	 */
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_free(a));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_free(a));
 
 	free(buff);
 }

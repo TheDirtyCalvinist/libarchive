@@ -51,14 +51,14 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_write_set_compression_program.c 
 
 #if ARCHIVE_VERSION_NUMBER < 4000000
 int
-archive_write_set_compression_program(struct archive *a, const char *cmd)
+tk_archive_write_set_compression_program(struct archive *a, const char *cmd)
 {
-	__archive_write_filters_free(a);
-	return (archive_write_add_filter_program(a, cmd));
+	__tk_archive_write_filters_free(a);
+	return (tk_archive_write_add_filter_program(a, cmd));
 }
 #endif
 
-struct archive_write_program_data {
+struct tk_archive_write_program_data {
 #if defined(_WIN32) && !defined(__CYGWIN__)
 	HANDLE		 child;
 #else
@@ -71,30 +71,30 @@ struct archive_write_program_data {
 };
 
 struct private_data {
-	struct archive_write_program_data *pdata;
-	struct archive_string description;
+	struct tk_archive_write_program_data *pdata;
+	struct tk_archive_string description;
 	char		*cmd;
 };
 
-static int archive_compressor_program_open(struct archive_write_filter *);
-static int archive_compressor_program_write(struct archive_write_filter *,
+static int tk_archive_compressor_program_open(struct tk_archive_write_filter *);
+static int tk_archive_compressor_program_write(struct tk_archive_write_filter *,
 		    const void *, size_t);
-static int archive_compressor_program_close(struct archive_write_filter *);
-static int archive_compressor_program_free(struct archive_write_filter *);
+static int tk_archive_compressor_program_close(struct tk_archive_write_filter *);
+static int tk_archive_compressor_program_free(struct tk_archive_write_filter *);
 
 /*
  * Add a filter to this write handle that passes all data through an
  * external program.
  */
 int
-archive_write_add_filter_program(struct archive *_a, const char *cmd)
+tk_archive_write_add_filter_program(struct archive *_a, const char *cmd)
 {
-	struct archive_write_filter *f = __archive_write_allocate_filter(_a);
+	struct tk_archive_write_filter *f = __tk_archive_write_allocate_filter(_a);
 	struct private_data *data;
 	static const char *prefix = "Program: ";
 
-	archive_check_magic(_a, ARCHIVE_WRITE_MAGIC,
-	    ARCHIVE_STATE_NEW, "archive_write_add_filter_program");
+	tk_archive_check_magic(_a, ARCHIVE_WRITE_MAGIC,
+	    ARCHIVE_STATE_NEW, "tk_archive_write_add_filter_program");
 
 	f->data = calloc(1, sizeof(*data));
 	if (f->data == NULL)
@@ -105,65 +105,65 @@ archive_write_add_filter_program(struct archive *_a, const char *cmd)
 	if (data->cmd == NULL)
 		goto memerr;
 
-	data->pdata = __archive_write_program_allocate();
+	data->pdata = __tk_archive_write_program_allocate();
 	if (data->pdata == NULL)
 		goto memerr;
 
 	/* Make up a description string. */
-	if (archive_string_ensure(&data->description,
+	if (tk_archive_string_ensure(&data->description,
 	    strlen(prefix) + strlen(cmd) + 1) == NULL)
 		goto memerr;
-	archive_strcpy(&data->description, prefix);
-	archive_strcat(&data->description, cmd);
+	tk_archive_strcpy(&data->description, prefix);
+	tk_archive_strcat(&data->description, cmd);
 
 	f->name = data->description.s;
 	f->code = ARCHIVE_FILTER_PROGRAM;
-	f->open = archive_compressor_program_open;
-	f->write = archive_compressor_program_write;
-	f->close = archive_compressor_program_close;
-	f->free = archive_compressor_program_free;
+	f->open = tk_archive_compressor_program_open;
+	f->write = tk_archive_compressor_program_write;
+	f->close = tk_archive_compressor_program_close;
+	f->free = tk_archive_compressor_program_free;
 	return (ARCHIVE_OK);
 memerr:
-	archive_compressor_program_free(f);
-	archive_set_error(_a, ENOMEM,
+	tk_archive_compressor_program_free(f);
+	tk_archive_set_error(_a, ENOMEM,
 	    "Can't allocate memory for filter program");
 	return (ARCHIVE_FATAL);
 }
 
 static int
-archive_compressor_program_open(struct archive_write_filter *f)
+tk_archive_compressor_program_open(struct tk_archive_write_filter *f)
 {
 	struct private_data *data = (struct private_data *)f->data;
 
-	return __archive_write_program_open(f, data->pdata, data->cmd);
+	return __tk_archive_write_program_open(f, data->pdata, data->cmd);
 }
 
 static int
-archive_compressor_program_write(struct archive_write_filter *f,
+tk_archive_compressor_program_write(struct tk_archive_write_filter *f,
     const void *buff, size_t length)
 {
 	struct private_data *data = (struct private_data *)f->data;
 
-	return __archive_write_program_write(f, data->pdata, buff, length);
+	return __tk_archive_write_program_write(f, data->pdata, buff, length);
 }
 
 static int
-archive_compressor_program_close(struct archive_write_filter *f)
+tk_archive_compressor_program_close(struct tk_archive_write_filter *f)
 {
 	struct private_data *data = (struct private_data *)f->data;
 
-	return __archive_write_program_close(f, data->pdata);
+	return __tk_archive_write_program_close(f, data->pdata);
 }
 
 static int
-archive_compressor_program_free(struct archive_write_filter *f)
+tk_archive_compressor_program_free(struct tk_archive_write_filter *f)
 {
 	struct private_data *data = (struct private_data *)f->data;
 
 	if (data) {
 		free(data->cmd);
-		archive_string_free(&data->description);
-		__archive_write_program_free(data->pdata);
+		tk_archive_string_free(&data->description);
+		__tk_archive_write_program_free(data->pdata);
 		free(data);
 		f->data = NULL;
 	}
@@ -173,12 +173,12 @@ archive_compressor_program_free(struct archive_write_filter *f)
 /*
  * Allocate resources for executing an external program.
  */
-struct archive_write_program_data *
-__archive_write_program_allocate(void)
+struct tk_archive_write_program_data *
+__tk_archive_write_program_allocate(void)
 {
-	struct archive_write_program_data *data;
+	struct tk_archive_write_program_data *data;
 
-	data = calloc(1, sizeof(struct archive_write_program_data));
+	data = calloc(1, sizeof(struct tk_archive_write_program_data));
 	if (data == NULL)
 		return (data);
 	data->child_stdin = -1;
@@ -190,7 +190,7 @@ __archive_write_program_allocate(void)
  * Release the resources.
  */
 int
-__archive_write_program_free(struct archive_write_program_data *data)
+__tk_archive_write_program_free(struct tk_archive_write_program_data *data)
 {
 
 	if (data) {
@@ -205,13 +205,13 @@ __archive_write_program_free(struct archive_write_program_data *data)
 }
 
 int
-__archive_write_program_open(struct archive_write_filter *f,
-    struct archive_write_program_data *data, const char *cmd)
+__tk_archive_write_program_open(struct tk_archive_write_filter *f,
+    struct tk_archive_write_program_data *data, const char *cmd)
 {
 	pid_t child;
 	int ret;
 
-	ret = __archive_write_open_filter(f->next_filter);
+	ret = __tk_archive_write_open_filter(f->next_filter);
 	if (ret != ARCHIVE_OK)
 		return (ret);
 
@@ -221,16 +221,16 @@ __archive_write_program_open(struct archive_write_filter *f,
 		data->child_buf = malloc(data->child_buf_len);
 
 		if (data->child_buf == NULL) {
-			archive_set_error(f->archive, ENOMEM,
+			tk_archive_set_error(f->archive, ENOMEM,
 			    "Can't allocate compression buffer");
 			return (ARCHIVE_FATAL);
 		}
 	}
 
-	child = __archive_create_child(cmd, &data->child_stdin,
+	child = __tk_archive_create_child(cmd, &data->child_stdin,
 		    &data->child_stdout);
 	if (child == -1) {
-		archive_set_error(f->archive, EINVAL,
+		tk_archive_set_error(f->archive, EINVAL,
 		    "Can't initialise filter");
 		return (ARCHIVE_FATAL);
 	}
@@ -241,7 +241,7 @@ __archive_write_program_open(struct archive_write_filter *f,
 		data->child_stdin = -1;
 		close(data->child_stdout);
 		data->child_stdout = -1;
-		archive_set_error(f->archive, EINVAL,
+		tk_archive_set_error(f->archive, EINVAL,
 		    "Can't initialise filter");
 		return (ARCHIVE_FATAL);
 	}
@@ -252,8 +252,8 @@ __archive_write_program_open(struct archive_write_filter *f,
 }
 
 static ssize_t
-child_write(struct archive_write_filter *f,
-    struct archive_write_program_data *data, const char *buf, size_t buf_len)
+child_write(struct tk_archive_write_filter *f,
+    struct tk_archive_write_program_data *data, const char *buf, size_t buf_len)
 {
 	ssize_t ret;
 
@@ -281,7 +281,7 @@ child_write(struct archive_write_filter *f,
 
 		if (data->child_stdout == -1) {
 			fcntl(data->child_stdin, F_SETFL, 0);
-			__archive_check_child(data->child_stdin,
+			__tk_archive_check_child(data->child_stdin,
 				data->child_stdout);
 			continue;
 		}
@@ -299,7 +299,7 @@ child_write(struct archive_write_filter *f,
 			continue;
 		}
 		if (ret == -1 && errno == EAGAIN) {
-			__archive_check_child(data->child_stdin,
+			__tk_archive_check_child(data->child_stdin,
 				data->child_stdout);
 			continue;
 		}
@@ -308,7 +308,7 @@ child_write(struct archive_write_filter *f,
 
 		data->child_buf_avail += ret;
 
-		ret = __archive_write_filter(f->next_filter,
+		ret = __tk_archive_write_filter(f->next_filter,
 		    data->child_buf, data->child_buf_avail);
 		if (ret != ARCHIVE_OK)
 			return (-1);
@@ -320,8 +320,8 @@ child_write(struct archive_write_filter *f,
  * Write data to the filter stream.
  */
 int
-__archive_write_program_write(struct archive_write_filter *f,
-    struct archive_write_program_data *data, const void *buff, size_t length)
+__tk_archive_write_program_write(struct tk_archive_write_filter *f,
+    struct tk_archive_write_program_data *data, const void *buff, size_t length)
 {
 	ssize_t ret;
 	const char *buf;
@@ -333,7 +333,7 @@ __archive_write_program_write(struct archive_write_filter *f,
 	while (length > 0) {
 		ret = child_write(f, data, buf, length);
 		if (ret == -1 || ret == 0) {
-			archive_set_error(f->archive, EIO,
+			tk_archive_set_error(f->archive, EIO,
 			    "Can't write to filter");
 			return (ARCHIVE_FATAL);
 		}
@@ -347,14 +347,14 @@ __archive_write_program_write(struct archive_write_filter *f,
  * Finish the filtering...
  */
 int
-__archive_write_program_close(struct archive_write_filter *f,
-    struct archive_write_program_data *data)
+__tk_archive_write_program_close(struct tk_archive_write_filter *f,
+    struct tk_archive_write_program_data *data)
 {
 	int ret, r1, status;
 	ssize_t bytes_read;
 
 	if (data->child == 0)
-		return __archive_write_close_filter(f->next_filter);
+		return __tk_archive_write_close_filter(f->next_filter);
 
 	ret = 0;
 	close(data->child_stdin);
@@ -372,14 +372,14 @@ __archive_write_program_close(struct archive_write_filter *f,
 			break;
 
 		if (bytes_read == -1) {
-			archive_set_error(f->archive, errno,
+			tk_archive_set_error(f->archive, errno,
 			    "Read from filter failed unexpectedly.");
 			ret = ARCHIVE_FATAL;
 			goto cleanup;
 		}
 		data->child_buf_avail += bytes_read;
 
-		ret = __archive_write_filter(f->next_filter,
+		ret = __tk_archive_write_filter(f->next_filter,
 		    data->child_buf, data->child_buf_avail);
 		if (ret != ARCHIVE_OK) {
 			ret = ARCHIVE_FATAL;
@@ -402,11 +402,11 @@ cleanup:
 	data->child = 0;
 
 	if (status != 0) {
-		archive_set_error(f->archive, EIO,
+		tk_archive_set_error(f->archive, EIO,
 		    "Filter exited with failure.");
 		ret = ARCHIVE_FATAL;
 	}
-	r1 = __archive_write_close_filter(f->next_filter);
+	r1 = __tk_archive_write_close_filter(f->next_filter);
 	return (r1 < ret ? r1 : ret);
 }
 

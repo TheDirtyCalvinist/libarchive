@@ -82,7 +82,7 @@ DEFINE_TEST(test_write_disk_appledouble)
 #else
 	const char *refname = "test_write_disk_appledouble.cpio.gz";
 	struct archive *ad, *a;
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	struct stat st;
 	acl_t acl;
 
@@ -91,41 +91,41 @@ DEFINE_TEST(test_write_disk_appledouble)
 	/*
 	 * Extract an archive to disk with HFS+ Compression.
 	 */
-	assert((ad = archive_write_disk_new()) != NULL);
+	assert((ad = tk_archive_write_disk_new()) != NULL);
 	assertEqualIntA(ad, ARCHIVE_OK,
-	    archive_write_disk_set_standard_lookup(ad));
+	    tk_archive_write_disk_set_standard_lookup(ad));
 	assertEqualIntA(ad, ARCHIVE_OK,
-	    archive_write_disk_set_options(ad,
+	    tk_archive_write_disk_set_options(ad,
 		ARCHIVE_EXTRACT_TIME |
 		ARCHIVE_EXTRACT_SECURE_SYMLINKS |
 		ARCHIVE_EXTRACT_SECURE_NODOTDOT |
 		ARCHIVE_EXTRACT_HFS_COMPRESSION_FORCED));
 
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_open_filename(a,
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_open_filename(a,
 	    refname, 512 * 20));
 
 	assertMakeDir("hfscmp", 0755);
 	assertChdir("hfscmp");
 
 	/* Skip "." */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualString(".", archive_entry_pathname(ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualString(".", tk_archive_entry_pathname(ae));
 	/* Extract file3. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualString("./file3", archive_entry_pathname(ae));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_extract2(a, ae, ad));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualString("./file3", tk_archive_entry_pathname(ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_extract2(a, ae, ad));
 	/* Extract ._file3 which will be merged into file3 as medtadata. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualString("./._file3", archive_entry_pathname(ae));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_extract2(a, ae, ad));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualString("./._file3", tk_archive_entry_pathname(ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_extract2(a, ae, ad));
 
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
-	assertEqualIntA(ad, ARCHIVE_OK, archive_write_free(ad));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
+	assertEqualIntA(ad, ARCHIVE_OK, tk_archive_write_free(ad));
 
 	/* Test file3. */
 	assertEqualInt(0, stat("file3", &st));
@@ -151,40 +151,40 @@ DEFINE_TEST(test_write_disk_appledouble)
 	/*
 	 * Extract an archive to disk without HFS+ Compression.
 	 */
-	assert((ad = archive_write_disk_new()) != NULL);
+	assert((ad = tk_archive_write_disk_new()) != NULL);
 	assertEqualIntA(ad, ARCHIVE_OK,
-	    archive_write_disk_set_standard_lookup(ad));
+	    tk_archive_write_disk_set_standard_lookup(ad));
 	assertEqualIntA(ad, ARCHIVE_OK,
-	    archive_write_disk_set_options(ad,
+	    tk_archive_write_disk_set_options(ad,
 		ARCHIVE_EXTRACT_TIME |
 		ARCHIVE_EXTRACT_SECURE_SYMLINKS |
 		ARCHIVE_EXTRACT_SECURE_NODOTDOT));
 
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_open_filename(a,
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_open_filename(a,
 	    refname, 512 * 20));
 
 	assertMakeDir("nocmp", 0755);
 	assertChdir("nocmp");
 
 	/* Skip "." */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualString(".", archive_entry_pathname(ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualString(".", tk_archive_entry_pathname(ae));
 	/* Extract file3. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualString("./file3", archive_entry_pathname(ae));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_extract2(a, ae, ad));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualString("./file3", tk_archive_entry_pathname(ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_extract2(a, ae, ad));
 	/* Extract ._file3 which will be merged into file3 as medtadata. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualString("./._file3", archive_entry_pathname(ae));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_extract2(a, ae, ad));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualString("./._file3", tk_archive_entry_pathname(ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_extract2(a, ae, ad));
 
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
-	assertEqualIntA(ad, ARCHIVE_OK, archive_write_free(ad));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
+	assertEqualIntA(ad, ARCHIVE_OK, tk_archive_write_free(ad));
 
 	/* Test file3. */
 	assertEqualInt(0, stat("file3", &st));

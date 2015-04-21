@@ -34,9 +34,9 @@
 #define ARCHIVE_READ_DISK_PRIVATE_H_INCLUDED
 
 struct tree;
-struct archive_entry;
+struct tk_archive_entry;
 
-struct archive_read_disk {
+struct tk_archive_read_disk {
 	struct archive	archive;
 
 	/*
@@ -77,7 +77,7 @@ struct archive_read_disk {
 	void	 *lookup_uname_data;
 
 	int	(*metadata_filter_func)(struct archive *, void *,
-			struct archive_entry *);
+			struct tk_archive_entry *);
 	void	*metadata_filter_data;
 
 	/* ARCHIVE_MATCH object. */
@@ -85,7 +85,7 @@ struct archive_read_disk {
 	/* Callback function, this will be invoked when ARCHIVE_MATCH
 	 * archive_match_*_excluded_ae return true. */
 	void	(*excluded_cb_func)(struct archive *, void *,
-			 struct archive_entry *);
+			 struct tk_archive_entry *);
 	void	*excluded_cb_data;
 };
 

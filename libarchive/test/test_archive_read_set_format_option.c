@@ -27,16 +27,16 @@
 __FBSDID("$FreeBSD$");
 
 #define should(__a, __code, __m, __o, __v) \
-assertEqualInt(__code, archive_read_set_format_option(__a, __m, __o, __v))
+assertEqualInt(__code, tk_archive_read_set_format_option(__a, __m, __o, __v))
 
 static void
 test(int pristine)
 {
-	struct archive* a = archive_read_new();
+	struct archive* a = tk_archive_read_new();
 	int known_option_rv = pristine ? ARCHIVE_FAILED : ARCHIVE_OK;
 
 	if (!pristine)
-		archive_read_support_format_all(a);
+		tk_archive_read_support_format_all(a);
 
 	/* NULL and "" denote `no option', so they're ok no matter
 	 * what, if any, formats are registered */
@@ -57,10 +57,10 @@ test(int pristine)
 	should(a, known_option_rv, NULL, "joliet", NULL);
 	should(a, known_option_rv, NULL, "joliet", NULL);
 
-	archive_read_free(a);
+	tk_archive_read_free(a);
 }
 
-DEFINE_TEST(test_archive_read_set_format_option)
+DEFINE_TEST(test_tk_archive_read_set_format_option)
 {
 	test(1);
 	test(0);

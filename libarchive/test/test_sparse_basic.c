@@ -248,7 +248,7 @@ static void
 verify_sparse_file(struct archive *a, const char *path,
     const struct sparse *sparse, int blocks)
 {
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	const void *buff;
 	size_t bytes_read;
 	int64_t offset;
@@ -256,17 +256,17 @@ verify_sparse_file(struct archive *a, const char *path,
 	int data_blocks, hole;
 
 	create_sparse_file(path, sparse);
-	assert((ae = archive_entry_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_disk_open(a, path));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header2(a, ae));
+	assert((ae = tk_archive_entry_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_disk_open(a, path));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header2(a, ae));
 	/* Verify the number of holes only, not its offset nor its
 	 * length because those alignments are deeply dependence on
 	 * its filesystem. */ 
-	assertEqualInt(blocks, archive_entry_sparse_count(ae));
+	assertEqualInt(blocks, tk_archive_entry_sparse_count(ae));
 	total = 0;
 	data_blocks = 0;
 	hole = 0;
-	while (ARCHIVE_OK == archive_read_data_block(a, &buff, &bytes_read,
+	while (ARCHIVE_OK == tk_archive_read_data_block(a, &buff, &bytes_read,
 	    &offset)) {
 		if (offset > total || offset == 0) {
 			if (offset > total)
@@ -279,8 +279,8 @@ verify_sparse_file(struct archive *a, const char *path,
 		data_blocks = 0;/* There are no holes */
 	assertEqualInt(blocks, data_blocks);
 
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
-	archive_entry_free(ae);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_close(a));
+	tk_archive_entry_free(ae);
 }
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -295,49 +295,49 @@ static void
 verify_sparse_file2(struct archive *a, const char *path,
     const struct sparse *sparse, int blocks, int preopen)
 {
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	int fd;
 
 	(void)sparse; /* UNUSED */
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_set_pathname(ae, path);
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_pathname(ae, path);
 	if (preopen)
 		fd = open(path, O_RDONLY | O_BINARY);
 	else
 		fd = -1;
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_disk_entry_from_file(a, ae, fd, NULL));
+	    tk_archive_read_disk_entry_from_file(a, ae, fd, NULL));
 	if (fd >= 0)
 		close(fd);
 	/* Verify the number of holes only, not its offset nor its
 	 * length because those alignments are deeply dependence on
 	 * its filesystem. */ 
-	assertEqualInt(blocks, archive_entry_sparse_count(ae));
-	archive_entry_free(ae);
+	assertEqualInt(blocks, tk_archive_entry_sparse_count(ae));
+	tk_archive_entry_free(ae);
 }
 
 static void
 test_sparse_whole_file_data()
 {
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	int64_t offset;
 	int i;
 
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_set_size(ae, 1024*10);
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_size(ae, 1024*10);
 
 	/*
 	 * Add sparse block data up to the file size.
 	 */
 	offset = 0;
 	for (i = 0; i < 10; i++) {
-		archive_entry_sparse_add_entry(ae, offset, 1024);
+		tk_archive_entry_sparse_add_entry(ae, offset, 1024);
 		offset += 1024;
 	}
 
 	failure("There should be no sparse");
-	assertEqualInt(0, archive_entry_sparse_count(ae));
-	archive_entry_free(ae);
+	assertEqualInt(0, tk_archive_entry_sparse_count(ae));
+	tk_archive_entry_free(ae);
 }
 
 DEFINE_TEST(test_sparse_basic)
@@ -420,23 +420,23 @@ DEFINE_TEST(test_sparse_basic)
 	/*
 	 * Get sparse data through directory traversals.
 	 */
-	assert((a = archive_read_disk_new()) != NULL);
+	assert((a = tk_archive_read_disk_new()) != NULL);
 
 	verify_sparse_file(a, "file0", sparse_file0, 5);
 	verify_sparse_file(a, "file1", sparse_file1, 2);
 	verify_sparse_file(a, "file2", sparse_file2, 20);
 	verify_sparse_file(a, "file3", sparse_file3, 0);
 
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 
 	/*
 	 * Get sparse data through archive_read_disk_entry_from_file().
 	 */
-	assert((a = archive_read_disk_new()) != NULL);
+	assert((a = tk_archive_read_disk_new()) != NULL);
 
 	verify_sparse_file2(a, "file0", sparse_file0, 5, 0);
 	verify_sparse_file2(a, "file0", sparse_file0, 5, 1);
 
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 	free(cwd);
 }

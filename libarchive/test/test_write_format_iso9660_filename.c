@@ -30,20 +30,20 @@
 static void
 add_entry(struct archive *a, const char *fname, const char *sym)
 {
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_set_birthtime(ae, 2, 20);
-	archive_entry_set_atime(ae, 3, 30);
-	archive_entry_set_ctime(ae, 4, 40);
-	archive_entry_set_mtime(ae, 5, 50);
-	archive_entry_copy_pathname(ae, fname);
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_birthtime(ae, 2, 20);
+	tk_archive_entry_set_atime(ae, 3, 30);
+	tk_archive_entry_set_ctime(ae, 4, 40);
+	tk_archive_entry_set_mtime(ae, 5, 50);
+	tk_archive_entry_copy_pathname(ae, fname);
 	if (sym != NULL)
-		archive_entry_set_symlink(ae, sym);
-	archive_entry_set_mode(ae, S_IFREG | 0555);
-	archive_entry_set_size(ae, 0);
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
-	archive_entry_free(ae);
+		tk_archive_entry_set_symlink(ae, sym);
+	tk_archive_entry_set_mode(ae, S_IFREG | 0555);
+	tk_archive_entry_set_size(ae, 0);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_header(a, ae));
+	tk_archive_entry_free(ae);
 }
 
 struct fns {
@@ -72,33 +72,33 @@ enum vtype {
 static void
 verify_file(struct archive *a, enum vtype type, struct fns *fns)
 {
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	int i;
 
-	assertEqualIntA(a, 0, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, 0, tk_archive_read_next_header(a, &ae));
 	if (type == ROCKRIDGE) {
-		assertEqualInt(2, archive_entry_birthtime(ae));
-		assertEqualInt(3, archive_entry_atime(ae));
-		assertEqualInt(4, archive_entry_ctime(ae));
+		assertEqualInt(2, tk_archive_entry_birthtime(ae));
+		assertEqualInt(3, tk_archive_entry_atime(ae));
+		assertEqualInt(4, tk_archive_entry_ctime(ae));
 	} else {
-		assertEqualInt(0, archive_entry_birthtime_is_set(ae));
-		assertEqualInt(5, archive_entry_atime(ae));
-		assertEqualInt(5, archive_entry_ctime(ae));
+		assertEqualInt(0, tk_archive_entry_birthtime_is_set(ae));
+		assertEqualInt(5, tk_archive_entry_atime(ae));
+		assertEqualInt(5, tk_archive_entry_ctime(ae));
 	}
-	assertEqualInt(5, archive_entry_mtime(ae));
+	assertEqualInt(5, tk_archive_entry_mtime(ae));
 	if (type == ROCKRIDGE)
-		assert((S_IFREG | 0555) == archive_entry_mode(ae));
+		assert((S_IFREG | 0555) == tk_archive_entry_mode(ae));
 	else
-		assert((S_IFREG | 0400) == archive_entry_mode(ae));
-	assertEqualInt(0, archive_entry_size(ae));
+		assert((S_IFREG | 0400) == tk_archive_entry_mode(ae));
+	assertEqualInt(0, tk_archive_entry_size(ae));
 
 	/*
 	 * Check if the same filename does not appear.
 	 */
 	for (i = 0; i < fns->cnt; i++) {
 		const char *p;
-		const char *pathname = archive_entry_pathname(ae);
-		const char *symlinkname = archive_entry_symlink(ae);
+		const char *pathname = tk_archive_entry_pathname(ae);
+		const char *symlinkname = tk_archive_entry_symlink(ae);
 		size_t length;
 
 		if (symlinkname != NULL) {
@@ -134,47 +134,47 @@ verify_file(struct archive *a, enum vtype type, struct fns *fns)
 			assert(*pathname != '.');
 	}
 	/* Save the filename which is appeared to use above next time. */
-	fns->names[fns->cnt++] = strdup(archive_entry_pathname(ae));
+	fns->names[fns->cnt++] = strdup(tk_archive_entry_pathname(ae));
 }
 
 static void
 verify(unsigned char *buff, size_t used, enum vtype type, struct fns *fns)
 {
 	struct archive *a;
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	size_t i;
 
 	/*
 	 * Read ISO image.
 	 */
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, 0, archive_read_support_format_all(a));
-	assertEqualIntA(a, 0, archive_read_support_filter_all(a));
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, 0, tk_archive_read_support_format_all(a));
+	assertEqualIntA(a, 0, tk_archive_read_support_filter_all(a));
 	if (type >= 1)
-		assertA(0 == archive_read_set_option(a, NULL, "rockridge",
+		assertA(0 == tk_archive_read_set_option(a, NULL, "rockridge",
 		    NULL));
 	if (type >= 2)
-		assertA(0 == archive_read_set_option(a, NULL, "joliet",
+		assertA(0 == tk_archive_read_set_option(a, NULL, "joliet",
 		    NULL));
-	assertEqualIntA(a, 0, archive_read_open_memory(a, buff, used));
+	assertEqualIntA(a, 0, tk_archive_read_open_memory(a, buff, used));
 
 	/*
 	 * Read Root Directory
 	 * Root Directory entry must be in ISO image.
 	 */
-	assertEqualIntA(a, 0, archive_read_next_header(a, &ae));
-	assertEqualInt(archive_entry_atime(ae), archive_entry_ctime(ae));
-	assertEqualInt(archive_entry_atime(ae), archive_entry_mtime(ae));
-	assertEqualString(".", archive_entry_pathname(ae));
+	assertEqualIntA(a, 0, tk_archive_read_next_header(a, &ae));
+	assertEqualInt(tk_archive_entry_atime(ae), tk_archive_entry_ctime(ae));
+	assertEqualInt(tk_archive_entry_atime(ae), tk_archive_entry_mtime(ae));
+	assertEqualString(".", tk_archive_entry_pathname(ae));
 	switch (type) {
 	case ROCKRIDGE:
-		assert((S_IFDIR | 0555) == archive_entry_mode(ae));
+		assert((S_IFDIR | 0555) == tk_archive_entry_mode(ae));
 		break;
 	case JOLIET:
-		assert((S_IFDIR | 0700) == archive_entry_mode(ae));
+		assert((S_IFDIR | 0700) == tk_archive_entry_mode(ae));
 		break;
 	case ISO9660:
-		assert((S_IFDIR | 0700) == archive_entry_mode(ae));
+		assert((S_IFDIR | 0700) == tk_archive_entry_mode(ae));
 		break;
 	}
 
@@ -192,9 +192,9 @@ verify(unsigned char *buff, size_t used, enum vtype type, struct fns *fns)
 	/*
 	 * Verify the end of the archive.
 	 */
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_free(a));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 static int
@@ -216,15 +216,15 @@ create_iso_image(unsigned char *buff, size_t buffsize, size_t *used,
 	char sym255[256];
 
 	/* ISO9660 format: Create a new archive in memory. */
-	assert((a = archive_write_new()) != NULL);
-	assertA(0 == archive_write_set_format_iso9660(a));
-	assertA(0 == archive_write_add_filter_none(a));
-	assertA(0 == archive_write_set_option(a, NULL, "pad", NULL));
+	assert((a = tk_archive_write_new()) != NULL);
+	assertA(0 == tk_archive_write_set_format_iso9660(a));
+	assertA(0 == tk_archive_write_add_filter_none(a));
+	assertA(0 == tk_archive_write_set_option(a, NULL, "pad", NULL));
 	if (opt)
-		assertA(0 == archive_write_set_options(a, opt));
-	assertA(0 == archive_write_set_bytes_per_block(a, 1));
-	assertA(0 == archive_write_set_bytes_in_last_block(a, 1));
-	assertA(0 == archive_write_open_memory(a, buff, buffsize, used));
+		assertA(0 == tk_archive_write_set_options(a, opt));
+	assertA(0 == tk_archive_write_set_bytes_per_block(a, 1));
+	assertA(0 == tk_archive_write_set_bytes_in_last_block(a, 1));
+	assertA(0 == tk_archive_write_open_memory(a, buff, buffsize, used));
 
 	sym1[0] = 'x';
 	sym1[1] = '\0';
@@ -296,8 +296,8 @@ create_iso_image(unsigned char *buff, size_t buffsize, size_t *used,
 	}
 
 	/* Close out the archive. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_free(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_close(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_free(a));
 
 	return (fcnt);
 }

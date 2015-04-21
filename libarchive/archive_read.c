@@ -55,39 +55,39 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_read.c 201157 2009-12-29 05:30:2
 
 #define minimum(a, b) (a < b ? a : b)
 
-static int	choose_filters(struct archive_read *);
-static int	choose_format(struct archive_read *);
-static struct archive_vtable *archive_read_vtable(void);
-static int64_t	_archive_filter_bytes(struct archive *, int);
-static int	_archive_filter_code(struct archive *, int);
-static const char *_archive_filter_name(struct archive *, int);
-static int  _archive_filter_count(struct archive *);
-static int	_archive_read_close(struct archive *);
-static int	_archive_read_data_block(struct archive *,
+static int	choose_filters(struct tk_archive_read *);
+static int	choose_format(struct tk_archive_read *);
+static struct tk_archive_vtable *tk_archive_read_vtable(void);
+static int64_t	_tk_archive_filter_bytes(struct archive *, int);
+static int	_tk_archive_filter_code(struct archive *, int);
+static const char *_tk_archive_filter_name(struct archive *, int);
+static int  _tk_archive_filter_count(struct archive *);
+static int	_tk_archive_read_close(struct archive *);
+static int	_tk_archive_read_data_block(struct archive *,
 		    const void **, size_t *, int64_t *);
-static int	_archive_read_free(struct archive *);
-static int	_archive_read_next_header(struct archive *,
-		    struct archive_entry **);
-static int	_archive_read_next_header2(struct archive *,
-		    struct archive_entry *);
-static int64_t  advance_file_pointer(struct archive_read_filter *, int64_t);
+static int	_tk_archive_read_free(struct archive *);
+static int	_tk_archive_read_next_header(struct archive *,
+		    struct tk_archive_entry **);
+static int	_tk_archive_read_next_header2(struct archive *,
+		    struct tk_archive_entry *);
+static int64_t  advance_file_pointer(struct tk_archive_read_filter *, int64_t);
 
-static struct archive_vtable *
-archive_read_vtable(void)
+static struct tk_archive_vtable *
+tk_archive_read_vtable(void)
 {
-	static struct archive_vtable av;
+	static struct tk_archive_vtable av;
 	static int inited = 0;
 
 	if (!inited) {
-		av.archive_filter_bytes = _archive_filter_bytes;
-		av.archive_filter_code = _archive_filter_code;
-		av.archive_filter_name = _archive_filter_name;
-		av.archive_filter_count = _archive_filter_count;
-		av.archive_read_data_block = _archive_read_data_block;
-		av.archive_read_next_header = _archive_read_next_header;
-		av.archive_read_next_header2 = _archive_read_next_header2;
-		av.archive_free = _archive_read_free;
-		av.archive_close = _archive_read_close;
+		av.tk_archive_filter_bytes = _tk_archive_filter_bytes;
+		av.tk_archive_filter_code = _tk_archive_filter_code;
+		av.tk_archive_filter_name = _tk_archive_filter_name;
+		av.tk_archive_filter_count = _tk_archive_filter_count;
+		av.tk_archive_read_data_block = _tk_archive_read_data_block;
+		av.tk_archive_read_next_header = _tk_archive_read_next_header;
+		av.tk_archive_read_next_header2 = _tk_archive_read_next_header2;
+		av.tk_archive_free = _tk_archive_read_free;
+		av.tk_archive_close = _tk_archive_read_close;
 		inited = 1;
 	}
 	return (&av);
@@ -97,19 +97,19 @@ archive_read_vtable(void)
  * Allocate, initialize and return a struct archive object.
  */
 struct archive *
-archive_read_new(void)
+tk_archive_read_new(void)
 {
-	struct archive_read *a;
+	struct tk_archive_read *a;
 
-	a = (struct archive_read *)malloc(sizeof(*a));
+	a = (struct tk_archive_read *)malloc(sizeof(*a));
 	if (a == NULL)
 		return (NULL);
 	memset(a, 0, sizeof(*a));
 	a->archive.magic = ARCHIVE_READ_MAGIC;
 
 	a->archive.state = ARCHIVE_STATE_NEW;
-	a->entry = archive_entry_new2(&a->archive);
-	a->archive.vtable = archive_read_vtable();
+	a->entry = tk_archive_entry_new2(&a->archive);
+	a->archive.vtable = tk_archive_read_vtable();
 
 	return (&a->archive);
 }
@@ -118,12 +118,12 @@ archive_read_new(void)
  * Record the do-not-extract-to file. This belongs in archive_read_extract.c.
  */
 void
-archive_read_extract_set_skip_file(struct archive *_a, int64_t d, int64_t i)
+tk_archive_read_extract_set_skip_file(struct archive *_a, int64_t d, int64_t i)
 {
-	struct archive_read *a = (struct archive_read *)_a;
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
 
-	if (ARCHIVE_OK != __archive_check_magic(_a, ARCHIVE_READ_MAGIC,
-		ARCHIVE_STATE_ANY, "archive_read_extract_set_skip_file"))
+	if (ARCHIVE_OK != __tk_archive_check_magic(_a, ARCHIVE_READ_MAGIC,
+		ARCHIVE_STATE_ANY, "tk_archive_read_extract_set_skip_file"))
 		return;
 	a->skip_file_set = 1;
 	a->skip_file_dev = d;
@@ -134,39 +134,39 @@ archive_read_extract_set_skip_file(struct archive *_a, int64_t d, int64_t i)
  * Open the archive
  */
 int
-archive_read_open(struct archive *a, void *client_data,
-    archive_open_callback *client_opener, archive_read_callback *client_reader,
-    archive_close_callback *client_closer)
+tk_archive_read_open(struct archive *a, void *client_data,
+    tk_archive_open_callback *client_opener, tk_archive_read_callback *client_reader,
+    tk_archive_close_callback *client_closer)
 {
 	/* Old archive_read_open() is just a thin shell around
 	 * archive_read_open1. */
-	archive_read_set_open_callback(a, client_opener);
-	archive_read_set_read_callback(a, client_reader);
-	archive_read_set_close_callback(a, client_closer);
-	archive_read_set_callback_data(a, client_data);
-	return archive_read_open1(a);
+	tk_archive_read_set_open_callback(a, client_opener);
+	tk_archive_read_set_read_callback(a, client_reader);
+	tk_archive_read_set_close_callback(a, client_closer);
+	tk_archive_read_set_callback_data(a, client_data);
+	return tk_archive_read_open1(a);
 }
 
 
 int
-archive_read_open2(struct archive *a, void *client_data,
-    archive_open_callback *client_opener,
-    archive_read_callback *client_reader,
-    archive_skip_callback *client_skipper,
-    archive_close_callback *client_closer)
+tk_archive_read_open2(struct archive *a, void *client_data,
+    tk_archive_open_callback *client_opener,
+    tk_archive_read_callback *client_reader,
+    tk_archive_skip_callback *client_skipper,
+    tk_archive_close_callback *client_closer)
 {
 	/* Old archive_read_open2() is just a thin shell around
 	 * archive_read_open1. */
-	archive_read_set_callback_data(a, client_data);
-	archive_read_set_open_callback(a, client_opener);
-	archive_read_set_read_callback(a, client_reader);
-	archive_read_set_skip_callback(a, client_skipper);
-	archive_read_set_close_callback(a, client_closer);
-	return archive_read_open1(a);
+	tk_archive_read_set_callback_data(a, client_data);
+	tk_archive_read_set_open_callback(a, client_opener);
+	tk_archive_read_set_read_callback(a, client_reader);
+	tk_archive_read_set_skip_callback(a, client_skipper);
+	tk_archive_read_set_close_callback(a, client_closer);
+	return tk_archive_read_open1(a);
 }
 
 static ssize_t
-client_read_proxy(struct archive_read_filter *self, const void **buff)
+client_read_proxy(struct tk_archive_read_filter *self, const void **buff)
 {
 	ssize_t r;
 	r = (self->archive->client.reader)(&self->archive->archive,
@@ -175,10 +175,10 @@ client_read_proxy(struct archive_read_filter *self, const void **buff)
 }
 
 static int64_t
-client_skip_proxy(struct archive_read_filter *self, int64_t request)
+client_skip_proxy(struct tk_archive_read_filter *self, int64_t request)
 {
 	if (request < 0)
-		__archive_errx(1, "Negative skip requested.");
+		__tk_archive_errx(1, "Negative skip requested.");
 	if (request == 0)
 		return 0;
 
@@ -223,7 +223,7 @@ client_skip_proxy(struct archive_read_filter *self, int64_t request)
 }
 
 static int64_t
-client_seek_proxy(struct archive_read_filter *self, int64_t offset, int whence)
+client_seek_proxy(struct tk_archive_read_filter *self, int64_t offset, int whence)
 {
 	/* DO NOT use the skipper here!  If we transparently handled
 	 * forward seek here by using the skipper, that will break
@@ -237,7 +237,7 @@ client_seek_proxy(struct archive_read_filter *self, int64_t offset, int whence)
 }
 
 static int
-client_close_proxy(struct archive_read_filter *self)
+client_close_proxy(struct tk_archive_read_filter *self)
 {
 	int r = ARCHIVE_OK, r2;
 	unsigned int i;
@@ -256,7 +256,7 @@ client_close_proxy(struct archive_read_filter *self)
 }
 
 static int
-client_open_proxy(struct archive_read_filter *self)
+client_open_proxy(struct tk_archive_read_filter *self)
 {
   int r = ARCHIVE_OK;
 	if (self->archive->client.opener != NULL)
@@ -266,7 +266,7 @@ client_open_proxy(struct archive_read_filter *self)
 }
 
 static int
-client_switch_proxy(struct archive_read_filter *self, unsigned int iindex)
+client_switch_proxy(struct tk_archive_read_filter *self, unsigned int iindex)
 {
   int r1 = ARCHIVE_OK, r2 = ARCHIVE_OK;
 	void *data2 = NULL;
@@ -298,92 +298,92 @@ client_switch_proxy(struct archive_read_filter *self, unsigned int iindex)
 }
 
 int
-archive_read_set_open_callback(struct archive *_a,
-    archive_open_callback *client_opener)
+tk_archive_read_set_open_callback(struct archive *_a,
+    tk_archive_open_callback *client_opener)
 {
-	struct archive_read *a = (struct archive_read *)_a;
-	archive_check_magic(_a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_NEW,
-	    "archive_read_set_open_callback");
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
+	tk_archive_check_magic(_a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_NEW,
+	    "tk_archive_read_set_open_callback");
 	a->client.opener = client_opener;
 	return ARCHIVE_OK;
 }
 
 int
-archive_read_set_read_callback(struct archive *_a,
-    archive_read_callback *client_reader)
+tk_archive_read_set_read_callback(struct archive *_a,
+    tk_archive_read_callback *client_reader)
 {
-	struct archive_read *a = (struct archive_read *)_a;
-	archive_check_magic(_a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_NEW,
-	    "archive_read_set_read_callback");
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
+	tk_archive_check_magic(_a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_NEW,
+	    "tk_archive_read_set_read_callback");
 	a->client.reader = client_reader;
 	return ARCHIVE_OK;
 }
 
 int
-archive_read_set_skip_callback(struct archive *_a,
-    archive_skip_callback *client_skipper)
+tk_archive_read_set_skip_callback(struct archive *_a,
+    tk_archive_skip_callback *client_skipper)
 {
-	struct archive_read *a = (struct archive_read *)_a;
-	archive_check_magic(_a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_NEW,
-	    "archive_read_set_skip_callback");
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
+	tk_archive_check_magic(_a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_NEW,
+	    "tk_archive_read_set_skip_callback");
 	a->client.skipper = client_skipper;
 	return ARCHIVE_OK;
 }
 
 int
-archive_read_set_seek_callback(struct archive *_a,
-    archive_seek_callback *client_seeker)
+tk_archive_read_set_seek_callback(struct archive *_a,
+    tk_archive_seek_callback *client_seeker)
 {
-	struct archive_read *a = (struct archive_read *)_a;
-	archive_check_magic(_a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_NEW,
-	    "archive_read_set_seek_callback");
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
+	tk_archive_check_magic(_a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_NEW,
+	    "tk_archive_read_set_seek_callback");
 	a->client.seeker = client_seeker;
 	return ARCHIVE_OK;
 }
 
 int
-archive_read_set_close_callback(struct archive *_a,
-    archive_close_callback *client_closer)
+tk_archive_read_set_close_callback(struct archive *_a,
+    tk_archive_close_callback *client_closer)
 {
-	struct archive_read *a = (struct archive_read *)_a;
-	archive_check_magic(_a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_NEW,
-	    "archive_read_set_close_callback");
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
+	tk_archive_check_magic(_a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_NEW,
+	    "tk_archive_read_set_close_callback");
 	a->client.closer = client_closer;
 	return ARCHIVE_OK;
 }
 
 int
-archive_read_set_switch_callback(struct archive *_a,
-    archive_switch_callback *client_switcher)
+tk_archive_read_set_switch_callback(struct archive *_a,
+    tk_archive_switch_callback *client_switcher)
 {
-	struct archive_read *a = (struct archive_read *)_a;
-	archive_check_magic(_a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_NEW,
-	    "archive_read_set_switch_callback");
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
+	tk_archive_check_magic(_a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_NEW,
+	    "tk_archive_read_set_switch_callback");
 	a->client.switcher = client_switcher;
 	return ARCHIVE_OK;
 }
 
 int
-archive_read_set_callback_data(struct archive *_a, void *client_data)
+tk_archive_read_set_callback_data(struct archive *_a, void *client_data)
 {
-	return archive_read_set_callback_data2(_a, client_data, 0);
+	return tk_archive_read_set_callback_data2(_a, client_data, 0);
 }
 
 int
-archive_read_set_callback_data2(struct archive *_a, void *client_data,
+tk_archive_read_set_callback_data2(struct archive *_a, void *client_data,
     unsigned int iindex)
 {
-	struct archive_read *a = (struct archive_read *)_a;
-	archive_check_magic(_a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_NEW,
-	    "archive_read_set_callback_data2");
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
+	tk_archive_check_magic(_a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_NEW,
+	    "tk_archive_read_set_callback_data2");
 
 	if (a->client.nodes == 0)
 	{
-		a->client.dataset = (struct archive_read_data_node *)
+		a->client.dataset = (struct tk_archive_read_data_node *)
 		    calloc(1, sizeof(*a->client.dataset));
 		if (a->client.dataset == NULL)
 		{
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 				"No memory.");
 			return ARCHIVE_FATAL;
 		}
@@ -392,7 +392,7 @@ archive_read_set_callback_data2(struct archive *_a, void *client_data,
 
 	if (iindex > a->client.nodes - 1)
 	{
-		archive_set_error(&a->archive, EINVAL,
+		tk_archive_set_error(&a->archive, EINVAL,
 			"Invalid index specified.");
 		return ARCHIVE_FATAL;
 	}
@@ -403,28 +403,28 @@ archive_read_set_callback_data2(struct archive *_a, void *client_data,
 }
 
 int
-archive_read_add_callback_data(struct archive *_a, void *client_data,
+tk_archive_read_add_callback_data(struct archive *_a, void *client_data,
     unsigned int iindex)
 {
-	struct archive_read *a = (struct archive_read *)_a;
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
 	void *p;
 	unsigned int i;
 
-	archive_check_magic(_a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_NEW,
-	    "archive_read_add_callback_data");
+	tk_archive_check_magic(_a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_NEW,
+	    "tk_archive_read_add_callback_data");
 	if (iindex > a->client.nodes) {
-		archive_set_error(&a->archive, EINVAL,
+		tk_archive_set_error(&a->archive, EINVAL,
 			"Invalid index specified.");
 		return ARCHIVE_FATAL;
 	}
 	p = realloc(a->client.dataset, sizeof(*a->client.dataset)
 		* (++(a->client.nodes)));
 	if (p == NULL) {
-		archive_set_error(&a->archive, ENOMEM,
+		tk_archive_set_error(&a->archive, ENOMEM,
 			"No memory.");
 		return ARCHIVE_FATAL;
 	}
-	a->client.dataset = (struct archive_read_data_node *)p;
+	a->client.dataset = (struct tk_archive_read_data_node *)p;
 	for (i = a->client.nodes - 1; i > iindex && i > 0; i--) {
 		a->client.dataset[i].data = a->client.dataset[i-1].data;
 		a->client.dataset[i].begin_position = -1;
@@ -437,32 +437,32 @@ archive_read_add_callback_data(struct archive *_a, void *client_data,
 }
 
 int
-archive_read_append_callback_data(struct archive *_a, void *client_data)
+tk_archive_read_append_callback_data(struct archive *_a, void *client_data)
 {
-	struct archive_read *a = (struct archive_read *)_a;
-	return archive_read_add_callback_data(_a, client_data, a->client.nodes);
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
+	return tk_archive_read_add_callback_data(_a, client_data, a->client.nodes);
 }
 
 int
-archive_read_prepend_callback_data(struct archive *_a, void *client_data)
+tk_archive_read_prepend_callback_data(struct archive *_a, void *client_data)
 {
-	return archive_read_add_callback_data(_a, client_data, 0);
+	return tk_archive_read_add_callback_data(_a, client_data, 0);
 }
 
 int
-archive_read_open1(struct archive *_a)
+tk_archive_read_open1(struct archive *_a)
 {
-	struct archive_read *a = (struct archive_read *)_a;
-	struct archive_read_filter *filter, *tmp;
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
+	struct tk_archive_read_filter *filter, *tmp;
 	int slot, e;
 	unsigned int i;
 
-	archive_check_magic(_a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_NEW,
-	    "archive_read_open");
-	archive_clear_error(&a->archive);
+	tk_archive_check_magic(_a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_NEW,
+	    "tk_archive_read_open");
+	tk_archive_clear_error(&a->archive);
 
 	if (a->client.reader == NULL) {
-		archive_set_error(&a->archive, EINVAL,
+		tk_archive_set_error(&a->archive, EINVAL,
 		    "No reader function provided to archive_read_open");
 		a->archive.state = ARCHIVE_STATE_FATAL;
 		return (ARCHIVE_FATAL);
@@ -522,7 +522,7 @@ archive_read_open1(struct archive *_a)
 	{
 		slot = choose_format(a);
 		if (slot < 0) {
-			__archive_read_close_filters(a);
+			__tk_archive_read_close_filters(a);
 			a->archive.state = ARCHIVE_STATE_FATAL;
 			return (ARCHIVE_FATAL);
 		}
@@ -542,11 +542,11 @@ archive_read_open1(struct archive *_a)
  * building the pipeline.
  */
 static int
-choose_filters(struct archive_read *a)
+choose_filters(struct tk_archive_read *a)
 {
 	int number_bidders, i, bid, best_bid;
-	struct archive_read_filter_bidder *bidder, *best_bidder;
-	struct archive_read_filter *filter;
+	struct tk_archive_read_filter_bidder *bidder, *best_bidder;
+	struct tk_archive_read_filter *filter;
 	ssize_t avail;
 	int r;
 
@@ -570,10 +570,10 @@ choose_filters(struct archive_read *a)
 		/* If no bidder, we're done. */
 		if (best_bidder == NULL) {
 			/* Verify the filter by asking it for some data. */
-			__archive_read_filter_ahead(a->filter, 1, &avail);
+			__tk_archive_read_filter_ahead(a->filter, 1, &avail);
 			if (avail < 0) {
-				__archive_read_close_filters(a);
-				__archive_read_free_filters(a);
+				__tk_archive_read_close_filters(a);
+				__tk_archive_read_free_filters(a);
 				return (ARCHIVE_FATAL);
 			}
 			a->archive.compression_name = a->filter->name;
@@ -582,7 +582,7 @@ choose_filters(struct archive_read *a)
 		}
 
 		filter
-		    = (struct archive_read_filter *)calloc(1, sizeof(*filter));
+		    = (struct tk_archive_read_filter *)calloc(1, sizeof(*filter));
 		if (filter == NULL)
 			return (ARCHIVE_FATAL);
 		filter->bidder = best_bidder;
@@ -591,8 +591,8 @@ choose_filters(struct archive_read *a)
 		a->filter = filter;
 		r = (best_bidder->init)(a->filter);
 		if (r != ARCHIVE_OK) {
-			__archive_read_close_filters(a);
-			__archive_read_free_filters(a);
+			__tk_archive_read_close_filters(a);
+			__tk_archive_read_free_filters(a);
 			return (ARCHIVE_FATAL);
 		}
 	}
@@ -602,26 +602,26 @@ choose_filters(struct archive_read *a)
  * Read header of next entry.
  */
 static int
-_archive_read_next_header2(struct archive *_a, struct archive_entry *entry)
+_tk_archive_read_next_header2(struct archive *_a, struct tk_archive_entry *entry)
 {
-	struct archive_read *a = (struct archive_read *)_a;
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
 	int r1 = ARCHIVE_OK, r2;
 
-	archive_check_magic(_a, ARCHIVE_READ_MAGIC,
+	tk_archive_check_magic(_a, ARCHIVE_READ_MAGIC,
 	    ARCHIVE_STATE_HEADER | ARCHIVE_STATE_DATA,
-	    "archive_read_next_header");
+	    "tk_archive_read_next_header");
 
-	archive_entry_clear(entry);
-	archive_clear_error(&a->archive);
+	tk_archive_entry_clear(entry);
+	tk_archive_clear_error(&a->archive);
 
 	/*
 	 * If client didn't consume entire data, skip any remainder
 	 * (This is especially important for GNU incremental directories.)
 	 */
 	if (a->archive.state == ARCHIVE_STATE_DATA) {
-		r1 = archive_read_data_skip(&a->archive);
+		r1 = tk_archive_read_data_skip(&a->archive);
 		if (r1 == ARCHIVE_EOF)
-			archive_set_error(&a->archive, EIO,
+			tk_archive_set_error(&a->archive, EIO,
 			    "Premature end-of-file.");
 		if (r1 == ARCHIVE_EOF || r1 == ARCHIVE_FATAL) {
 			a->archive.state = ARCHIVE_STATE_FATAL;
@@ -668,12 +668,12 @@ _archive_read_next_header2(struct archive *_a, struct archive_entry *entry)
 }
 
 int
-_archive_read_next_header(struct archive *_a, struct archive_entry **entryp)
+_tk_archive_read_next_header(struct archive *_a, struct tk_archive_entry **entryp)
 {
 	int ret;
-	struct archive_read *a = (struct archive_read *)_a;
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
 	*entryp = NULL;
-	ret = _archive_read_next_header2(_a, a->entry);
+	ret = _tk_archive_read_next_header2(_a, a->entry);
 	*entryp = a->entry;
 	return ret;
 }
@@ -683,7 +683,7 @@ _archive_read_next_header(struct archive *_a, struct archive_entry **entryp)
  * the next entry.  Return index of winning bidder.
  */
 static int
-choose_format(struct archive_read *a)
+choose_format(struct tk_archive_read *a)
 {
 	int slots;
 	int i;
@@ -702,7 +702,7 @@ choose_format(struct archive_read *a)
 			if (bid == ARCHIVE_FATAL)
 				return (ARCHIVE_FATAL);
 			if (a->filter->position != 0)
-				__archive_read_seek(a, 0, SEEK_SET);
+				__tk_archive_read_seek(a, 0, SEEK_SET);
 			if ((bid > best_bid) || (best_bid_slot < 0)) {
 				best_bid = bid;
 				best_bid_slot = i;
@@ -715,7 +715,7 @@ choose_format(struct archive_read *a)
 	 * and demands a quick and definitive abort.
 	 */
 	if (best_bid_slot < 0) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "No formats registered");
 		return (ARCHIVE_FATAL);
 	}
@@ -725,7 +725,7 @@ choose_format(struct archive_read *a)
 	 * can't support this stream.
 	 */
 	if (best_bid < 1) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Unrecognized archive format");
 		return (ARCHIVE_FATAL);
 	}
@@ -738,11 +738,11 @@ choose_format(struct archive_read *a)
  * the last header started.
  */
 int64_t
-archive_read_header_position(struct archive *_a)
+tk_archive_read_header_position(struct archive *_a)
 {
-	struct archive_read *a = (struct archive_read *)_a;
-	archive_check_magic(_a, ARCHIVE_READ_MAGIC,
-	    ARCHIVE_STATE_ANY, "archive_read_header_position");
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
+	tk_archive_check_magic(_a, ARCHIVE_READ_MAGIC,
+	    ARCHIVE_STATE_ANY, "tk_archive_read_header_position");
 	return (a->header_position);
 }
 
@@ -758,9 +758,9 @@ archive_read_header_position(struct archive *_a)
  * to read a single entry body.
  */
 ssize_t
-archive_read_data(struct archive *_a, void *buff, size_t s)
+tk_archive_read_data(struct archive *_a, void *buff, size_t s)
 {
-	struct archive_read *a = (struct archive_read *)_a;
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
 	char	*dest;
 	const void *read_buf;
 	size_t	 bytes_read;
@@ -775,7 +775,7 @@ archive_read_data(struct archive *_a, void *buff, size_t s)
 			read_buf = a->read_data_block;
 			a->read_data_is_posix_read = 1;
 			a->read_data_requested = s;
-			r = _archive_read_data_block(&a->archive, &read_buf,
+			r = _tk_archive_read_data_block(&a->archive, &read_buf,
 			    &a->read_data_remaining, &a->read_data_offset);
 			a->read_data_block = read_buf;
 			if (r == ARCHIVE_EOF)
@@ -790,7 +790,7 @@ archive_read_data(struct archive *_a, void *buff, size_t s)
 		}
 
 		if (a->read_data_offset < a->read_data_output_offset) {
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 			    "Encountered out-of-order sparse blocks");
 			return (ARCHIVE_RETRY);
 		}
@@ -837,21 +837,21 @@ archive_read_data(struct archive *_a, void *buff, size_t s)
  * Skip over all remaining data in this entry.
  */
 int
-archive_read_data_skip(struct archive *_a)
+tk_archive_read_data_skip(struct archive *_a)
 {
-	struct archive_read *a = (struct archive_read *)_a;
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
 	int r;
 	const void *buff;
 	size_t size;
 	int64_t offset;
 
-	archive_check_magic(_a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_DATA,
-	    "archive_read_data_skip");
+	tk_archive_check_magic(_a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_DATA,
+	    "tk_archive_read_data_skip");
 
 	if (a->format->read_data_skip != NULL)
 		r = (a->format->read_data_skip)(a);
 	else {
-		while ((r = archive_read_data_block(&a->archive,
+		while ((r = tk_archive_read_data_block(&a->archive,
 			    &buff, &size, &offset))
 		    == ARCHIVE_OK)
 			;
@@ -865,14 +865,14 @@ archive_read_data_skip(struct archive *_a)
 }
 
 int64_t
-archive_seek_data(struct archive *_a, int64_t offset, int whence)
+tk_archive_seek_data(struct archive *_a, int64_t offset, int whence)
 {
-	struct archive_read *a = (struct archive_read *)_a;
-	archive_check_magic(_a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_DATA,
-	    "archive_seek_data_block");
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
+	tk_archive_check_magic(_a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_DATA,
+	    "tk_archive_seek_data_block");
 
 	if (a->format->seek_data == NULL) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_PROGRAMMER,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_PROGRAMMER,
 		    "Internal error: "
 		    "No format_seek_data_block function registered");
 		return (ARCHIVE_FATAL);
@@ -890,15 +890,15 @@ archive_seek_data(struct archive *_a, int64_t offset, int whence)
  * the end of entry is encountered.
  */
 static int
-_archive_read_data_block(struct archive *_a,
+_tk_archive_read_data_block(struct archive *_a,
     const void **buff, size_t *size, int64_t *offset)
 {
-	struct archive_read *a = (struct archive_read *)_a;
-	archive_check_magic(_a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_DATA,
-	    "archive_read_data_block");
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
+	tk_archive_check_magic(_a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_DATA,
+	    "tk_archive_read_data_block");
 
 	if (a->format->read_data == NULL) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_PROGRAMMER,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_PROGRAMMER,
 		    "Internal error: "
 		    "No format_read_data_block function registered");
 		return (ARCHIVE_FATAL);
@@ -908,13 +908,13 @@ _archive_read_data_block(struct archive *_a,
 }
 
 int
-__archive_read_close_filters(struct archive_read *a)
+__tk_archive_read_close_filters(struct tk_archive_read *a)
 {
-	struct archive_read_filter *f = a->filter;
+	struct tk_archive_read_filter *f = a->filter;
 	int r = ARCHIVE_OK;
 	/* Close each filter in the pipeline. */
 	while (f != NULL) {
-		struct archive_read_filter *t = f->upstream;
+		struct tk_archive_read_filter *t = f->upstream;
 		if (!f->closed && f->close != NULL) {
 			int r1 = (f->close)(f);
 			f->closed = 1;
@@ -929,10 +929,10 @@ __archive_read_close_filters(struct archive_read *a)
 }
 
 void
-__archive_read_free_filters(struct archive_read *a)
+__tk_archive_read_free_filters(struct tk_archive_read *a)
 {
 	while (a->filter != NULL) {
-		struct archive_read_filter *t = a->filter->upstream;
+		struct tk_archive_read_filter *t = a->filter->upstream;
 		free(a->filter);
 		a->filter = t;
 	}
@@ -942,10 +942,10 @@ __archive_read_free_filters(struct archive_read *a)
  * return the count of # of filters in use
  */
 static int
-_archive_filter_count(struct archive *_a)
+_tk_archive_filter_count(struct archive *_a)
 {
-	struct archive_read *a = (struct archive_read *)_a;
-	struct archive_read_filter *p = a->filter;
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
+	struct tk_archive_read_filter *p = a->filter;
 	int count = 0;
 	while(p) {
 		count++;
@@ -958,22 +958,22 @@ _archive_filter_count(struct archive *_a)
  * Close the file and all I/O.
  */
 static int
-_archive_read_close(struct archive *_a)
+_tk_archive_read_close(struct archive *_a)
 {
-	struct archive_read *a = (struct archive_read *)_a;
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
 	int r = ARCHIVE_OK, r1 = ARCHIVE_OK;
 
-	archive_check_magic(&a->archive, ARCHIVE_READ_MAGIC,
-	    ARCHIVE_STATE_ANY | ARCHIVE_STATE_FATAL, "archive_read_close");
+	tk_archive_check_magic(&a->archive, ARCHIVE_READ_MAGIC,
+	    ARCHIVE_STATE_ANY | ARCHIVE_STATE_FATAL, "tk_archive_read_close");
 	if (a->archive.state == ARCHIVE_STATE_CLOSED)
 		return (ARCHIVE_OK);
-	archive_clear_error(&a->archive);
+	tk_archive_clear_error(&a->archive);
 	a->archive.state = ARCHIVE_STATE_CLOSED;
 
 	/* TODO: Clean up the formatters. */
 
 	/* Release the filter objects. */
-	r1 = __archive_read_close_filters(a);
+	r1 = __tk_archive_read_close_filters(a);
 	if (r1 < r)
 		r = r1;
 
@@ -984,24 +984,24 @@ _archive_read_close(struct archive *_a)
  * Release memory and other resources.
  */
 static int
-_archive_read_free(struct archive *_a)
+_tk_archive_read_free(struct archive *_a)
 {
-	struct archive_read *a = (struct archive_read *)_a;
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
 	int i, n;
 	int slots;
 	int r = ARCHIVE_OK;
 
 	if (_a == NULL)
 		return (ARCHIVE_OK);
-	archive_check_magic(_a, ARCHIVE_READ_MAGIC,
-	    ARCHIVE_STATE_ANY | ARCHIVE_STATE_FATAL, "archive_read_free");
+	tk_archive_check_magic(_a, ARCHIVE_READ_MAGIC,
+	    ARCHIVE_STATE_ANY | ARCHIVE_STATE_FATAL, "tk_archive_read_free");
 	if (a->archive.state != ARCHIVE_STATE_CLOSED
 	    && a->archive.state != ARCHIVE_STATE_FATAL)
-		r = archive_read_close(&a->archive);
+		r = tk_archive_read_close(&a->archive);
 
 	/* Call cleanup functions registered by optional components. */
-	if (a->cleanup_archive_extract != NULL)
-		r = (a->cleanup_archive_extract)(a);
+	if (a->cleanup_tk_archive_extract != NULL)
+		r = (a->cleanup_tk_archive_extract)(a);
 
 	/* Cleanup format-specific data. */
 	slots = sizeof(a->formats) / sizeof(a->formats[0]);
@@ -1012,7 +1012,7 @@ _archive_read_free(struct archive *_a)
 	}
 
 	/* Free the filters */
-	__archive_read_free_filters(a);
+	__tk_archive_read_free_filters(a);
 
 	/* Release the bidder objects. */
 	n = sizeof(a->bidders)/sizeof(a->bidders[0]);
@@ -1024,25 +1024,25 @@ _archive_read_free(struct archive *_a)
 		}
 	}
 
-	archive_string_free(&a->archive.error_string);
+	tk_archive_string_free(&a->archive.error_string);
 	if (a->entry)
-		archive_entry_free(a->entry);
+		tk_archive_entry_free(a->entry);
 	a->archive.magic = 0;
-	__archive_clean(&a->archive);
+	__tk_archive_clean(&a->archive);
 	free(a->client.dataset);
 	free(a);
 	return (r);
 }
 
-static struct archive_read_filter *
+static struct tk_archive_read_filter *
 get_filter(struct archive *_a, int n)
 {
-	struct archive_read *a = (struct archive_read *)_a;
-	struct archive_read_filter *f = a->filter;
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
+	struct tk_archive_read_filter *f = a->filter;
 	/* We use n == -1 for 'the last filter', which is always the
 	 * client proxy. */
 	if (n == -1 && f != NULL) {
-		struct archive_read_filter *last = f;
+		struct tk_archive_read_filter *last = f;
 		f = f->upstream;
 		while (f != NULL) {
 			last = f;
@@ -1060,23 +1060,23 @@ get_filter(struct archive *_a, int n)
 }
 
 static int
-_archive_filter_code(struct archive *_a, int n)
+_tk_archive_filter_code(struct archive *_a, int n)
 {
-	struct archive_read_filter *f = get_filter(_a, n);
+	struct tk_archive_read_filter *f = get_filter(_a, n);
 	return f == NULL ? -1 : f->code;
 }
 
 static const char *
-_archive_filter_name(struct archive *_a, int n)
+_tk_archive_filter_name(struct archive *_a, int n)
 {
-	struct archive_read_filter *f = get_filter(_a, n);
+	struct tk_archive_read_filter *f = get_filter(_a, n);
 	return f == NULL ? NULL : f->name;
 }
 
 static int64_t
-_archive_filter_bytes(struct archive *_a, int n)
+_tk_archive_filter_bytes(struct archive *_a, int n)
 {
-	struct archive_read_filter *f = get_filter(_a, n);
+	struct tk_archive_read_filter *f = get_filter(_a, n);
 	return f == NULL ? -1 : f->position;
 }
 
@@ -1085,20 +1085,20 @@ _archive_filter_bytes(struct archive *_a, int n)
  * initialization functions.
  */
 int
-__archive_read_register_format(struct archive_read *a,
+__tk_archive_read_register_format(struct tk_archive_read *a,
     void *format_data,
     const char *name,
-    int (*bid)(struct archive_read *, int),
-    int (*options)(struct archive_read *, const char *, const char *),
-    int (*read_header)(struct archive_read *, struct archive_entry *),
-    int (*read_data)(struct archive_read *, const void **, size_t *, int64_t *),
-    int (*read_data_skip)(struct archive_read *),
-    int64_t (*seek_data)(struct archive_read *, int64_t, int),
-    int (*cleanup)(struct archive_read *))
+    int (*bid)(struct tk_archive_read *, int),
+    int (*options)(struct tk_archive_read *, const char *, const char *),
+    int (*read_header)(struct tk_archive_read *, struct tk_archive_entry *),
+    int (*read_data)(struct tk_archive_read *, const void **, size_t *, int64_t *),
+    int (*read_data_skip)(struct tk_archive_read *),
+    int64_t (*seek_data)(struct tk_archive_read *, int64_t, int),
+    int (*cleanup)(struct tk_archive_read *))
 {
 	int i, number_slots;
 
-	archive_check_magic(&a->archive,
+	tk_archive_check_magic(&a->archive,
 	    ARCHIVE_READ_MAGIC, ARCHIVE_STATE_NEW,
 	    "__archive_read_register_format");
 
@@ -1121,7 +1121,7 @@ __archive_read_register_format(struct archive_read *a,
 		}
 	}
 
-	archive_set_error(&a->archive, ENOMEM,
+	tk_archive_set_error(&a->archive, ENOMEM,
 	    "Not enough slots for format registration");
 	return (ARCHIVE_FATAL);
 }
@@ -1131,8 +1131,8 @@ __archive_read_register_format(struct archive_read *a,
  * initialization functions.
  */
 int
-__archive_read_get_bidder(struct archive_read *a,
-    struct archive_read_filter_bidder **bidder)
+__tk_archive_read_get_bidder(struct tk_archive_read *a,
+    struct tk_archive_read_filter_bidder **bidder)
 {
 	int i, number_slots;
 
@@ -1146,7 +1146,7 @@ __archive_read_get_bidder(struct archive_read *a,
 		}
 	}
 
-	archive_set_error(&a->archive, ENOMEM,
+	tk_archive_set_error(&a->archive, ENOMEM,
 	    "Not enough slots for filter registration");
 	return (ARCHIVE_FATAL);
 }
@@ -1203,13 +1203,13 @@ __archive_read_get_bidder(struct archive_read *a,
  * __archive_read_consume() below.
  */
 const void *
-__archive_read_ahead(struct archive_read *a, size_t min, ssize_t *avail)
+__tk_archive_read_ahead(struct tk_archive_read *a, size_t min, ssize_t *avail)
 {
-	return (__archive_read_filter_ahead(a->filter, min, avail));
+	return (__tk_archive_read_filter_ahead(a->filter, min, avail));
 }
 
 const void *
-__archive_read_filter_ahead(struct archive_read_filter *filter,
+__tk_archive_read_filter_ahead(struct tk_archive_read_filter *filter,
     size_t min, ssize_t *avail)
 {
 	ssize_t bytes_read;
@@ -1325,7 +1325,7 @@ __archive_read_filter_ahead(struct archive_read_filter *filter,
 				while (s < min) {
 					t *= 2;
 					if (t <= s) { /* Integer overflow! */
-						archive_set_error(
+						tk_archive_set_error(
 						    &filter->archive->archive,
 						    ENOMEM,
 						    "Unable to allocate copy"
@@ -1340,7 +1340,7 @@ __archive_read_filter_ahead(struct archive_read_filter *filter,
 				/* Now s >= min, so allocate a new buffer. */
 				p = (char *)malloc(s);
 				if (p == NULL) {
-					archive_set_error(
+					tk_archive_set_error(
 						&filter->archive->archive,
 						ENOMEM,
 					    "Unable to allocate copy buffer");
@@ -1383,13 +1383,13 @@ __archive_read_filter_ahead(struct archive_read_filter *filter,
  * Move the file pointer forward.
  */
 int64_t
-__archive_read_consume(struct archive_read *a, int64_t request)
+__tk_archive_read_consume(struct tk_archive_read *a, int64_t request)
 {
-	return (__archive_read_filter_consume(a->filter, request));
+	return (__tk_archive_read_filter_consume(a->filter, request));
 }
 
 int64_t
-__archive_read_filter_consume(struct archive_read_filter * filter,
+__tk_archive_read_filter_consume(struct tk_archive_read_filter * filter,
     int64_t request)
 {
 	int64_t skipped;
@@ -1403,7 +1403,7 @@ __archive_read_filter_consume(struct archive_read_filter * filter,
 	/* We hit EOF before we satisfied the skip request. */
 	if (skipped < 0)  /* Map error code to 0 for error message below. */
 		skipped = 0;
-	archive_set_error(&filter->archive->archive,
+	tk_archive_set_error(&filter->archive->archive,
 	    ARCHIVE_ERRNO_MISC,
 	    "Truncated input file (needed %jd bytes, only %jd available)",
 	    (intmax_t)request, (intmax_t)skipped);
@@ -1417,7 +1417,7 @@ __archive_read_filter_consume(struct archive_read_filter * filter,
  * Returns a negative value if there's an I/O error.
  */
 static int64_t
-advance_file_pointer(struct archive_read_filter *filter, int64_t request)
+advance_file_pointer(struct tk_archive_read_filter *filter, int64_t request)
 {
 	int64_t bytes_skipped, total_bytes_skipped = 0;
 	ssize_t bytes_read;
@@ -1504,16 +1504,16 @@ advance_file_pointer(struct archive_read_filter *filter, int64_t request)
  * Returns ARCHIVE_FAILED if seeking isn't supported.
  */
 int64_t
-__archive_read_seek(struct archive_read *a, int64_t offset, int whence)
+__tk_archive_read_seek(struct tk_archive_read *a, int64_t offset, int whence)
 {
-	return __archive_read_filter_seek(a->filter, offset, whence);
+	return __tk_archive_read_filter_seek(a->filter, offset, whence);
 }
 
 int64_t
-__archive_read_filter_seek(struct archive_read_filter *filter, int64_t offset,
+__tk_archive_read_filter_seek(struct tk_archive_read_filter *filter, int64_t offset,
     int whence)
 {
-	struct archive_read_client *client;
+	struct tk_archive_read_client *client;
 	int64_t r;
 	unsigned int cursor;
 

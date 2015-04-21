@@ -77,11 +77,11 @@ struct cpio {
 
 	/* Miscellaneous state information */
 	struct archive	 *archive;
-	struct archive	 *archive_read_disk;
+	struct archive	 *tk_archive_read_disk;
 	int		  argc;
 	char		**argv;
 	int		  return_value; /* Value returned by main() */
-	struct archive_entry_linkresolver *linkresolver;
+	struct tk_archive_entry_linkresolver *linkresolver;
 
 	struct name_cache *uname_cache;
 	struct name_cache *gname_cache;

@@ -168,20 +168,20 @@ static struct myacl_t acls_dir[] = {
 };
 
 static void
-set_acls(struct archive_entry *ae, struct myacl_t *acls, int start, int end)
+set_acls(struct tk_archive_entry *ae, struct myacl_t *acls, int start, int end)
 {
 	int i;
 
-	archive_entry_acl_clear(ae);
+	tk_archive_entry_acl_clear(ae);
 	if (start > 0) {
 		assertEqualInt(ARCHIVE_OK,
-			archive_entry_acl_add_entry(ae,
+			tk_archive_entry_acl_add_entry(ae,
 			    acls[0].type, acls[0].permset, acls[0].tag,
 			    acls[0].qual, acls[0].name));
 	}
 	for (i = start; i < end; i++) {
 		assertEqualInt(ARCHIVE_OK,
-		    archive_entry_acl_add_entry(ae,
+		    tk_archive_entry_acl_add_entry(ae,
 			acls[i].type, acls[i].permset, acls[i].tag,
 			acls[i].qual, acls[i].name));
 	}
@@ -345,7 +345,7 @@ compare_acls(acl_t acl, struct myacl_t *myacls, const char *filename, int start,
 }
 
 static void
-compare_entry_acls(struct archive_entry *ae, struct myacl_t *myacls, const char *filename, int start, int end)
+compare_entry_acls(struct tk_archive_entry *ae, struct myacl_t *myacls, const char *filename, int start, int end)
 {
 	int *marker;
 	int matched;
@@ -368,8 +368,8 @@ compare_entry_acls(struct archive_entry *ae, struct myacl_t *myacls, const char 
 	 * Iterate over acls in entry, try to match each
 	 * one with an item in the myacls array.
 	 */
-	assertEqualInt(n, archive_entry_acl_reset(ae, ARCHIVE_ENTRY_ACL_TYPE_NFS4));
-	while (ARCHIVE_OK == archive_entry_acl_next(ae,
+	assertEqualInt(n, tk_archive_entry_acl_reset(ae, ARCHIVE_ENTRY_ACL_TYPE_NFS4));
+	while (ARCHIVE_OK == tk_archive_entry_acl_next(ae,
 	    ARCHIVE_ENTRY_ACL_TYPE_NFS4, &type, &permset, &tag, &qual, &name)) {
 
 		/* Search for a matching entry (tag and qualifier) */
@@ -419,7 +419,7 @@ DEFINE_TEST(test_acl_freebsd_nfs4)
 	char buff[64];
 	struct stat st;
 	struct archive *a;
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	int i, n;
 	acl_t acl;
 
@@ -452,46 +452,46 @@ DEFINE_TEST(test_acl_freebsd_nfs4)
 	assertEqualInt(0, n);
 
 	/* Create a write-to-disk object. */
-	assert(NULL != (a = archive_write_disk_new()));
-	archive_write_disk_set_options(a,
+	assert(NULL != (a = tk_archive_write_disk_new()));
+	tk_archive_write_disk_set_options(a,
 	    ARCHIVE_EXTRACT_TIME | ARCHIVE_EXTRACT_PERM | ARCHIVE_EXTRACT_ACL);
 
 	/* Populate an archive entry with some metadata, including ACL info */
-	ae = archive_entry_new();
+	ae = tk_archive_entry_new();
 	assert(ae != NULL);
-	archive_entry_set_pathname(ae, "testall");
-	archive_entry_set_filetype(ae, AE_IFREG);
-	archive_entry_set_perm(ae, 0654);
-	archive_entry_set_mtime(ae, 123456, 7890);
-	archive_entry_set_size(ae, 0);
+	tk_archive_entry_set_pathname(ae, "testall");
+	tk_archive_entry_set_filetype(ae, AE_IFREG);
+	tk_archive_entry_set_perm(ae, 0654);
+	tk_archive_entry_set_mtime(ae, 123456, 7890);
+	tk_archive_entry_set_size(ae, 0);
 	set_acls(ae, acls_reg, 0, (int)(sizeof(acls_reg)/sizeof(acls_reg[0])));
 
 	/* Write the entry to disk, including ACLs. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_header(a, ae));
 
 	/* Likewise for a dir. */
-	archive_entry_set_pathname(ae, "dirall");
-	archive_entry_set_filetype(ae, AE_IFDIR);
-	archive_entry_set_perm(ae, 0654);
-	archive_entry_set_mtime(ae, 123456, 7890);
+	tk_archive_entry_set_pathname(ae, "dirall");
+	tk_archive_entry_set_filetype(ae, AE_IFDIR);
+	tk_archive_entry_set_perm(ae, 0654);
+	tk_archive_entry_set_mtime(ae, 123456, 7890);
 	set_acls(ae, acls_dir, 0, (int)(sizeof(acls_dir)/sizeof(acls_dir[0])));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_header(a, ae));
 
 	for (i = 0; i < (int)(sizeof(acls_dir)/sizeof(acls_dir[0])); ++i) {
 	  sprintf(buff, "dir%d", i);
-	  archive_entry_set_pathname(ae, buff);
-	  archive_entry_set_filetype(ae, AE_IFDIR);
-	  archive_entry_set_perm(ae, 0654);
-	  archive_entry_set_mtime(ae, 123456 + i, 7891 + i);
+	  tk_archive_entry_set_pathname(ae, buff);
+	  tk_archive_entry_set_filetype(ae, AE_IFDIR);
+	  tk_archive_entry_set_perm(ae, 0654);
+	  tk_archive_entry_set_mtime(ae, 123456 + i, 7891 + i);
 	  set_acls(ae, acls_dir, i, i + 1);
-	  assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
+	  assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_header(a, ae));
 	}
 
-	archive_entry_free(ae);
+	tk_archive_entry_free(ae);
 
 	/* Close the archive. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 
 	/* Verify the data on disk. */
 	assertEqualInt(0, stat("testall", &st));
@@ -521,27 +521,27 @@ DEFINE_TEST(test_acl_freebsd_nfs4)
 	acl_free(acl);
 
 	/* Read and compare ACL via archive_read_disk */
-	a = archive_read_disk_new();
+	a = tk_archive_read_disk_new();
 	assert(a != NULL);
-	ae = archive_entry_new();
+	ae = tk_archive_entry_new();
 	assert(ae != NULL);
-	archive_entry_set_pathname(ae, "testall");
+	tk_archive_entry_set_pathname(ae, "testall");
 	assertEqualInt(ARCHIVE_OK,
-		       archive_read_disk_entry_from_file(a, ae, -1, NULL));
+		       tk_archive_read_disk_entry_from_file(a, ae, -1, NULL));
 	compare_entry_acls(ae, acls_reg, "testall", 0, (int)(sizeof(acls_reg)/sizeof(acls_reg[0])));
-	archive_entry_free(ae);
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	tk_archive_entry_free(ae);
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 
 	/* Read and compare ACL via archive_read_disk */
-	a = archive_read_disk_new();
+	a = tk_archive_read_disk_new();
 	assert(a != NULL);
-	ae = archive_entry_new();
+	ae = tk_archive_entry_new();
 	assert(ae != NULL);
-	archive_entry_set_pathname(ae, "dirall");
+	tk_archive_entry_set_pathname(ae, "dirall");
 	assertEqualInt(ARCHIVE_OK,
-		       archive_read_disk_entry_from_file(a, ae, -1, NULL));
+		       tk_archive_read_disk_entry_from_file(a, ae, -1, NULL));
 	compare_entry_acls(ae, acls_dir, "dirall", 0,  (int)(sizeof(acls_dir)/sizeof(acls_dir[0])));
-	archive_entry_free(ae);
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	tk_archive_entry_free(ae);
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 #endif
 }

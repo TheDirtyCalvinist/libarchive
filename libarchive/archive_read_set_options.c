@@ -29,54 +29,54 @@ __FBSDID("$FreeBSD$");
 #include "archive_read_private.h"
 #include "archive_options_private.h"
 
-static int	archive_set_format_option(struct archive *a,
+static int	tk_archive_set_format_option(struct archive *a,
 		    const char *m, const char *o, const char *v);
-static int	archive_set_filter_option(struct archive *a,
+static int	tk_archive_set_filter_option(struct archive *a,
 		    const char *m, const char *o, const char *v);
-static int	archive_set_option(struct archive *a,
+static int	tk_archive_set_option(struct archive *a,
 		    const char *m, const char *o, const char *v);
 
 int
-archive_read_set_format_option(struct archive *a, const char *m, const char *o,
+tk_archive_read_set_format_option(struct archive *a, const char *m, const char *o,
     const char *v)
 {
-	return _archive_set_option(a, m, o, v,
-	    ARCHIVE_READ_MAGIC, "archive_read_set_format_option",
-	    archive_set_format_option);
+	return _tk_archive_set_option(a, m, o, v,
+	    ARCHIVE_READ_MAGIC, "tk_archive_read_set_format_option",
+	    tk_archive_set_format_option);
 }
 
 int
-archive_read_set_filter_option(struct archive *a, const char *m, const char *o,
+tk_archive_read_set_filter_option(struct archive *a, const char *m, const char *o,
     const char *v)
 {
-	return _archive_set_option(a, m, o, v,
-	    ARCHIVE_READ_MAGIC, "archive_read_set_filter_option",
-	    archive_set_filter_option);
+	return _tk_archive_set_option(a, m, o, v,
+	    ARCHIVE_READ_MAGIC, "tk_archive_read_set_filter_option",
+	    tk_archive_set_filter_option);
 }
 
 int
-archive_read_set_option(struct archive *a, const char *m, const char *o,
+tk_archive_read_set_option(struct archive *a, const char *m, const char *o,
     const char *v)
 {
-	return _archive_set_option(a, m, o, v,
-	    ARCHIVE_READ_MAGIC, "archive_read_set_option",
-	    archive_set_option);
+	return _tk_archive_set_option(a, m, o, v,
+	    ARCHIVE_READ_MAGIC, "tk_archive_read_set_option",
+	    tk_archive_set_option);
 }
 
 int
-archive_read_set_options(struct archive *a, const char *options)
+tk_archive_read_set_options(struct archive *a, const char *options)
 {
-	return _archive_set_options(a, options,
-	    ARCHIVE_READ_MAGIC, "archive_read_set_options",
-	    archive_set_option);
+	return _tk_archive_set_options(a, options,
+	    ARCHIVE_READ_MAGIC, "tk_archive_read_set_options",
+	    tk_archive_set_option);
 }
 
 static int
-archive_set_format_option(struct archive *_a, const char *m, const char *o,
+tk_archive_set_format_option(struct archive *_a, const char *m, const char *o,
     const char *v)
 {
-	struct archive_read *a = (struct archive_read *)_a;
-	struct archive_format_descriptor *format;
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
+	struct tk_archive_format_descriptor *format;
 	size_t i;
 	int r, rv = ARCHIVE_WARN;
 
@@ -110,12 +110,12 @@ archive_set_format_option(struct archive *_a, const char *m, const char *o,
 }
 
 static int
-archive_set_filter_option(struct archive *_a, const char *m, const char *o,
+tk_archive_set_filter_option(struct archive *_a, const char *m, const char *o,
     const char *v)
 {
-	struct archive_read *a = (struct archive_read *)_a;
-	struct archive_read_filter *filter;
-	struct archive_read_filter_bidder *bidder;
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
+	struct tk_archive_read_filter *filter;
+	struct tk_archive_read_filter_bidder *bidder;
 	int r, rv = ARCHIVE_WARN;
 
 	for (filter = a->filter; filter != NULL; filter = filter->upstream) {
@@ -147,10 +147,10 @@ archive_set_filter_option(struct archive *_a, const char *m, const char *o,
 }
 
 static int
-archive_set_option(struct archive *a, const char *m, const char *o,
+tk_archive_set_option(struct archive *a, const char *m, const char *o,
     const char *v)
 {
-	return _archive_set_either_option(a, m, o, v,
-	    archive_set_format_option,
-	    archive_set_filter_option);
+	return _tk_archive_set_either_option(a, m, o, v,
+	    tk_archive_set_format_option,
+	    tk_archive_set_filter_option);
 }

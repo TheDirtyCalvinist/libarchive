@@ -60,41 +60,41 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_write.c 201099 2009-12-28 03:03:
 #include "archive_private.h"
 #include "archive_write_private.h"
 
-static struct archive_vtable *archive_write_vtable(void);
+static struct tk_archive_vtable *tk_archive_write_vtable(void);
 
-static int	_archive_filter_code(struct archive *, int);
-static const char *_archive_filter_name(struct archive *, int);
-static int64_t	_archive_filter_bytes(struct archive *, int);
-static int  _archive_write_filter_count(struct archive *);
-static int	_archive_write_close(struct archive *);
-static int	_archive_write_free(struct archive *);
-static int	_archive_write_header(struct archive *, struct archive_entry *);
-static int	_archive_write_finish_entry(struct archive *);
-static ssize_t	_archive_write_data(struct archive *, const void *, size_t);
+static int	_tk_archive_filter_code(struct archive *, int);
+static const char *_tk_archive_filter_name(struct archive *, int);
+static int64_t	_tk_archive_filter_bytes(struct archive *, int);
+static int  _tk_archive_write_filter_count(struct archive *);
+static int	_tk_archive_write_close(struct archive *);
+static int	_tk_archive_write_free(struct archive *);
+static int	_tk_archive_write_header(struct archive *, struct tk_archive_entry *);
+static int	_tk_archive_write_finish_entry(struct archive *);
+static ssize_t	_tk_archive_write_data(struct archive *, const void *, size_t);
 
-struct archive_none {
+struct tk_archive_none {
 	size_t buffer_size;
 	size_t avail;
 	char *buffer;
 	char *next;
 };
 
-static struct archive_vtable *
-archive_write_vtable(void)
+static struct tk_archive_vtable *
+tk_archive_write_vtable(void)
 {
-	static struct archive_vtable av;
+	static struct tk_archive_vtable av;
 	static int inited = 0;
 
 	if (!inited) {
-		av.archive_close = _archive_write_close;
-		av.archive_filter_bytes = _archive_filter_bytes;
-		av.archive_filter_code = _archive_filter_code;
-		av.archive_filter_name = _archive_filter_name;
-		av.archive_filter_count = _archive_write_filter_count;
-		av.archive_free = _archive_write_free;
-		av.archive_write_header = _archive_write_header;
-		av.archive_write_finish_entry = _archive_write_finish_entry;
-		av.archive_write_data = _archive_write_data;
+		av.tk_archive_close = _tk_archive_write_close;
+		av.tk_archive_filter_bytes = _tk_archive_filter_bytes;
+		av.tk_archive_filter_code = _tk_archive_filter_code;
+		av.tk_archive_filter_name = _tk_archive_filter_name;
+		av.tk_archive_filter_count = _tk_archive_write_filter_count;
+		av.tk_archive_free = _tk_archive_write_free;
+		av.tk_archive_write_header = _tk_archive_write_header;
+		av.tk_archive_write_finish_entry = _tk_archive_write_finish_entry;
+		av.tk_archive_write_data = _tk_archive_write_data;
 		inited = 1;
 	}
 	return (&av);
@@ -104,18 +104,18 @@ archive_write_vtable(void)
  * Allocate, initialize and return an archive object.
  */
 struct archive *
-archive_write_new(void)
+tk_archive_write_new(void)
 {
-	struct archive_write *a;
+	struct tk_archive_write *a;
 	unsigned char *nulls;
 
-	a = (struct archive_write *)malloc(sizeof(*a));
+	a = (struct tk_archive_write *)malloc(sizeof(*a));
 	if (a == NULL)
 		return (NULL);
 	memset(a, 0, sizeof(*a));
 	a->archive.magic = ARCHIVE_WRITE_MAGIC;
 	a->archive.state = ARCHIVE_STATE_NEW;
-	a->archive.vtable = archive_write_vtable();
+	a->archive.vtable = tk_archive_write_vtable();
 	/*
 	 * The value 10240 here matches the traditional tar default,
 	 * but is otherwise arbitrary.
@@ -140,11 +140,11 @@ archive_write_new(void)
  * Set the block size.  Returns 0 if successful.
  */
 int
-archive_write_set_bytes_per_block(struct archive *_a, int bytes_per_block)
+tk_archive_write_set_bytes_per_block(struct archive *_a, int bytes_per_block)
 {
-	struct archive_write *a = (struct archive_write *)_a;
-	archive_check_magic(&a->archive, ARCHIVE_WRITE_MAGIC,
-	    ARCHIVE_STATE_NEW, "archive_write_set_bytes_per_block");
+	struct tk_archive_write *a = (struct tk_archive_write *)_a;
+	tk_archive_check_magic(&a->archive, ARCHIVE_WRITE_MAGIC,
+	    ARCHIVE_STATE_NEW, "tk_archive_write_set_bytes_per_block");
 	a->bytes_per_block = bytes_per_block;
 	return (ARCHIVE_OK);
 }
@@ -153,11 +153,11 @@ archive_write_set_bytes_per_block(struct archive *_a, int bytes_per_block)
  * Get the current block size.  -1 if it has never been set.
  */
 int
-archive_write_get_bytes_per_block(struct archive *_a)
+tk_archive_write_get_bytes_per_block(struct archive *_a)
 {
-	struct archive_write *a = (struct archive_write *)_a;
-	archive_check_magic(&a->archive, ARCHIVE_WRITE_MAGIC,
-	    ARCHIVE_STATE_ANY, "archive_write_get_bytes_per_block");
+	struct tk_archive_write *a = (struct tk_archive_write *)_a;
+	tk_archive_check_magic(&a->archive, ARCHIVE_WRITE_MAGIC,
+	    ARCHIVE_STATE_ANY, "tk_archive_write_get_bytes_per_block");
 	return (a->bytes_per_block);
 }
 
@@ -166,11 +166,11 @@ archive_write_get_bytes_per_block(struct archive *_a)
  * Returns 0 if successful.
  */
 int
-archive_write_set_bytes_in_last_block(struct archive *_a, int bytes)
+tk_archive_write_set_bytes_in_last_block(struct archive *_a, int bytes)
 {
-	struct archive_write *a = (struct archive_write *)_a;
-	archive_check_magic(&a->archive, ARCHIVE_WRITE_MAGIC,
-	    ARCHIVE_STATE_ANY, "archive_write_set_bytes_in_last_block");
+	struct tk_archive_write *a = (struct tk_archive_write *)_a;
+	tk_archive_check_magic(&a->archive, ARCHIVE_WRITE_MAGIC,
+	    ARCHIVE_STATE_ANY, "tk_archive_write_set_bytes_in_last_block");
 	a->bytes_in_last_block = bytes;
 	return (ARCHIVE_OK);
 }
@@ -179,11 +179,11 @@ archive_write_set_bytes_in_last_block(struct archive *_a, int bytes)
  * Return the value set above.  -1 indicates it has not been set.
  */
 int
-archive_write_get_bytes_in_last_block(struct archive *_a)
+tk_archive_write_get_bytes_in_last_block(struct archive *_a)
 {
-	struct archive_write *a = (struct archive_write *)_a;
-	archive_check_magic(&a->archive, ARCHIVE_WRITE_MAGIC,
-	    ARCHIVE_STATE_ANY, "archive_write_get_bytes_in_last_block");
+	struct tk_archive_write *a = (struct tk_archive_write *)_a;
+	tk_archive_check_magic(&a->archive, ARCHIVE_WRITE_MAGIC,
+	    ARCHIVE_STATE_ANY, "tk_archive_write_get_bytes_in_last_block");
 	return (a->bytes_in_last_block);
 }
 
@@ -192,11 +192,11 @@ archive_write_get_bytes_in_last_block(struct archive *_a)
  * an archive to itself recursively.
  */
 int
-archive_write_set_skip_file(struct archive *_a, int64_t d, int64_t i)
+tk_archive_write_set_skip_file(struct archive *_a, int64_t d, int64_t i)
 {
-	struct archive_write *a = (struct archive_write *)_a;
-	archive_check_magic(&a->archive, ARCHIVE_WRITE_MAGIC,
-	    ARCHIVE_STATE_ANY, "archive_write_set_skip_file");
+	struct tk_archive_write *a = (struct tk_archive_write *)_a;
+	tk_archive_check_magic(&a->archive, ARCHIVE_WRITE_MAGIC,
+	    ARCHIVE_STATE_ANY, "tk_archive_write_set_skip_file");
 	a->skip_file_set = 1;
 	a->skip_file_dev = d;
 	a->skip_file_ino = i;
@@ -206,11 +206,11 @@ archive_write_set_skip_file(struct archive *_a, int64_t d, int64_t i)
 /*
  * Allocate and return the next filter structure.
  */
-struct archive_write_filter *
-__archive_write_allocate_filter(struct archive *_a)
+struct tk_archive_write_filter *
+__tk_archive_write_allocate_filter(struct archive *_a)
 {
-	struct archive_write *a = (struct archive_write *)_a;
-	struct archive_write_filter *f;
+	struct tk_archive_write *a = (struct tk_archive_write *)_a;
+	struct tk_archive_write_filter *f;
 
 	f = calloc(1, sizeof(*f));
 	f->archive = _a;
@@ -226,7 +226,7 @@ __archive_write_allocate_filter(struct archive *_a)
  * Write data to a particular filter.
  */
 int
-__archive_write_filter(struct archive_write_filter *f,
+__tk_archive_write_filter(struct tk_archive_write_filter *f,
     const void *buff, size_t length)
 {
 	int r;
@@ -245,7 +245,7 @@ __archive_write_filter(struct archive_write_filter *f,
  * Open a filter.
  */
 int
-__archive_write_open_filter(struct archive_write_filter *f)
+__tk_archive_write_open_filter(struct tk_archive_write_filter *f)
 {
 	if (f->open == NULL)
 		return (ARCHIVE_OK);
@@ -256,30 +256,30 @@ __archive_write_open_filter(struct archive_write_filter *f)
  * Close a filter.
  */
 int
-__archive_write_close_filter(struct archive_write_filter *f)
+__tk_archive_write_close_filter(struct tk_archive_write_filter *f)
 {
 	if (f->close != NULL)
 		return (f->close)(f);
 	if (f->next_filter != NULL)
-		return (__archive_write_close_filter(f->next_filter));
+		return (__tk_archive_write_close_filter(f->next_filter));
 	return (ARCHIVE_OK);
 }
 
 int
-__archive_write_output(struct archive_write *a, const void *buff, size_t length)
+__tk_archive_write_output(struct tk_archive_write *a, const void *buff, size_t length)
 {
-	return (__archive_write_filter(a->filter_first, buff, length));
+	return (__tk_archive_write_filter(a->filter_first, buff, length));
 }
 
 int
-__archive_write_nulls(struct archive_write *a, size_t length)
+__tk_archive_write_nulls(struct tk_archive_write *a, size_t length)
 {
 	if (length == 0)
 		return (ARCHIVE_OK);
 
 	while (length > 0) {
 		size_t to_write = length < a->null_length ? length : a->null_length;
-		int r = __archive_write_output(a, a->nulls, to_write);
+		int r = __tk_archive_write_output(a, a->nulls, to_write);
 		if (r < ARCHIVE_OK)
 			return (r);
 		length -= to_write;
@@ -288,24 +288,24 @@ __archive_write_nulls(struct archive_write *a, size_t length)
 }
 
 static int
-archive_write_client_open(struct archive_write_filter *f)
+tk_archive_write_client_open(struct tk_archive_write_filter *f)
 {
-	struct archive_write *a = (struct archive_write *)f->archive;
-	struct archive_none *state;
+	struct tk_archive_write *a = (struct tk_archive_write *)f->archive;
+	struct tk_archive_none *state;
 	void *buffer;
 	size_t buffer_size;
 
-	f->bytes_per_block = archive_write_get_bytes_per_block(f->archive);
+	f->bytes_per_block = tk_archive_write_get_bytes_per_block(f->archive);
 	f->bytes_in_last_block =
-	    archive_write_get_bytes_in_last_block(f->archive);
+	    tk_archive_write_get_bytes_in_last_block(f->archive);
 	buffer_size = f->bytes_per_block;
 
-	state = (struct archive_none *)calloc(1, sizeof(*state));
+	state = (struct tk_archive_none *)calloc(1, sizeof(*state));
 	buffer = (char *)malloc(buffer_size);
 	if (state == NULL || buffer == NULL) {
 		free(state);
 		free(buffer);
-		archive_set_error(f->archive, ENOMEM,
+		tk_archive_set_error(f->archive, ENOMEM,
 		    "Can't allocate data for output buffering");
 		return (ARCHIVE_FATAL);
 	}
@@ -322,11 +322,11 @@ archive_write_client_open(struct archive_write_filter *f)
 }
 
 static int
-archive_write_client_write(struct archive_write_filter *f,
+tk_archive_write_client_write(struct tk_archive_write_filter *f,
     const void *_buff, size_t length)
 {
-	struct archive_write *a = (struct archive_write *)f->archive;
-        struct archive_none *state = (struct archive_none *)f->data;
+	struct tk_archive_write *a = (struct tk_archive_write *)f->archive;
+        struct tk_archive_none *state = (struct tk_archive_none *)f->data;
 	const char *buff = (const char *)_buff;
 	ssize_t remaining, to_copy;
 	ssize_t bytes_written;
@@ -372,7 +372,7 @@ archive_write_client_write(struct archive_write_filter *f,
 				if (bytes_written <= 0)
 					return (ARCHIVE_FATAL);
 				if ((size_t)bytes_written > to_write) {
-					archive_set_error(&(a->archive),
+					tk_archive_set_error(&(a->archive),
 					    -1, "write overrun");
 					return (ARCHIVE_FATAL);
 				}
@@ -404,10 +404,10 @@ archive_write_client_write(struct archive_write_filter *f,
 }
 
 static int
-archive_write_client_close(struct archive_write_filter *f)
+tk_archive_write_client_close(struct tk_archive_write_filter *f)
 {
-	struct archive_write *a = (struct archive_write *)f->archive;
-	struct archive_none *state = (struct archive_none *)f->data;
+	struct tk_archive_write *a = (struct tk_archive_write *)f->archive;
+	struct tk_archive_none *state = (struct tk_archive_none *)f->data;
 	ssize_t block_length;
 	ssize_t target_block_length;
 	ssize_t bytes_written;
@@ -451,31 +451,31 @@ archive_write_client_close(struct archive_write_filter *f)
  * Open the archive using the current settings.
  */
 int
-archive_write_open(struct archive *_a, void *client_data,
-    archive_open_callback *opener, archive_write_callback *writer,
-    archive_close_callback *closer)
+tk_archive_write_open(struct archive *_a, void *client_data,
+    tk_archive_open_callback *opener, tk_archive_write_callback *writer,
+    tk_archive_close_callback *closer)
 {
-	struct archive_write *a = (struct archive_write *)_a;
-	struct archive_write_filter *client_filter;
+	struct tk_archive_write *a = (struct tk_archive_write *)_a;
+	struct tk_archive_write_filter *client_filter;
 	int ret, r1;
 
-	archive_check_magic(&a->archive, ARCHIVE_WRITE_MAGIC,
-	    ARCHIVE_STATE_NEW, "archive_write_open");
-	archive_clear_error(&a->archive);
+	tk_archive_check_magic(&a->archive, ARCHIVE_WRITE_MAGIC,
+	    ARCHIVE_STATE_NEW, "tk_archive_write_open");
+	tk_archive_clear_error(&a->archive);
 
 	a->client_writer = writer;
 	a->client_opener = opener;
 	a->client_closer = closer;
 	a->client_data = client_data;
 
-	client_filter = __archive_write_allocate_filter(_a);
-	client_filter->open = archive_write_client_open;
-	client_filter->write = archive_write_client_write;
-	client_filter->close = archive_write_client_close;
+	client_filter = __tk_archive_write_allocate_filter(_a);
+	client_filter->open = tk_archive_write_client_open;
+	client_filter->write = tk_archive_write_client_write;
+	client_filter->close = tk_archive_write_client_close;
 
-	ret = __archive_write_open_filter(a->filter_first);
+	ret = __tk_archive_write_open_filter(a->filter_first);
 	if (ret < ARCHIVE_WARN) {
-		r1 = __archive_write_close_filter(a->filter_first);
+		r1 = __tk_archive_write_close_filter(a->filter_first);
 		return (r1 < ret ? r1 : ret);
 	}
 
@@ -489,19 +489,19 @@ archive_write_open(struct archive *_a, void *client_data,
  * Close out the archive.
  */
 static int
-_archive_write_close(struct archive *_a)
+_tk_archive_write_close(struct archive *_a)
 {
-	struct archive_write *a = (struct archive_write *)_a;
+	struct tk_archive_write *a = (struct tk_archive_write *)_a;
 	int r = ARCHIVE_OK, r1 = ARCHIVE_OK;
 
-	archive_check_magic(&a->archive, ARCHIVE_WRITE_MAGIC,
+	tk_archive_check_magic(&a->archive, ARCHIVE_WRITE_MAGIC,
 	    ARCHIVE_STATE_ANY | ARCHIVE_STATE_FATAL,
-	    "archive_write_close");
+	    "tk_archive_write_close");
 	if (a->archive.state == ARCHIVE_STATE_NEW
 	    || a->archive.state == ARCHIVE_STATE_CLOSED)
 		return (ARCHIVE_OK); /* Okay to close() when not open. */
 
-	archive_clear_error(&a->archive);
+	tk_archive_clear_error(&a->archive);
 
 	/* Finish the last entry. */
 	if (a->archive.state == ARCHIVE_STATE_DATA)
@@ -516,7 +516,7 @@ _archive_write_close(struct archive *_a)
 	}
 
 	/* Finish the compression and close the stream. */
-	r1 = __archive_write_close_filter(a->filter_first);
+	r1 = __tk_archive_write_close_filter(a->filter_first);
 	if (r1 < r)
 		r = r1;
 
@@ -526,10 +526,10 @@ _archive_write_close(struct archive *_a)
 }
 
 static int
-_archive_write_filter_count(struct archive *_a)
+_tk_archive_write_filter_count(struct archive *_a)
 {
-	struct archive_write *a = (struct archive_write *)_a;
-	struct archive_write_filter *p = a->filter_first;
+	struct tk_archive_write *a = (struct tk_archive_write *)_a;
+	struct tk_archive_write_filter *p = a->filter_first;
 	int count = 0;
 	while(p) {
 		count++;
@@ -539,13 +539,13 @@ _archive_write_filter_count(struct archive *_a)
 }
 
 void
-__archive_write_filters_free(struct archive *_a)
+__tk_archive_write_filters_free(struct archive *_a)
 {
-	struct archive_write *a = (struct archive_write *)_a;
+	struct tk_archive_write *a = (struct tk_archive_write *)_a;
 	int r = ARCHIVE_OK, r1;
 
 	while (a->filter_first != NULL) {
-		struct archive_write_filter *next
+		struct tk_archive_write_filter *next
 		    = a->filter_first->next_filter;
 		if (a->filter_first->free != NULL) {
 			r1 = (*a->filter_first->free)(a->filter_first);
@@ -566,18 +566,18 @@ __archive_write_filters_free(struct archive *_a)
  * initialization.
  */
 static int
-_archive_write_free(struct archive *_a)
+_tk_archive_write_free(struct archive *_a)
 {
-	struct archive_write *a = (struct archive_write *)_a;
+	struct tk_archive_write *a = (struct tk_archive_write *)_a;
 	int r = ARCHIVE_OK, r1;
 
 	if (_a == NULL)
 		return (ARCHIVE_OK);
 	/* It is okay to call free() in state FATAL. */
-	archive_check_magic(&a->archive, ARCHIVE_WRITE_MAGIC,
-	    ARCHIVE_STATE_ANY | ARCHIVE_STATE_FATAL, "archive_write_free");
+	tk_archive_check_magic(&a->archive, ARCHIVE_WRITE_MAGIC,
+	    ARCHIVE_STATE_ANY | ARCHIVE_STATE_FATAL, "tk_archive_write_free");
 	if (a->archive.state != ARCHIVE_STATE_FATAL)
-		r = archive_write_close(&a->archive);
+		r = tk_archive_write_close(&a->archive);
 
 	/* Release format resources. */
 	if (a->format_free != NULL) {
@@ -586,13 +586,13 @@ _archive_write_free(struct archive *_a)
 			r = r1;
 	}
 
-	__archive_write_filters_free(_a);
+	__tk_archive_write_filters_free(_a);
 
 	/* Release various dynamic buffers. */
 	free((void *)(uintptr_t)(const void *)a->nulls);
-	archive_string_free(&a->archive.error_string);
+	tk_archive_string_free(&a->archive.error_string);
 	a->archive.magic = 0;
-	__archive_clean(&a->archive);
+	__tk_archive_clean(&a->archive);
 	free(a);
 	return (r);
 }
@@ -601,24 +601,24 @@ _archive_write_free(struct archive *_a)
  * Write the appropriate header.
  */
 static int
-_archive_write_header(struct archive *_a, struct archive_entry *entry)
+_tk_archive_write_header(struct archive *_a, struct tk_archive_entry *entry)
 {
-	struct archive_write *a = (struct archive_write *)_a;
+	struct tk_archive_write *a = (struct tk_archive_write *)_a;
 	int ret, r2;
 
-	archive_check_magic(&a->archive, ARCHIVE_WRITE_MAGIC,
-	    ARCHIVE_STATE_DATA | ARCHIVE_STATE_HEADER, "archive_write_header");
-	archive_clear_error(&a->archive);
+	tk_archive_check_magic(&a->archive, ARCHIVE_WRITE_MAGIC,
+	    ARCHIVE_STATE_DATA | ARCHIVE_STATE_HEADER, "tk_archive_write_header");
+	tk_archive_clear_error(&a->archive);
 
 	if (a->format_write_header == NULL) {
-		archive_set_error(&(a->archive), -1,
+		tk_archive_set_error(&(a->archive), -1,
 		    "Format must be set before you can write to an archive.");
 		a->archive.state = ARCHIVE_STATE_FATAL;
 		return (ARCHIVE_FATAL);
 	}
 
 	/* In particular, "retry" and "fatal" get returned immediately. */
-	ret = archive_write_finish_entry(&a->archive);
+	ret = tk_archive_write_finish_entry(&a->archive);
 	if (ret == ARCHIVE_FATAL) {
 		a->archive.state = ARCHIVE_STATE_FATAL;
 		return (ARCHIVE_FATAL);
@@ -627,11 +627,11 @@ _archive_write_header(struct archive *_a, struct archive_entry *entry)
 		return (ret);
 
 	if (a->skip_file_set &&
-	    archive_entry_dev_is_set(entry) &&
-	    archive_entry_ino_is_set(entry) &&
-	    archive_entry_dev(entry) == (dev_t)a->skip_file_dev &&
-	    archive_entry_ino64(entry) == a->skip_file_ino) {
-		archive_set_error(&a->archive, 0,
+	    tk_archive_entry_dev_is_set(entry) &&
+	    tk_archive_entry_ino_is_set(entry) &&
+	    tk_archive_entry_dev(entry) == (dev_t)a->skip_file_dev &&
+	    tk_archive_entry_ino64(entry) == a->skip_file_ino) {
+		tk_archive_set_error(&a->archive, 0,
 		    "Can't add archive to itself");
 		return (ARCHIVE_FAILED);
 	}
@@ -650,14 +650,14 @@ _archive_write_header(struct archive *_a, struct archive_entry *entry)
 }
 
 static int
-_archive_write_finish_entry(struct archive *_a)
+_tk_archive_write_finish_entry(struct archive *_a)
 {
-	struct archive_write *a = (struct archive_write *)_a;
+	struct tk_archive_write *a = (struct tk_archive_write *)_a;
 	int ret = ARCHIVE_OK;
 
-	archive_check_magic(&a->archive, ARCHIVE_WRITE_MAGIC,
+	tk_archive_check_magic(&a->archive, ARCHIVE_WRITE_MAGIC,
 	    ARCHIVE_STATE_HEADER | ARCHIVE_STATE_DATA,
-	    "archive_write_finish_entry");
+	    "tk_archive_write_finish_entry");
 	if (a->archive.state & ARCHIVE_STATE_DATA)
 		ret = (a->format_finish_entry)(a);
 	a->archive.state = ARCHIVE_STATE_HEADER;
@@ -668,20 +668,20 @@ _archive_write_finish_entry(struct archive *_a)
  * Note that the compressor is responsible for blocking.
  */
 static ssize_t
-_archive_write_data(struct archive *_a, const void *buff, size_t s)
+_tk_archive_write_data(struct archive *_a, const void *buff, size_t s)
 {
-	struct archive_write *a = (struct archive_write *)_a;
-	archive_check_magic(&a->archive, ARCHIVE_WRITE_MAGIC,
-	    ARCHIVE_STATE_DATA, "archive_write_data");
-	archive_clear_error(&a->archive);
+	struct tk_archive_write *a = (struct tk_archive_write *)_a;
+	tk_archive_check_magic(&a->archive, ARCHIVE_WRITE_MAGIC,
+	    ARCHIVE_STATE_DATA, "tk_archive_write_data");
+	tk_archive_clear_error(&a->archive);
 	return ((a->format_write_data)(a, buff, s));
 }
 
-static struct archive_write_filter *
+static struct tk_archive_write_filter *
 filter_lookup(struct archive *_a, int n)
 {
-	struct archive_write *a = (struct archive_write *)_a;
-	struct archive_write_filter *f = a->filter_first;
+	struct tk_archive_write *a = (struct tk_archive_write *)_a;
+	struct tk_archive_write_filter *f = a->filter_first;
 	if (n == -1)
 		return a->filter_last;
 	if (n < 0)
@@ -694,22 +694,22 @@ filter_lookup(struct archive *_a, int n)
 }
 
 static int
-_archive_filter_code(struct archive *_a, int n)
+_tk_archive_filter_code(struct archive *_a, int n)
 {
-	struct archive_write_filter *f = filter_lookup(_a, n);
+	struct tk_archive_write_filter *f = filter_lookup(_a, n);
 	return f == NULL ? -1 : f->code;
 }
 
 static const char *
-_archive_filter_name(struct archive *_a, int n)
+_tk_archive_filter_name(struct archive *_a, int n)
 {
-	struct archive_write_filter *f = filter_lookup(_a, n);
+	struct tk_archive_write_filter *f = filter_lookup(_a, n);
 	return f == NULL ? NULL : f->name;
 }
 
 static int64_t
-_archive_filter_bytes(struct archive *_a, int n)
+_tk_archive_filter_bytes(struct archive *_a, int n)
 {
-	struct archive_write_filter *f = filter_lookup(_a, n);
+	struct tk_archive_write_filter *f = filter_lookup(_a, n);
 	return f == NULL ? -1 : f->bytes_written;
 }

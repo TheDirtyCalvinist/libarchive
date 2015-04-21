@@ -31,7 +31,7 @@ static void
 test_read_format_gtar_filename_eucJP_UTF8(const char *refname)
 {
 	struct archive *a;
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 
 	/*
 	 * Read eucJP filename in en_US.UTF-8 with "hdrcharset=eucJP" option.
@@ -41,47 +41,47 @@ test_read_format_gtar_filename_eucJP_UTF8(const char *refname)
 		return;
 	}
 
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
-	if (ARCHIVE_OK != archive_read_set_options(a, "hdrcharset=eucJP")) {
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
+	if (ARCHIVE_OK != tk_archive_read_set_options(a, "hdrcharset=eucJP")) {
 		skipping("This system cannot convert character-set"
 		    " from eucJP to UTF-8.");
 		goto cleanup;
 	}
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_open_filename(a, refname, 10240));
+	    tk_archive_read_open_filename(a, refname, 10240));
 
 	/* Verify regular file. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
 	assertEqualString("\xe6\xbc\xa2\xe5\xad\x97.txt",
-	    archive_entry_pathname(ae));
-	assertEqualInt(8, archive_entry_size(ae));
+	    tk_archive_entry_pathname(ae));
+	assertEqualInt(8, tk_archive_entry_size(ae));
 
 	/* Verify regular file. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualString("\xe8\xa1\xa8.txt", archive_entry_pathname(ae));
-	assertEqualInt(4, archive_entry_size(ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualString("\xe8\xa1\xa8.txt", tk_archive_entry_pathname(ae));
+	assertEqualInt(4, tk_archive_entry_size(ae));
 
 
 	/* End of archive. */
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
 
 	/* Verify archive format. */
-	assertEqualIntA(a, ARCHIVE_FILTER_COMPRESS, archive_filter_code(a, 0));
-	assertEqualIntA(a, ARCHIVE_FORMAT_TAR_GNUTAR, archive_format(a));
+	assertEqualIntA(a, ARCHIVE_FILTER_COMPRESS, tk_archive_filter_code(a, 0));
+	assertEqualIntA(a, ARCHIVE_FORMAT_TAR_GNUTAR, tk_archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_close(a));
 cleanup:
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 static void
 test_read_format_gtar_filename_CP866_KOI8R(const char *refname)
 {
 	struct archive *a;
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 
 	/*
 	 * Read CP866 filename in ru_RU.KOI8-R with "hdrcharset=CP866" option.
@@ -92,48 +92,48 @@ test_read_format_gtar_filename_CP866_KOI8R(const char *refname)
 		return;
 	}
 
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
-	if (ARCHIVE_OK != archive_read_set_options(a, "hdrcharset=CP866")) {
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
+	if (ARCHIVE_OK != tk_archive_read_set_options(a, "hdrcharset=CP866")) {
 		skipping("This system cannot convert character-set"
 		    " from CP866 to KOI8-R.");
 		goto cleanup;
 	}
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_open_filename(a, refname, 10240));
+	    tk_archive_read_open_filename(a, refname, 10240));
 
 	/* Verify regular file. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
 	assertEqualString("\xf0\xf2\xe9\xf7\xe5\xf4",
-	    archive_entry_pathname(ae));
-	assertEqualInt(6, archive_entry_size(ae));
+	    tk_archive_entry_pathname(ae));
+	assertEqualInt(6, tk_archive_entry_size(ae));
 
 	/* Verify regular file. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
 	assertEqualString("\xd0\xd2\xc9\xd7\xc5\xd4",
-	    archive_entry_pathname(ae));
-	assertEqualInt(6, archive_entry_size(ae));
+	    tk_archive_entry_pathname(ae));
+	assertEqualInt(6, tk_archive_entry_size(ae));
 
 
 	/* End of archive. */
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
 
 	/* Verify archive format. */
-	assertEqualIntA(a, ARCHIVE_FILTER_COMPRESS, archive_filter_code(a, 0));
-	assertEqualIntA(a, ARCHIVE_FORMAT_TAR_GNUTAR, archive_format(a));
+	assertEqualIntA(a, ARCHIVE_FILTER_COMPRESS, tk_archive_filter_code(a, 0));
+	assertEqualIntA(a, ARCHIVE_FORMAT_TAR_GNUTAR, tk_archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_close(a));
 cleanup:
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 static void
 test_read_format_gtar_filename_CP866_UTF8(const char *refname)
 {
 	struct archive *a;
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 
 	/*
 	 * Read CP866 filename in en_US.UTF-8 with "hdrcharset=CP866" option.
@@ -143,48 +143,48 @@ test_read_format_gtar_filename_CP866_UTF8(const char *refname)
 		return;
 	}
 
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
-	if (ARCHIVE_OK != archive_read_set_options(a, "hdrcharset=CP866")) {
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
+	if (ARCHIVE_OK != tk_archive_read_set_options(a, "hdrcharset=CP866")) {
 		skipping("This system cannot convert character-set"
 		    " from CP866 to UTF-8.");
 		goto cleanup;
 	}
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_open_filename(a, refname, 10240));
+	    tk_archive_read_open_filename(a, refname, 10240));
 
 	/* Verify regular file. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
 	assertEqualString("\xd0\x9f\xd0\xa0\xd0\x98\xd0\x92\xd0\x95\xd0\xa2",
-	    archive_entry_pathname(ae));
-	assertEqualInt(6, archive_entry_size(ae));
+	    tk_archive_entry_pathname(ae));
+	assertEqualInt(6, tk_archive_entry_size(ae));
 
 	/* Verify regular file. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
 	assertEqualString("\xd0\xbf\xd1\x80\xd0\xb8\xd0\xb2\xd0\xb5\xd1\x82",
-	    archive_entry_pathname(ae));
-	assertEqualInt(6, archive_entry_size(ae));
+	    tk_archive_entry_pathname(ae));
+	assertEqualInt(6, tk_archive_entry_size(ae));
 
 
 	/* End of archive. */
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
 
 	/* Verify archive format. */
-	assertEqualIntA(a, ARCHIVE_FILTER_COMPRESS, archive_filter_code(a, 0));
-	assertEqualIntA(a, ARCHIVE_FORMAT_TAR_GNUTAR, archive_format(a));
+	assertEqualIntA(a, ARCHIVE_FILTER_COMPRESS, tk_archive_filter_code(a, 0));
+	assertEqualIntA(a, ARCHIVE_FORMAT_TAR_GNUTAR, tk_archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_close(a));
 cleanup:
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 static void
 test_read_format_gtar_filename_KOI8R_CP866(const char *refname)
 {
 	struct archive *a;
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 
 	/*
 	 * Read KOI8-R filename in ru_RU.CP866 with "hdrcharset=KOI8-R" option.
@@ -195,48 +195,48 @@ test_read_format_gtar_filename_KOI8R_CP866(const char *refname)
 		return;
 	}
 
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
-	if (ARCHIVE_OK != archive_read_set_options(a, "hdrcharset=KOI8-R")) {
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
+	if (ARCHIVE_OK != tk_archive_read_set_options(a, "hdrcharset=KOI8-R")) {
 		skipping("This system cannot convert character-set"
 		    " from KOI8-R to CP866.");
 		goto cleanup;
 	}
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_open_filename(a, refname, 10240));
+	    tk_archive_read_open_filename(a, refname, 10240));
 
 	/* Verify regular file. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
 	assertEqualString("\xaf\xe0\xa8\xa2\xa5\xe2",
-	    archive_entry_pathname(ae));
-	assertEqualInt(6, archive_entry_size(ae));
+	    tk_archive_entry_pathname(ae));
+	assertEqualInt(6, tk_archive_entry_size(ae));
 
 	/* Verify regular file. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
 	assertEqualString("\x8f\x90\x88\x82\x85\x92",
-	    archive_entry_pathname(ae));
-	assertEqualInt(6, archive_entry_size(ae));
+	    tk_archive_entry_pathname(ae));
+	assertEqualInt(6, tk_archive_entry_size(ae));
 
 
 	/* End of archive. */
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
 
 	/* Verify archive format. */
-	assertEqualIntA(a, ARCHIVE_FILTER_COMPRESS, archive_filter_code(a, 0));
-	assertEqualIntA(a, ARCHIVE_FORMAT_TAR_GNUTAR, archive_format(a));
+	assertEqualIntA(a, ARCHIVE_FILTER_COMPRESS, tk_archive_filter_code(a, 0));
+	assertEqualIntA(a, ARCHIVE_FORMAT_TAR_GNUTAR, tk_archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_close(a));
 cleanup:
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 static void
 test_read_format_gtar_filename_KOI8R_UTF8(const char *refname)
 {
 	struct archive *a;
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 
 	/*
 	 * Read KOI8-R filename in en_US.UTF-8 with "hdrcharset=KOI8-R" option.
@@ -246,48 +246,48 @@ test_read_format_gtar_filename_KOI8R_UTF8(const char *refname)
 		return;
 	}
 
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
-	if (ARCHIVE_OK != archive_read_set_options(a, "hdrcharset=KOI8-R")) {
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
+	if (ARCHIVE_OK != tk_archive_read_set_options(a, "hdrcharset=KOI8-R")) {
 		skipping("This system cannot convert character-set"
 		    " from KOI8-R to UTF-8.");
 		goto cleanup;
 	}
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_open_filename(a, refname, 10240));
+	    tk_archive_read_open_filename(a, refname, 10240));
 
 	/* Verify regular file. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
 	assertEqualString("\xd0\xbf\xd1\x80\xd0\xb8\xd0\xb2\xd0\xb5\xd1\x82",
-	    archive_entry_pathname(ae));
-	assertEqualInt(6, archive_entry_size(ae));
+	    tk_archive_entry_pathname(ae));
+	assertEqualInt(6, tk_archive_entry_size(ae));
 
 	/* Verify regular file. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
 	assertEqualString("\xd0\x9f\xd0\xa0\xd0\x98\xd0\x92\xd0\x95\xd0\xa2",
-	    archive_entry_pathname(ae));
-	assertEqualInt(6, archive_entry_size(ae));
+	    tk_archive_entry_pathname(ae));
+	assertEqualInt(6, tk_archive_entry_size(ae));
 
 
 	/* End of archive. */
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
 
 	/* Verify archive format. */
-	assertEqualIntA(a, ARCHIVE_FILTER_COMPRESS, archive_filter_code(a, 0));
-	assertEqualIntA(a, ARCHIVE_FORMAT_TAR_GNUTAR, archive_format(a));
+	assertEqualIntA(a, ARCHIVE_FILTER_COMPRESS, tk_archive_filter_code(a, 0));
+	assertEqualIntA(a, ARCHIVE_FORMAT_TAR_GNUTAR, tk_archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_close(a));
 cleanup:
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 static void
 test_read_format_gtar_filename_eucJP_CP932(const char *refname)
 {
 	struct archive *a;
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 
 	/*
 	 * Read eucJP filename in CP932/SJIS with "hdrcharset=eucJP" option.
@@ -298,46 +298,46 @@ test_read_format_gtar_filename_eucJP_CP932(const char *refname)
 		return;
 	}
 
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
-	if (ARCHIVE_OK != archive_read_set_options(a, "hdrcharset=eucJP")) {
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
+	if (ARCHIVE_OK != tk_archive_read_set_options(a, "hdrcharset=eucJP")) {
 		skipping("This system cannot convert character-set"
 		    " from eucJP.");
 		goto cleanup;
 	}
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_open_filename(a, refname, 10240));
+	    tk_archive_read_open_filename(a, refname, 10240));
 
 	/* Verify regular file. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualString("\x8a\xbf\x8e\x9a.txt", archive_entry_pathname(ae));
-	assertEqualInt(8, archive_entry_size(ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualString("\x8a\xbf\x8e\x9a.txt", tk_archive_entry_pathname(ae));
+	assertEqualInt(8, tk_archive_entry_size(ae));
 
 	/* Verify regular file. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualString("\x95\x5c.txt", archive_entry_pathname(ae));
-	assertEqualInt(4, archive_entry_size(ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualString("\x95\x5c.txt", tk_archive_entry_pathname(ae));
+	assertEqualInt(4, tk_archive_entry_size(ae));
 
 
 	/* End of archive. */
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
 
 	/* Verify archive format. */
-	assertEqualIntA(a, ARCHIVE_FILTER_COMPRESS, archive_filter_code(a, 0));
-	assertEqualIntA(a, ARCHIVE_FORMAT_TAR_GNUTAR, archive_format(a));
+	assertEqualIntA(a, ARCHIVE_FILTER_COMPRESS, tk_archive_filter_code(a, 0));
+	assertEqualIntA(a, ARCHIVE_FORMAT_TAR_GNUTAR, tk_archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_close(a));
 cleanup:
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 static void
 test_read_format_gtar_filename_CP866_CP1251(const char *refname)
 {
 	struct archive *a;
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 
 	/*
 	 * Read CP866 filename in CP1251 with "hdrcharset=CP866" option.
@@ -348,41 +348,41 @@ test_read_format_gtar_filename_CP866_CP1251(const char *refname)
 		return;
 	}
 
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
-	if (ARCHIVE_OK != archive_read_set_options(a, "hdrcharset=CP866")) {
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
+	if (ARCHIVE_OK != tk_archive_read_set_options(a, "hdrcharset=CP866")) {
 		skipping("This system cannot convert character-set"
 		    " from CP866 to CP1251.");
 		goto cleanup;
 	}
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_open_filename(a, refname, 10240));
+	    tk_archive_read_open_filename(a, refname, 10240));
 
 	/* Verify regular file. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
 	assertEqualString("\xcf\xd0\xc8\xc2\xc5\xd2",
-	    archive_entry_pathname(ae));
-	assertEqualInt(6, archive_entry_size(ae));
+	    tk_archive_entry_pathname(ae));
+	assertEqualInt(6, tk_archive_entry_size(ae));
 
 	/* Verify regular file. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
 	assertEqualString("\xef\xf0\xe8\xe2\xe5\xf2",
-	    archive_entry_pathname(ae));
-	assertEqualInt(6, archive_entry_size(ae));
+	    tk_archive_entry_pathname(ae));
+	assertEqualInt(6, tk_archive_entry_size(ae));
 
 
 	/* End of archive. */
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
 
 	/* Verify archive format. */
-	assertEqualIntA(a, ARCHIVE_FILTER_COMPRESS, archive_filter_code(a, 0));
-	assertEqualIntA(a, ARCHIVE_FORMAT_TAR_GNUTAR, archive_format(a));
+	assertEqualIntA(a, ARCHIVE_FILTER_COMPRESS, tk_archive_filter_code(a, 0));
+	assertEqualIntA(a, ARCHIVE_FORMAT_TAR_GNUTAR, tk_archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_close(a));
 cleanup:
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 /*
@@ -395,7 +395,7 @@ static void
 test_read_format_gtar_filename_CP866_CP1251_win(const char *refname)
 {
 	struct archive *a;
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 
 	/*
 	 * Read CP866 filename in CP1251 without "hdrcharset=CP866" option.
@@ -405,42 +405,42 @@ test_read_format_gtar_filename_CP866_CP1251_win(const char *refname)
 		return;
 	}
 
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_open_filename(a, refname, 10240));
+	    tk_archive_read_open_filename(a, refname, 10240));
 
 	/* Verify regular file. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
 	assertEqualString("\xcf\xd0\xc8\xc2\xc5\xd2",
-	    archive_entry_pathname(ae));
-	assertEqualInt(6, archive_entry_size(ae));
+	    tk_archive_entry_pathname(ae));
+	assertEqualInt(6, tk_archive_entry_size(ae));
 
 	/* Verify regular file. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
 	assertEqualString("\xef\xf0\xe8\xe2\xe5\xf2",
-	    archive_entry_pathname(ae));
-	assertEqualInt(6, archive_entry_size(ae));
+	    tk_archive_entry_pathname(ae));
+	assertEqualInt(6, tk_archive_entry_size(ae));
 
 
 	/* End of archive. */
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
 
 	/* Verify archive format. */
-	assertEqualIntA(a, ARCHIVE_FILTER_COMPRESS, archive_filter_code(a, 0));
-	assertEqualIntA(a, ARCHIVE_FORMAT_TAR_GNUTAR, archive_format(a));
+	assertEqualIntA(a, ARCHIVE_FILTER_COMPRESS, tk_archive_filter_code(a, 0));
+	assertEqualIntA(a, ARCHIVE_FORMAT_TAR_GNUTAR, tk_archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 static void
 test_read_format_gtar_filename_KOI8R_CP1251(const char *refname)
 {
 	struct archive *a;
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 
 	/*
 	 * Read KOI8-R filename in CP1251 with "hdrcharset=KOI8-R" option.
@@ -451,41 +451,41 @@ test_read_format_gtar_filename_KOI8R_CP1251(const char *refname)
 		return;
 	}
 
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
-	if (ARCHIVE_OK != archive_read_set_options(a, "hdrcharset=KOI8-R")) {
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
+	if (ARCHIVE_OK != tk_archive_read_set_options(a, "hdrcharset=KOI8-R")) {
 		skipping("This system cannot convert character-set"
 		    " from KOI8-R to CP1251.");
 		goto cleanup;
 	}
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_open_filename(a, refname, 10240));
+	    tk_archive_read_open_filename(a, refname, 10240));
 
 	/* Verify regular file. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
 	assertEqualString("\xef\xf0\xe8\xe2\xe5\xf2",
-	    archive_entry_pathname(ae));
-	assertEqualInt(6, archive_entry_size(ae));
+	    tk_archive_entry_pathname(ae));
+	assertEqualInt(6, tk_archive_entry_size(ae));
 
 	/* Verify regular file. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
 	assertEqualString("\xcf\xd0\xc8\xc2\xc5\xd2",
-	    archive_entry_pathname(ae));
-	assertEqualInt(6, archive_entry_size(ae));
+	    tk_archive_entry_pathname(ae));
+	assertEqualInt(6, tk_archive_entry_size(ae));
 
 
 	/* End of archive. */
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
 
 	/* Verify archive format. */
-	assertEqualIntA(a, ARCHIVE_FILTER_COMPRESS, archive_filter_code(a, 0));
-	assertEqualIntA(a, ARCHIVE_FORMAT_TAR_GNUTAR, archive_format(a));
+	assertEqualIntA(a, ARCHIVE_FILTER_COMPRESS, tk_archive_filter_code(a, 0));
+	assertEqualIntA(a, ARCHIVE_FORMAT_TAR_GNUTAR, tk_archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_close(a));
 cleanup:
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 

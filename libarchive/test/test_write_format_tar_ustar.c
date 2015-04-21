@@ -50,7 +50,7 @@ is_null(const char *p, size_t l)
 DEFINE_TEST(test_write_format_tar_ustar)
 {
 	struct archive *a;
-	struct archive_entry *entry;
+	struct tk_archive_entry *entry;
 	char *buff, *e;
 	size_t buffsize = 100000;
 	size_t used;
@@ -75,13 +75,13 @@ DEFINE_TEST(test_write_format_tar_ustar)
 	buff = malloc(buffsize);
 
 	/* Create a new archive in memory. */
-	assert((a = archive_write_new()) != NULL);
+	assert((a = tk_archive_write_new()) != NULL);
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_write_set_format_ustar(a));
+	    tk_archive_write_set_format_ustar(a));
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_write_add_filter_none(a));
+	    tk_archive_write_add_filter_none(a));
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_write_open_memory(a, buff, buffsize, &used));
+	    tk_archive_write_open_memory(a, buff, buffsize, &used));
 
 	/*
 	 * Add various files to it.
@@ -89,118 +89,118 @@ DEFINE_TEST(test_write_format_tar_ustar)
 	 */
 
 	/* "file" with 10 bytes of content */
-	assert((entry = archive_entry_new()) != NULL);
-	archive_entry_set_mtime(entry, 1, 10);
-	archive_entry_set_pathname(entry, "file");
-	archive_entry_set_mode(entry, S_IFREG | 0664);
-	archive_entry_set_size(entry, 10);
-	archive_entry_set_uid(entry, 80);
-	archive_entry_set_gid(entry, 90);
-	archive_entry_set_dev(entry, 12);
-	archive_entry_set_ino(entry, 89);
-	archive_entry_set_nlink(entry, 2);
+	assert((entry = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_mtime(entry, 1, 10);
+	tk_archive_entry_set_pathname(entry, "file");
+	tk_archive_entry_set_mode(entry, S_IFREG | 0664);
+	tk_archive_entry_set_size(entry, 10);
+	tk_archive_entry_set_uid(entry, 80);
+	tk_archive_entry_set_gid(entry, 90);
+	tk_archive_entry_set_dev(entry, 12);
+	tk_archive_entry_set_ino(entry, 89);
+	tk_archive_entry_set_nlink(entry, 2);
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_write_header(a, entry));
-	archive_entry_free(entry);
-	assertEqualIntA(a, 10, archive_write_data(a, "1234567890", 10));
+	    tk_archive_write_header(a, entry));
+	tk_archive_entry_free(entry);
+	assertEqualIntA(a, 10, tk_archive_write_data(a, "1234567890", 10));
 
 	/* Hardlink to "file" with 10 bytes of content */
-	assert((entry = archive_entry_new()) != NULL);
-	archive_entry_set_mtime(entry, 1, 10);
-	archive_entry_set_pathname(entry, "linkfile");
-	archive_entry_set_mode(entry, S_IFREG | 0664);
+	assert((entry = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_mtime(entry, 1, 10);
+	tk_archive_entry_set_pathname(entry, "linkfile");
+	tk_archive_entry_set_mode(entry, S_IFREG | 0664);
 	/* TODO: Put this back and fix the bug. */
 	/* archive_entry_set_size(entry, 10); */
-	archive_entry_set_uid(entry, 80);
-	archive_entry_set_gid(entry, 90);
-	archive_entry_set_dev(entry, 12);
-	archive_entry_set_ino(entry, 89);
-	archive_entry_set_nlink(entry, 2);
+	tk_archive_entry_set_uid(entry, 80);
+	tk_archive_entry_set_gid(entry, 90);
+	tk_archive_entry_set_dev(entry, 12);
+	tk_archive_entry_set_ino(entry, 89);
+	tk_archive_entry_set_nlink(entry, 2);
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_write_header(a, entry));
-	archive_entry_free(entry);
+	    tk_archive_write_header(a, entry));
+	tk_archive_entry_free(entry);
 	/* Write of data to dir should fail == zero bytes get written. */
-	assertEqualIntA(a, 0, archive_write_data(a, "1234567890", 10));
+	assertEqualIntA(a, 0, tk_archive_write_data(a, "1234567890", 10));
 
 	/* "dir" */
-	assert((entry = archive_entry_new()) != NULL);
-	archive_entry_set_mtime(entry, 2, 20);
-	archive_entry_set_pathname(entry, "dir");
-	archive_entry_set_mode(entry, S_IFDIR | 0775);
-	archive_entry_set_size(entry, 10);
-	archive_entry_set_nlink(entry, 2);
+	assert((entry = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_mtime(entry, 2, 20);
+	tk_archive_entry_set_pathname(entry, "dir");
+	tk_archive_entry_set_mode(entry, S_IFDIR | 0775);
+	tk_archive_entry_set_size(entry, 10);
+	tk_archive_entry_set_nlink(entry, 2);
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_write_header(a, entry));
-	archive_entry_free(entry);
+	    tk_archive_write_header(a, entry));
+	tk_archive_entry_free(entry);
 	/* Write of data to dir should fail == zero bytes get written. */
-	assertEqualIntA(a, 0, archive_write_data(a, "1234567890", 10));
+	assertEqualIntA(a, 0, tk_archive_write_data(a, "1234567890", 10));
 
 	/* "symlink" pointing to "file" */
-	assert((entry = archive_entry_new()) != NULL);
-	archive_entry_set_mtime(entry, 3, 30);
-	archive_entry_set_pathname(entry, "symlink");
-	archive_entry_set_mode(entry, 0664);
-	archive_entry_set_filetype(entry, AE_IFLNK);
-	archive_entry_set_symlink(entry,"file");
-	archive_entry_set_size(entry, 0);
-	archive_entry_set_uid(entry, 88);
-	archive_entry_set_gid(entry, 98);
-	archive_entry_set_dev(entry, 12);
-	archive_entry_set_ino(entry, 90);
-	archive_entry_set_nlink(entry, 1);
+	assert((entry = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_mtime(entry, 3, 30);
+	tk_archive_entry_set_pathname(entry, "symlink");
+	tk_archive_entry_set_mode(entry, 0664);
+	tk_archive_entry_set_filetype(entry, AE_IFLNK);
+	tk_archive_entry_set_symlink(entry,"file");
+	tk_archive_entry_set_size(entry, 0);
+	tk_archive_entry_set_uid(entry, 88);
+	tk_archive_entry_set_gid(entry, 98);
+	tk_archive_entry_set_dev(entry, 12);
+	tk_archive_entry_set_ino(entry, 90);
+	tk_archive_entry_set_nlink(entry, 1);
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_write_header(a, entry));
-	archive_entry_free(entry);
+	    tk_archive_write_header(a, entry));
+	tk_archive_entry_free(entry);
 	/* Write of data to symlink should fail == zero bytes get written. */
-	assertEqualIntA(a, 0, archive_write_data(a, "1234567890", 10));
+	assertEqualIntA(a, 0, tk_archive_write_data(a, "1234567890", 10));
 
 	/* file with 99-char filename. */
-	assert((entry = archive_entry_new()) != NULL);
-	archive_entry_set_mtime(entry, 1, 10);
-	archive_entry_set_pathname(entry, f99);
-	archive_entry_set_mode(entry, S_IFREG | 0664);
-	archive_entry_set_size(entry, 0);
-	archive_entry_set_uid(entry, 82);
-	archive_entry_set_gid(entry, 93);
-	archive_entry_set_dev(entry, 102);
-	archive_entry_set_ino(entry, 7);
-	archive_entry_set_nlink(entry, 1);
+	assert((entry = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_mtime(entry, 1, 10);
+	tk_archive_entry_set_pathname(entry, f99);
+	tk_archive_entry_set_mode(entry, S_IFREG | 0664);
+	tk_archive_entry_set_size(entry, 0);
+	tk_archive_entry_set_uid(entry, 82);
+	tk_archive_entry_set_gid(entry, 93);
+	tk_archive_entry_set_dev(entry, 102);
+	tk_archive_entry_set_ino(entry, 7);
+	tk_archive_entry_set_nlink(entry, 1);
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_write_header(a, entry));
-	archive_entry_free(entry);
+	    tk_archive_write_header(a, entry));
+	tk_archive_entry_free(entry);
 
 	/* file with 100-char filename. */
-	assert((entry = archive_entry_new()) != NULL);
-	archive_entry_set_mtime(entry, 1, 10);
-	archive_entry_set_pathname(entry, f100);
-	archive_entry_set_mode(entry, S_IFREG | 0664);
-	archive_entry_set_size(entry, 0);
-	archive_entry_set_uid(entry, 82);
-	archive_entry_set_gid(entry, 93);
-	archive_entry_set_dev(entry, 102);
-	archive_entry_set_ino(entry, 7);
-	archive_entry_set_nlink(entry, 1);
+	assert((entry = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_mtime(entry, 1, 10);
+	tk_archive_entry_set_pathname(entry, f100);
+	tk_archive_entry_set_mode(entry, S_IFREG | 0664);
+	tk_archive_entry_set_size(entry, 0);
+	tk_archive_entry_set_uid(entry, 82);
+	tk_archive_entry_set_gid(entry, 93);
+	tk_archive_entry_set_dev(entry, 102);
+	tk_archive_entry_set_ino(entry, 7);
+	tk_archive_entry_set_nlink(entry, 1);
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_write_header(a, entry));
-	archive_entry_free(entry);
+	    tk_archive_write_header(a, entry));
+	tk_archive_entry_free(entry);
 
 	/* file with 256-char filename. */
-	assert((entry = archive_entry_new()) != NULL);
-	archive_entry_set_mtime(entry, 1, 10);
-	archive_entry_set_pathname(entry, f256);
-	archive_entry_set_mode(entry, S_IFREG | 0664);
-	archive_entry_set_size(entry, 0);
-	archive_entry_set_uid(entry, 82);
-	archive_entry_set_gid(entry, 93);
-	archive_entry_set_dev(entry, 102);
-	archive_entry_set_ino(entry, 7);
-	archive_entry_set_nlink(entry, 1);
+	assert((entry = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_mtime(entry, 1, 10);
+	tk_archive_entry_set_pathname(entry, f256);
+	tk_archive_entry_set_mode(entry, S_IFREG | 0664);
+	tk_archive_entry_set_size(entry, 0);
+	tk_archive_entry_set_uid(entry, 82);
+	tk_archive_entry_set_gid(entry, 93);
+	tk_archive_entry_set_dev(entry, 102);
+	tk_archive_entry_set_ino(entry, 7);
+	tk_archive_entry_set_nlink(entry, 1);
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_write_header(a, entry));
-	archive_entry_free(entry);
+	    tk_archive_write_header(a, entry));
+	tk_archive_entry_free(entry);
 
 	/* Close out the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 
 	/*
 	 * Verify the archive format.

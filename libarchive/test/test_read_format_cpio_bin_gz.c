@@ -33,29 +33,29 @@ static unsigned char archive[] = {
 
 DEFINE_TEST(test_read_format_cpio_bin_gz)
 {
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	struct archive *a;
 	int r;
 
-	assert((a = archive_read_new()) != NULL);
-	assertEqualInt(ARCHIVE_OK, archive_read_support_filter_all(a));
-	r = archive_read_support_filter_gzip(a);
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_support_filter_all(a));
+	r = tk_archive_read_support_filter_gzip(a);
 	if (r == ARCHIVE_WARN) {
 		skipping("gzip reading not fully supported on this platform");
-		assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+		assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 		return;
 	}
-	failure("archive_read_support_filter_gzip");
+	failure("tk_archive_read_support_filter_gzip");
 	assertEqualInt(ARCHIVE_OK, r);
-	assertEqualInt(ARCHIVE_OK, archive_read_support_format_all(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_support_format_all(a));
 	assertEqualInt(ARCHIVE_OK,
-	    archive_read_open_memory(a, archive, sizeof(archive)));
-	assertEqualInt(ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt(archive_filter_code(a, 0),
+	    tk_archive_read_open_memory(a, archive, sizeof(archive)));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt(tk_archive_filter_code(a, 0),
 	    ARCHIVE_FILTER_GZIP);
-	assertEqualInt(archive_format(a), ARCHIVE_FORMAT_CPIO_BIN_LE);
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(tk_archive_format(a), ARCHIVE_FORMAT_CPIO_BIN_LE);
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 

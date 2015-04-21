@@ -57,7 +57,7 @@ pad_to(struct archive *a, int fd, int can_lseek,
 		actual_offset = lseek(fd,
 		    target_offset - actual_offset, SEEK_CUR);
 		if (actual_offset != target_offset) {
-			archive_set_error(a, errno, "Seek error");
+			tk_archive_set_error(a, errno, "Seek error");
 			return (ARCHIVE_FATAL);
 		}
 		return (ARCHIVE_OK);
@@ -68,7 +68,7 @@ pad_to(struct archive *a, int fd, int can_lseek,
 			to_write = (size_t)(target_offset - actual_offset);
 		bytes_written = write(fd, nulls, to_write);
 		if (bytes_written < 0) {
-			archive_set_error(a, errno, "Write error");
+			tk_archive_set_error(a, errno, "Write error");
 			return (ARCHIVE_FATAL);
 		}
 		actual_offset += bytes_written;
@@ -78,7 +78,7 @@ pad_to(struct archive *a, int fd, int can_lseek,
 
 
 int
-archive_read_data_into_fd(struct archive *a, int fd)
+tk_archive_read_data_into_fd(struct archive *a, int fd)
 {
 	struct stat st;
 	int r, r2;
@@ -91,14 +91,14 @@ archive_read_data_into_fd(struct archive *a, int fd)
 	char *nulls = NULL;
 	size_t nulls_size = 16384;
 
-	archive_check_magic(a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_DATA,
-	    "archive_read_data_into_fd");
+	tk_archive_check_magic(a, ARCHIVE_READ_MAGIC, ARCHIVE_STATE_DATA,
+	    "tk_archive_read_data_into_fd");
 
 	can_lseek = (fstat(fd, &st) == 0) && S_ISREG(st.st_mode);
 	if (!can_lseek)
 		nulls = calloc(1, nulls_size);
 
-	while ((r = archive_read_data_block(a, &buff, &size, &target_offset)) ==
+	while ((r = tk_archive_read_data_block(a, &buff, &size, &target_offset)) ==
 	    ARCHIVE_OK) {
 		const char *p = buff;
 		if (target_offset > actual_offset) {
@@ -114,7 +114,7 @@ archive_read_data_into_fd(struct archive *a, int fd)
 				bytes_to_write = MAX_WRITE;
 			bytes_written = write(fd, p, bytes_to_write);
 			if (bytes_written < 0) {
-				archive_set_error(a, errno, "Write error");
+				tk_archive_set_error(a, errno, "Write error");
 				r = ARCHIVE_FATAL;
 				goto cleanup;
 			}

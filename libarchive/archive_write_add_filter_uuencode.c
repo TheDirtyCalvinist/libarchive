@@ -46,53 +46,53 @@ __FBSDID("$FreeBSD$");
 
 struct private_uuencode {
 	int			mode;
-	struct archive_string	name;
-	struct archive_string	encoded_buff;
+	struct tk_archive_string	name;
+	struct tk_archive_string	encoded_buff;
 	size_t			bs;
 	size_t			hold_len;
 	unsigned char		hold[LBYTES];
 };
 
-static int archive_filter_uuencode_options(struct archive_write_filter *,
+static int tk_archive_filter_uuencode_options(struct tk_archive_write_filter *,
     const char *, const char *);
-static int archive_filter_uuencode_open(struct archive_write_filter *);
-static int archive_filter_uuencode_write(struct archive_write_filter *,
+static int tk_archive_filter_uuencode_open(struct tk_archive_write_filter *);
+static int tk_archive_filter_uuencode_write(struct tk_archive_write_filter *,
     const void *, size_t);
-static int archive_filter_uuencode_close(struct archive_write_filter *);
-static int archive_filter_uuencode_free(struct archive_write_filter *);
-static void uu_encode(struct archive_string *, const unsigned char *, size_t);
+static int tk_archive_filter_uuencode_close(struct tk_archive_write_filter *);
+static int tk_archive_filter_uuencode_free(struct tk_archive_write_filter *);
+static void uu_encode(struct tk_archive_string *, const unsigned char *, size_t);
 static int64_t atol8(const char *, size_t);
 
 /*
  * Add a compress filter to this write handle.
  */
 int
-archive_write_add_filter_uuencode(struct archive *_a)
+tk_archive_write_add_filter_uuencode(struct archive *_a)
 {
-	struct archive_write *a = (struct archive_write *)_a;
-	struct archive_write_filter *f = __archive_write_allocate_filter(_a);
+	struct tk_archive_write *a = (struct tk_archive_write *)_a;
+	struct tk_archive_write_filter *f = __tk_archive_write_allocate_filter(_a);
 	struct private_uuencode *state;
 
-	archive_check_magic(&a->archive, ARCHIVE_WRITE_MAGIC,
-	    ARCHIVE_STATE_NEW, "archive_write_add_filter_uu");
+	tk_archive_check_magic(&a->archive, ARCHIVE_WRITE_MAGIC,
+	    ARCHIVE_STATE_NEW, "tk_archive_write_add_filter_uu");
 
 	state = (struct private_uuencode *)calloc(1, sizeof(*state));
 	if (state == NULL) {
-		archive_set_error(f->archive, ENOMEM,
+		tk_archive_set_error(f->archive, ENOMEM,
 		    "Can't allocate data for uuencode filter");
 		return (ARCHIVE_FATAL);
 	}
-	archive_strcpy(&state->name, "-");
+	tk_archive_strcpy(&state->name, "-");
 	state->mode = 0644;
 
 	f->data = state;
 	f->name = "uuencode";
 	f->code = ARCHIVE_FILTER_UU;
-	f->open = archive_filter_uuencode_open;
-	f->options = archive_filter_uuencode_options;
-	f->write = archive_filter_uuencode_write;
-	f->close = archive_filter_uuencode_close;
-	f->free = archive_filter_uuencode_free;
+	f->open = tk_archive_filter_uuencode_open;
+	f->options = tk_archive_filter_uuencode_options;
+	f->write = tk_archive_filter_uuencode_write;
+	f->close = tk_archive_filter_uuencode_close;
+	f->free = tk_archive_filter_uuencode_free;
 
 	return (ARCHIVE_OK);
 }
@@ -101,14 +101,14 @@ archive_write_add_filter_uuencode(struct archive *_a)
  * Set write options.
  */
 static int
-archive_filter_uuencode_options(struct archive_write_filter *f, const char *key,
+tk_archive_filter_uuencode_options(struct tk_archive_write_filter *f, const char *key,
     const char *value)
 {
 	struct private_uuencode *state = (struct private_uuencode *)f->data;
 
 	if (strcmp(key, "mode") == 0) {
 		if (value == NULL) {
-			archive_set_error(f->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(f->archive, ARCHIVE_ERRNO_MISC,
 			    "mode option requires octal digits");
 			return (ARCHIVE_FAILED);
 		}
@@ -116,11 +116,11 @@ archive_filter_uuencode_options(struct archive_write_filter *f, const char *key,
 		return (ARCHIVE_OK);
 	} else if (strcmp(key, "name") == 0) {
 		if (value == NULL) {
-			archive_set_error(f->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(f->archive, ARCHIVE_ERRNO_MISC,
 			    "name option requires a string");
 			return (ARCHIVE_FAILED);
 		}
-		archive_strcpy(&state->name, value);
+		tk_archive_strcpy(&state->name, value);
 		return (ARCHIVE_OK);
 	}
 
@@ -134,20 +134,20 @@ archive_filter_uuencode_options(struct archive_write_filter *f, const char *key,
  * Setup callback.
  */
 static int
-archive_filter_uuencode_open(struct archive_write_filter *f)
+tk_archive_filter_uuencode_open(struct tk_archive_write_filter *f)
 {
 	struct private_uuencode *state = (struct private_uuencode *)f->data;
 	size_t bs = 65536, bpb;
 	int ret;
 
-	ret = __archive_write_open_filter(f->next_filter);
+	ret = __tk_archive_write_open_filter(f->next_filter);
 	if (ret != ARCHIVE_OK)
 		return (ret);
 
 	if (f->archive->magic == ARCHIVE_WRITE_MAGIC) {
 		/* Buffer size should be a multiple number of the of bytes
 		 * per block for performance. */
-		bpb = archive_write_get_bytes_per_block(f->archive);
+		bpb = tk_archive_write_get_bytes_per_block(f->archive);
 		if (bpb > bs)
 			bs = bpb;
 		else if (bpb != 0)
@@ -155,13 +155,13 @@ archive_filter_uuencode_open(struct archive_write_filter *f)
 	}
 
 	state->bs = bs;
-	if (archive_string_ensure(&state->encoded_buff, bs + 512) == NULL) {
-		archive_set_error(f->archive, ENOMEM,
+	if (tk_archive_string_ensure(&state->encoded_buff, bs + 512) == NULL) {
+		tk_archive_set_error(f->archive, ENOMEM,
 		    "Can't allocate data for uuencode buffer");
 		return (ARCHIVE_FATAL);
 	}
 
-	archive_string_sprintf(&state->encoded_buff, "begin %o %s\n",
+	tk_archive_string_sprintf(&state->encoded_buff, "begin %o %s\n",
 	    state->mode, state->name.s);
 
 	f->data = state;
@@ -169,46 +169,46 @@ archive_filter_uuencode_open(struct archive_write_filter *f)
 }
 
 static void
-uu_encode(struct archive_string *as, const unsigned char *p, size_t len)
+uu_encode(struct tk_archive_string *as, const unsigned char *p, size_t len)
 {
 	int c;
 
 	c = (int)len;
-	archive_strappend_char(as, c?c + 0x20:'`');
+	tk_archive_strappend_char(as, c?c + 0x20:'`');
 	for (; len >= 3; p += 3, len -= 3) {
 		c = p[0] >> 2;
-		archive_strappend_char(as, c?c + 0x20:'`');
+		tk_archive_strappend_char(as, c?c + 0x20:'`');
 		c = ((p[0] & 0x03) << 4) | ((p[1] & 0xf0) >> 4);
-		archive_strappend_char(as, c?c + 0x20:'`');
+		tk_archive_strappend_char(as, c?c + 0x20:'`');
 		c = ((p[1] & 0x0f) << 2) | ((p[2] & 0xc0) >> 6);
-		archive_strappend_char(as, c?c + 0x20:'`');
+		tk_archive_strappend_char(as, c?c + 0x20:'`');
 		c = p[2] & 0x3f;
-		archive_strappend_char(as, c?c + 0x20:'`');
+		tk_archive_strappend_char(as, c?c + 0x20:'`');
 	}
 	if (len > 0) {
 		c = p[0] >> 2;
-		archive_strappend_char(as, c?c + 0x20:'`');
+		tk_archive_strappend_char(as, c?c + 0x20:'`');
 		c = (p[0] & 0x03) << 4;
 		if (len == 1) {
-			archive_strappend_char(as, c?c + 0x20:'`');
-			archive_strappend_char(as, '`');
-			archive_strappend_char(as, '`');
+			tk_archive_strappend_char(as, c?c + 0x20:'`');
+			tk_archive_strappend_char(as, '`');
+			tk_archive_strappend_char(as, '`');
 		} else {
 			c |= (p[1] & 0xf0) >> 4;
-			archive_strappend_char(as, c?c + 0x20:'`');
+			tk_archive_strappend_char(as, c?c + 0x20:'`');
 			c = (p[1] & 0x0f) << 2;
-			archive_strappend_char(as, c?c + 0x20:'`');
-			archive_strappend_char(as, '`');
+			tk_archive_strappend_char(as, c?c + 0x20:'`');
+			tk_archive_strappend_char(as, '`');
 		}
 	}
-	archive_strappend_char(as, '\n');
+	tk_archive_strappend_char(as, '\n');
 }
 
 /*
  * Write data to the encoded stream.
  */
 static int
-archive_filter_uuencode_write(struct archive_write_filter *f, const void *buff,
+tk_archive_filter_uuencode_write(struct tk_archive_write_filter *f, const void *buff,
     size_t length)
 {
 	struct private_uuencode *state = (struct private_uuencode *)f->data;
@@ -237,8 +237,8 @@ archive_filter_uuencode_write(struct archive_write_filter *f, const void *buff,
 		memcpy(state->hold, p, length);
 		state->hold_len = length;
 	}
-	while (archive_strlen(&state->encoded_buff) >= state->bs) {
-		ret = __archive_write_filter(f->next_filter,
+	while (tk_archive_strlen(&state->encoded_buff) >= state->bs) {
+		ret = __tk_archive_write_filter(f->next_filter,
 		    state->encoded_buff.s, state->bs);
 		memmove(state->encoded_buff.s,
 		    state->encoded_buff.s + state->bs,
@@ -254,7 +254,7 @@ archive_filter_uuencode_write(struct archive_write_filter *f, const void *buff,
  * Finish the compression...
  */
 static int
-archive_filter_uuencode_close(struct archive_write_filter *f)
+tk_archive_filter_uuencode_close(struct tk_archive_write_filter *f)
 {
 	struct private_uuencode *state = (struct private_uuencode *)f->data;
 	int ret, ret2;
@@ -262,24 +262,24 @@ archive_filter_uuencode_close(struct archive_write_filter *f)
 	/* Flush remaining bytes. */
 	if (state->hold_len != 0)
 		uu_encode(&state->encoded_buff, state->hold, state->hold_len);
-	archive_string_sprintf(&state->encoded_buff, "`\nend\n");
+	tk_archive_string_sprintf(&state->encoded_buff, "`\nend\n");
 	/* Write the last block */
-	archive_write_set_bytes_in_last_block(f->archive, 1);
-	ret = __archive_write_filter(f->next_filter,
-	    state->encoded_buff.s, archive_strlen(&state->encoded_buff));
-	ret2 = __archive_write_close_filter(f->next_filter);
+	tk_archive_write_set_bytes_in_last_block(f->archive, 1);
+	ret = __tk_archive_write_filter(f->next_filter,
+	    state->encoded_buff.s, tk_archive_strlen(&state->encoded_buff));
+	ret2 = __tk_archive_write_close_filter(f->next_filter);
 	if (ret > ret2)
 		ret = ret2;
 	return (ret);
 }
 
 static int
-archive_filter_uuencode_free(struct archive_write_filter *f)
+tk_archive_filter_uuencode_free(struct tk_archive_write_filter *f)
 {
 	struct private_uuencode *state = (struct private_uuencode *)f->data;
 
-	archive_string_free(&state->name);
-	archive_string_free(&state->encoded_buff);
+	tk_archive_string_free(&state->name);
+	tk_archive_string_free(&state->encoded_buff);
 	free(state);
 	return (ARCHIVE_OK);
 }

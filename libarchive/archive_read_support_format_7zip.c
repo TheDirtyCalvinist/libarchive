@@ -319,25 +319,25 @@ struct _7zip {
 	uint64_t		 bcj2_outPos;
 
 	/* Filename character-set conversion data. */
-	struct archive_string_conv *sconv;
+	struct tk_archive_string_conv *sconv;
 
 	char			 format_name[64];
 };
 
-static int	archive_read_format_7zip_bid(struct archive_read *, int);
-static int	archive_read_format_7zip_cleanup(struct archive_read *);
-static int	archive_read_format_7zip_read_data(struct archive_read *,
+static int	tk_archive_read_format_7zip_bid(struct tk_archive_read *, int);
+static int	tk_archive_read_format_7zip_cleanup(struct tk_archive_read *);
+static int	tk_archive_read_format_7zip_read_data(struct tk_archive_read *,
 		    const void **, size_t *, int64_t *);
-static int	archive_read_format_7zip_read_data_skip(struct archive_read *);
-static int	archive_read_format_7zip_read_header(struct archive_read *,
-		    struct archive_entry *);
+static int	tk_archive_read_format_7zip_read_data_skip(struct tk_archive_read *);
+static int	tk_archive_read_format_7zip_read_header(struct tk_archive_read *,
+		    struct tk_archive_entry *);
 static int	check_7zip_header_in_sfx(const char *);
 static unsigned long decode_codec_id(const unsigned char *, size_t);
-static int	decode_encoded_header_info(struct archive_read *,
+static int	decode_encoded_header_info(struct tk_archive_read *,
 		    struct _7z_stream_info *);
-static int	decompress(struct archive_read *, struct _7zip *,
+static int	decompress(struct tk_archive_read *, struct _7zip *,
 		    void *, size_t *, const void *, size_t *);
-static ssize_t	extract_pack_stream(struct archive_read *, size_t);
+static ssize_t	extract_pack_stream(struct tk_archive_read *, size_t);
 static void	fileTimeToUtc(uint64_t, time_t *, long *);
 static uint64_t folder_uncompressed_size(struct _7z_folder *);
 static void	free_CodersInfo(struct _7z_coders_info *);
@@ -347,37 +347,37 @@ static void	free_Header(struct _7z_header_info *);
 static void	free_PackInfo(struct _7z_pack_info *);
 static void	free_StreamsInfo(struct _7z_stream_info *);
 static void	free_SubStreamsInfo(struct _7z_substream_info *);
-static int	free_decompression(struct archive_read *, struct _7zip *);
-static ssize_t	get_uncompressed_data(struct archive_read *, const void **,
+static int	free_decompression(struct tk_archive_read *, struct _7zip *);
+static ssize_t	get_uncompressed_data(struct tk_archive_read *, const void **,
 		    size_t, size_t);
-static const unsigned char * header_bytes(struct archive_read *, size_t);
-static int	init_decompression(struct archive_read *, struct _7zip *,
+static const unsigned char * header_bytes(struct tk_archive_read *, size_t);
+static int	init_decompression(struct tk_archive_read *, struct _7zip *,
 		    const struct _7z_coder *, const struct _7z_coder *);
-static int	parse_7zip_uint64(struct archive_read *, uint64_t *);
-static int	read_Bools(struct archive_read *, unsigned char *, size_t);
-static int	read_CodersInfo(struct archive_read *,
+static int	parse_7zip_uint64(struct tk_archive_read *, uint64_t *);
+static int	read_Bools(struct tk_archive_read *, unsigned char *, size_t);
+static int	read_CodersInfo(struct tk_archive_read *,
 		    struct _7z_coders_info *);
-static int	read_Digests(struct archive_read *, struct _7z_digests *,
+static int	read_Digests(struct tk_archive_read *, struct _7z_digests *,
 		    size_t);
-static int	read_Folder(struct archive_read *, struct _7z_folder *);
-static int	read_Header(struct archive_read *, struct _7z_header_info *,
+static int	read_Folder(struct tk_archive_read *, struct _7z_folder *);
+static int	read_Header(struct tk_archive_read *, struct _7z_header_info *,
 		    int);
-static int	read_PackInfo(struct archive_read *, struct _7z_pack_info *);
-static int	read_StreamsInfo(struct archive_read *,
+static int	read_PackInfo(struct tk_archive_read *, struct _7z_pack_info *);
+static int	read_StreamsInfo(struct tk_archive_read *,
 		    struct _7z_stream_info *);
-static int	read_SubStreamsInfo(struct archive_read *,
+static int	read_SubStreamsInfo(struct tk_archive_read *,
 		    struct _7z_substream_info *, struct _7z_folder *, size_t);
-static int	read_Times(struct archive_read *, struct _7z_header_info *,
+static int	read_Times(struct tk_archive_read *, struct _7z_header_info *,
 		    int);
-static void	read_consume(struct archive_read *);
-static ssize_t	read_stream(struct archive_read *, const void **, size_t,
+static void	read_consume(struct tk_archive_read *);
+static ssize_t	read_stream(struct tk_archive_read *, const void **, size_t,
 		    size_t);
-static int	seek_pack(struct archive_read *);
-static int64_t	skip_stream(struct archive_read *, size_t);
-static int	skip_sfx(struct archive_read *, ssize_t);
-static int	slurp_central_directory(struct archive_read *, struct _7zip *,
+static int	seek_pack(struct tk_archive_read *);
+static int64_t	skip_stream(struct tk_archive_read *, size_t);
+static int	skip_sfx(struct tk_archive_read *, ssize_t);
+static int	slurp_central_directory(struct tk_archive_read *, struct _7zip *,
 		    struct _7z_header_info *);
-static int	setup_decode_folder(struct archive_read *, struct _7z_folder *,
+static int	setup_decode_folder(struct tk_archive_read *, struct _7z_folder *,
 		    int);
 static void	x86_Init(struct _7zip *);
 static size_t	x86_Convert(struct _7zip *, uint8_t *, size_t);
@@ -385,32 +385,32 @@ static ssize_t		Bcj2_Decode(struct _7zip *, uint8_t *, size_t);
 
 
 int
-archive_read_support_format_7zip(struct archive *_a)
+tk_archive_read_support_format_7zip(struct archive *_a)
 {
-	struct archive_read *a = (struct archive_read *)_a;
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
 	struct _7zip *zip;
 	int r;
 
-	archive_check_magic(_a, ARCHIVE_READ_MAGIC,
-	    ARCHIVE_STATE_NEW, "archive_read_support_format_7zip");
+	tk_archive_check_magic(_a, ARCHIVE_READ_MAGIC,
+	    ARCHIVE_STATE_NEW, "tk_archive_read_support_format_7zip");
 
 	zip = calloc(1, sizeof(*zip));
 	if (zip == NULL) {
-		archive_set_error(&a->archive, ENOMEM,
+		tk_archive_set_error(&a->archive, ENOMEM,
 		    "Can't allocate 7zip data");
 		return (ARCHIVE_FATAL);
 	}
 
-	r = __archive_read_register_format(a,
+	r = __tk_archive_read_register_format(a,
 	    zip,
 	    "7zip",
-	    archive_read_format_7zip_bid,
+	    tk_archive_read_format_7zip_bid,
 	    NULL,
-	    archive_read_format_7zip_read_header,
-	    archive_read_format_7zip_read_data,
-	    archive_read_format_7zip_read_data_skip,
+	    tk_archive_read_format_7zip_read_header,
+	    tk_archive_read_format_7zip_read_data,
+	    tk_archive_read_format_7zip_read_data_skip,
 	    NULL,
-	    archive_read_format_7zip_cleanup);
+	    tk_archive_read_format_7zip_cleanup);
 
 	if (r != ARCHIVE_OK)
 		free(zip);
@@ -418,7 +418,7 @@ archive_read_support_format_7zip(struct archive *_a)
 }
 
 static int
-archive_read_format_7zip_bid(struct archive_read *a, int best_bid)
+tk_archive_read_format_7zip_bid(struct tk_archive_read *a, int best_bid)
 {
 	const char *p;
 
@@ -427,7 +427,7 @@ archive_read_format_7zip_bid(struct archive_read *a, int best_bid)
 	if (best_bid > 32)
 		return (-1);
 
-	if ((p = __archive_read_ahead(a, 6, NULL)) == NULL)
+	if ((p = __tk_archive_read_ahead(a, 6, NULL)) == NULL)
 		return (0);
 
 	/* If first six bytes are the 7-Zip signature,
@@ -448,7 +448,7 @@ archive_read_format_7zip_bid(struct archive_read *a, int best_bid)
 		ssize_t window = 4096;
 		ssize_t bytes_avail;
 		while (offset + window <= (SFX_MAX_ADDR)) {
-			const char *buff = __archive_read_ahead(a,
+			const char *buff = __tk_archive_read_ahead(a,
 					offset + window, &bytes_avail);
 			if (buff == NULL) {
 				/* Remaining bytes are less than window. */
@@ -483,7 +483,7 @@ check_7zip_header_in_sfx(const char *p)
 		 * make a mis-detection.
 		 */
 		if (crc32(0, (const unsigned char *)p + 12, 20)
-			!= archive_le32dec(p + 8))
+			!= tk_archive_le32dec(p + 8))
 			return (6); 
 		/* Hit the header! */
 		return (0);
@@ -497,7 +497,7 @@ check_7zip_header_in_sfx(const char *p)
 }
 
 static int
-skip_sfx(struct archive_read *a, ssize_t bytes_avail)
+skip_sfx(struct tk_archive_read *a, ssize_t bytes_avail)
 {
 	const void *h;
 	const char *p, *q;
@@ -510,14 +510,14 @@ skip_sfx(struct archive_read *a, ssize_t bytes_avail)
 	 * alredy had enough data.
 	 */
 	if (bytes_avail > SFX_MIN_ADDR)
-		__archive_read_consume(a, SFX_MIN_ADDR);
-	else if (__archive_read_seek(a, SFX_MIN_ADDR, SEEK_SET) < 0)
+		__tk_archive_read_consume(a, SFX_MIN_ADDR);
+	else if (__tk_archive_read_seek(a, SFX_MIN_ADDR, SEEK_SET) < 0)
 		return (ARCHIVE_FATAL);
 
 	offset = 0;
 	window = 1;
 	while (offset + window <= SFX_MAX_ADDR - SFX_MIN_ADDR) {
-		h = __archive_read_ahead(a, window, &bytes);
+		h = __tk_archive_read_ahead(a, window, &bytes);
 		if (h == NULL) {
 			/* Remaining bytes are less than window. */
 			window >>= 1;
@@ -543,35 +543,35 @@ skip_sfx(struct archive_read *a, ssize_t bytes_avail)
 				struct _7zip *zip =
 				    (struct _7zip *)a->format->data;
 				skip = p - (const char *)h;
-				__archive_read_consume(a, skip);
+				__tk_archive_read_consume(a, skip);
 				zip->seek_base = SFX_MIN_ADDR + offset + skip;
 				return (ARCHIVE_OK);
 			}
 			p += step;
 		}
 		skip = p - (const char *)h;
-		__archive_read_consume(a, skip);
+		__tk_archive_read_consume(a, skip);
 		offset += skip;
 		if (window == 1)
 			window = 4096;
 	}
 fatal:
-	archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+	tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 	    "Couldn't find out 7-Zip header");
 	return (ARCHIVE_FATAL);
 }
 
 static int
-archive_read_format_7zip_read_header(struct archive_read *a,
-	struct archive_entry *entry)
+tk_archive_read_format_7zip_read_header(struct tk_archive_read *a,
+	struct tk_archive_entry *entry)
 {
 	struct _7zip *zip = (struct _7zip *)a->format->data;
 	struct _7zip_entry *zip_entry;
 	int r, ret = ARCHIVE_OK;
 
-	a->archive.archive_format = ARCHIVE_FORMAT_7ZIP;
-	if (a->archive.archive_format_name == NULL)
-		a->archive.archive_format_name = "7-Zip";
+	a->archive.tk_archive_format = ARCHIVE_FORMAT_7ZIP;
+	if (a->archive.tk_archive_format_name == NULL)
+		a->archive.tk_archive_format_name = "7-Zip";
 
 	if (zip->entries == NULL) {
 		struct _7z_header_info header;
@@ -598,46 +598,46 @@ archive_read_format_7zip_read_header(struct archive_read *a,
 
 	/* Setup a string conversion for a filename. */
 	if (zip->sconv == NULL) {
-		zip->sconv = archive_string_conversion_from_charset(
+		zip->sconv = tk_archive_string_conversion_from_charset(
 		    &a->archive, "UTF-16LE", 1);
 		if (zip->sconv == NULL)
 			return (ARCHIVE_FATAL);
 	}
 
-	if (archive_entry_copy_pathname_l(entry,
+	if (tk_archive_entry_copy_pathname_l(entry,
 	    (const char *)zip_entry->utf16name,
 	    zip_entry->name_len, zip->sconv) != 0) {
 		if (errno == ENOMEM) {
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate memory for Pathname");
 			return (ARCHIVE_FATAL);
 		}
-		archive_set_error(&a->archive,
+		tk_archive_set_error(&a->archive,
 		    ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Pathname cannot be converted "
 		    "from %s to current locale.",
-		    archive_string_conversion_charset_name(zip->sconv));
+		    tk_archive_string_conversion_charset_name(zip->sconv));
 		ret = ARCHIVE_WARN;
 	}
 
 	/* Populate some additional entry fields: */
-	archive_entry_set_mode(entry, zip_entry->mode);
+	tk_archive_entry_set_mode(entry, zip_entry->mode);
 	if (zip_entry->flg & MTIME_IS_SET)
-		archive_entry_set_mtime(entry, zip_entry->mtime,
+		tk_archive_entry_set_mtime(entry, zip_entry->mtime,
 			zip_entry->mtime_ns);
 	if (zip_entry->flg & CTIME_IS_SET)
-		archive_entry_set_ctime(entry, zip_entry->ctime,
+		tk_archive_entry_set_ctime(entry, zip_entry->ctime,
 		    zip_entry->ctime_ns);
 	if (zip_entry->flg & ATIME_IS_SET)
-		archive_entry_set_atime(entry, zip_entry->atime,
+		tk_archive_entry_set_atime(entry, zip_entry->atime,
 		    zip_entry->atime_ns);
 	if (zip_entry->ssIndex != (uint32_t)-1) {
 		zip->entry_bytes_remaining =
 		    zip->si.ss.unpackSizes[zip_entry->ssIndex];
-		archive_entry_set_size(entry, zip->entry_bytes_remaining);
+		tk_archive_entry_set_size(entry, zip->entry_bytes_remaining);
 	} else {
 		zip->entry_bytes_remaining = 0;
-		archive_entry_set_size(entry, 0);
+		tk_archive_entry_set_size(entry, 0);
 	}
 
 	/* If there's no body, force read_data() to return EOF immediately. */
@@ -658,7 +658,7 @@ archive_read_format_7zip_read_header(struct archive_read *a,
 			size_t size;
 			int64_t offset;
 
-			r = archive_read_format_7zip_read_data(a, &buff,
+			r = tk_archive_read_format_7zip_read_data(a, &buff,
 				&size, &offset);
 			if (r < ARCHIVE_WARN) {
 				free(symname);
@@ -667,7 +667,7 @@ archive_read_format_7zip_read_header(struct archive_read *a,
 			mem = realloc(symname, symsize + size + 1);
 			if (mem == NULL) {
 				free(symname);
-				archive_set_error(&a->archive, ENOMEM,
+				tk_archive_set_error(&a->archive, ENOMEM,
 				    "Can't allocate memory for Symname");
 				return (ARCHIVE_FATAL);
 			}
@@ -680,25 +680,25 @@ archive_read_format_7zip_read_header(struct archive_read *a,
 			 * file. */
 			zip_entry->mode &= ~AE_IFMT;
 			zip_entry->mode |= AE_IFREG;
-			archive_entry_set_mode(entry, zip_entry->mode);
+			tk_archive_entry_set_mode(entry, zip_entry->mode);
 		} else {
 			symname[symsize] = '\0';
-			archive_entry_copy_symlink(entry,
+			tk_archive_entry_copy_symlink(entry,
 			    (const char *)symname);
 		}
 		free(symname);
-		archive_entry_set_size(entry, 0);
+		tk_archive_entry_set_size(entry, 0);
 	}
 
 	/* Set up a more descriptive format name. */
 	sprintf(zip->format_name, "7-Zip");
-	a->archive.archive_format_name = zip->format_name;
+	a->archive.tk_archive_format_name = zip->format_name;
 
 	return (ret);
 }
 
 static int
-archive_read_format_7zip_read_data(struct archive_read *a,
+tk_archive_read_format_7zip_read_data(struct tk_archive_read *a,
     const void **buff, size_t *size, int64_t *offset)
 {
 	struct _7zip *zip;
@@ -725,7 +725,7 @@ archive_read_format_7zip_read_data(struct archive_read *a,
 	if (bytes < 0)
 		return ((int)bytes);
 	if (bytes == 0) {
-		archive_set_error(&a->archive,
+		tk_archive_set_error(&a->archive,
 		    ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Truncated 7-Zip file body");
 		return (ARCHIVE_FATAL);
@@ -745,7 +745,7 @@ archive_read_format_7zip_read_data(struct archive_read *a,
 		if ((zip->entry->flg & CRC32_IS_SET) &&
 			zip->si.ss.digests[zip->entry->ssIndex] !=
 		    zip->entry_crc32) {
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "7-Zip bad CRC: 0x%lx should be 0x%lx",
 			    (unsigned long)zip->entry_crc32,
 			    (unsigned long)zip->si.ss.digests[
@@ -762,7 +762,7 @@ archive_read_format_7zip_read_data(struct archive_read *a,
 }
 
 static int
-archive_read_format_7zip_read_data_skip(struct archive_read *a)
+tk_archive_read_format_7zip_read_data_skip(struct tk_archive_read *a)
 {
 	struct _7zip *zip;
 	int64_t bytes_skipped;
@@ -791,7 +791,7 @@ archive_read_format_7zip_read_data_skip(struct archive_read *a)
 }
 
 static int
-archive_read_format_7zip_cleanup(struct archive_read *a)
+tk_archive_read_format_7zip_cleanup(struct tk_archive_read *a)
 {
 	struct _7zip *zip;
 
@@ -811,12 +811,12 @@ archive_read_format_7zip_cleanup(struct archive_read *a)
 }
 
 static void
-read_consume(struct archive_read *a)
+read_consume(struct tk_archive_read *a)
 {
 	struct _7zip *zip = (struct _7zip *)a->format->data;
 
 	if (zip->pack_stream_bytes_unconsumed) {
-		__archive_read_consume(a, zip->pack_stream_bytes_unconsumed);
+		__tk_archive_read_consume(a, zip->pack_stream_bytes_unconsumed);
 		zip->stream_offset += zip->pack_stream_bytes_unconsumed;
 		zip->pack_stream_bytes_unconsumed = 0;
 	}
@@ -828,7 +828,7 @@ read_consume(struct archive_read *a)
  * Set an error code and choose an error message for liblzma.
  */
 static void
-set_error(struct archive_read *a, int ret)
+set_error(struct tk_archive_read *a, int ret)
 {
 
 	switch (ret) {
@@ -836,36 +836,36 @@ set_error(struct archive_read *a, int ret)
 	case LZMA_OK: /* Decompressor made some progress. */
 		break;
 	case LZMA_MEM_ERROR:
-		archive_set_error(&a->archive, ENOMEM,
+		tk_archive_set_error(&a->archive, ENOMEM,
 		    "Lzma library error: Cannot allocate memory");
 		break;
 	case LZMA_MEMLIMIT_ERROR:
-		archive_set_error(&a->archive, ENOMEM,
+		tk_archive_set_error(&a->archive, ENOMEM,
 		    "Lzma library error: Out of memory");
 		break;
 	case LZMA_FORMAT_ERROR:
-		archive_set_error(&a->archive,
+		tk_archive_set_error(&a->archive,
 		    ARCHIVE_ERRNO_MISC,
 		    "Lzma library error: format not recognized");
 		break;
 	case LZMA_OPTIONS_ERROR:
-		archive_set_error(&a->archive,
+		tk_archive_set_error(&a->archive,
 		    ARCHIVE_ERRNO_MISC,
 		    "Lzma library error: Invalid options");
 		break;
 	case LZMA_DATA_ERROR:
-		archive_set_error(&a->archive,
+		tk_archive_set_error(&a->archive,
 		    ARCHIVE_ERRNO_MISC,
 		    "Lzma library error: Corrupted input data");
 		break;
 	case LZMA_BUF_ERROR:
-		archive_set_error(&a->archive,
+		tk_archive_set_error(&a->archive,
 		    ARCHIVE_ERRNO_MISC,
 		    "Lzma library error:  No progress is possible");
 		break;
 	default:
 		/* Return an error. */
-		archive_set_error(&a->archive,
+		tk_archive_set_error(&a->archive,
 		    ARCHIVE_ERRNO_MISC,
 		    "Lzma decompression failed:  Unknown error");
 		break;
@@ -902,12 +902,12 @@ ppmd_free(void *p, void *address)
 static Byte
 ppmd_read(void *p)
 {
-	struct archive_read *a = ((IByteIn*)p)->a;
+	struct tk_archive_read *a = ((IByteIn*)p)->a;
 	struct _7zip *zip = (struct _7zip *)(a->format->data);
 	Byte b;
 
 	if (zip->ppstream.avail_in == 0) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Truncated RAR file data");
 		zip->ppstream.overconsumed = 1;
 		return (0);
@@ -921,7 +921,7 @@ ppmd_read(void *p)
 static ISzAlloc g_szalloc = { ppmd_alloc, ppmd_free };
 
 static int
-init_decompression(struct archive_read *a, struct _7zip *zip,
+init_decompression(struct tk_archive_read *a, struct _7zip *zip,
     const struct _7z_coder *coder1, const struct _7z_coder *coder2)
 {
 	int r;
@@ -937,7 +937,7 @@ init_decompression(struct archive_read *a, struct _7zip *zip,
 		if (coder2 != NULL) {
 			if (coder2->codec != _7Z_X86 &&
 			    coder2->codec != _7Z_X86_BCJ2) {
-				archive_set_error(&a->archive,
+				tk_archive_set_error(&a->archive,
 				    ARCHIVE_ERRNO_MISC,
 				    "Unsupported filter %lx for %lx",
 				    coder2->codec, coder1->codec);
@@ -1044,7 +1044,7 @@ init_decompression(struct archive_read *a, struct _7zip *zip,
 				fi++;
 				break;
 			default:
-				archive_set_error(&a->archive,
+				tk_archive_set_error(&a->archive,
 				    ARCHIVE_ERRNO_MISC,
 				    "Unexpected codec ID: %lX", zip->codec2);
 				return (ARCHIVE_FAILED);
@@ -1083,7 +1083,7 @@ init_decompression(struct archive_read *a, struct _7zip *zip,
 		break;
 	}
 #else
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 		    "LZMA codec is unsupported");
 		return (ARCHIVE_FAILED);
 #endif
@@ -1111,7 +1111,7 @@ init_decompression(struct archive_read *a, struct _7zip *zip,
 				detail = "mis-compiled library";
 				break;
 			}
-			archive_set_error(&a->archive, err,
+			tk_archive_set_error(&a->archive, err,
 			    "Internal error initializing decompressor: %s",
 			    detail == NULL ? "??" : detail);
 			zip->bzstream_valid = 0;
@@ -1124,7 +1124,7 @@ init_decompression(struct archive_read *a, struct _7zip *zip,
 		zip->bzstream.total_out_hi32 = 0;
 		break;
 #else
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 		    "BZ2 codec is unsupported");
 		return (ARCHIVE_FAILED);
 #endif
@@ -1136,7 +1136,7 @@ init_decompression(struct archive_read *a, struct _7zip *zip,
 			r = inflateInit2(&(zip->stream),
 			    -15 /* Don't check for zlib header */);
 		if (r != Z_OK) {
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "Couldn't initialize zlib stream.");
 			return (ARCHIVE_FAILED);
 		}
@@ -1145,7 +1145,7 @@ init_decompression(struct archive_read *a, struct _7zip *zip,
 		zip->stream.total_out = 0;
 		break;
 #else
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 		    "DEFLATE codec is unsupported");
 		return (ARCHIVE_FAILED);
 #endif
@@ -1155,35 +1155,35 @@ init_decompression(struct archive_read *a, struct _7zip *zip,
 		uint32_t msize;
 
 		if (zip->ppmd7_valid) {
-			__archive_ppmd7_functions.Ppmd7_Free(
+			__tk_archive_ppmd7_functions.Ppmd7_Free(
 			    &zip->ppmd7_context, &g_szalloc);
 			zip->ppmd7_valid = 0;
 		}
 
 		if (coder1->propertiesSize < 5) {
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "Malformed PPMd parameter");
 			return (ARCHIVE_FAILED);
 		}
 		order = coder1->properties[0];
-		msize = archive_le32dec(&(coder1->properties[1]));
+		msize = tk_archive_le32dec(&(coder1->properties[1]));
 		if (order < PPMD7_MIN_ORDER || order > PPMD7_MAX_ORDER ||
 		    msize < PPMD7_MIN_MEM_SIZE || msize > PPMD7_MAX_MEM_SIZE) {
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "Malformed PPMd parameter");
 			return (ARCHIVE_FAILED);
 		}
-		__archive_ppmd7_functions.Ppmd7_Construct(&zip->ppmd7_context);
-		r = __archive_ppmd7_functions.Ppmd7_Alloc(
+		__tk_archive_ppmd7_functions.Ppmd7_Construct(&zip->ppmd7_context);
+		r = __tk_archive_ppmd7_functions.Ppmd7_Alloc(
 			&zip->ppmd7_context, msize, &g_szalloc);
 		if (r == 0) {
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "Coludn't allocate memory for PPMd");
 			return (ARCHIVE_FATAL);
 		}
-		__archive_ppmd7_functions.Ppmd7_Init(
+		__tk_archive_ppmd7_functions.Ppmd7_Init(
 			&zip->ppmd7_context, order);
-		__archive_ppmd7_functions.Ppmd7z_RangeDec_CreateVTable(
+		__tk_archive_ppmd7_functions.Ppmd7z_RangeDec_CreateVTable(
 			&zip->range_dec);
 		zip->ppmd7_valid = 1;
 		zip->ppmd7_stat = 0;
@@ -1200,11 +1200,11 @@ init_decompression(struct archive_read *a, struct _7zip *zip,
 	case _7Z_ARMTHUMB:
 	case _7Z_SPARC:
 	case _7Z_DELTA:
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 		    "Unexpected codec ID: %lX", zip->codec);
 		return (ARCHIVE_FAILED);
 	default:
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 		    "Unknown codec ID: %lX", zip->codec);
 		return (ARCHIVE_FAILED);
 	}
@@ -1213,7 +1213,7 @@ init_decompression(struct archive_read *a, struct _7zip *zip,
 }
 
 static int
-decompress(struct archive_read *a, struct _7zip *zip,
+decompress(struct tk_archive_read *a, struct _7zip *zip,
     void *buff, size_t *outbytes, const void *b, size_t *used)
 {
 	const uint8_t *t_next_in;
@@ -1264,7 +1264,7 @@ decompress(struct archive_read *a, struct _7zip *zip,
 			size_t remaining = zip->tmp_stream_bytes_remaining;
 			bytes = Bcj2_Decode(zip, t_next_out, t_avail_out);
 			if (bytes < 0) {
-				archive_set_error(&(a->archive),
+				tk_archive_set_error(&(a->archive),
 				    ARCHIVE_ERRNO_MISC,
 				    "BCJ2 conversion Failed");
 				return (ARCHIVE_FAILED);
@@ -1318,7 +1318,7 @@ decompress(struct archive_read *a, struct _7zip *zip,
 		case LZMA_OK: /* Decompressor made some progress. */
 			break;
 		default:
-			archive_set_error(&(a->archive),
+			tk_archive_set_error(&(a->archive),
 			    ARCHIVE_ERRNO_MISC,
 				"Decompression failed(%d)",
 			    r);
@@ -1341,7 +1341,7 @@ decompress(struct archive_read *a, struct _7zip *zip,
 			case BZ_OK:
 				break;
 			default:
-				archive_set_error(&(a->archive),
+				tk_archive_set_error(&(a->archive),
 				    ARCHIVE_ERRNO_MISC,
 				    "Failed to clean up decompressor");
 				return (ARCHIVE_FAILED);
@@ -1352,7 +1352,7 @@ decompress(struct archive_read *a, struct _7zip *zip,
 		case BZ_OK: /* Decompressor made some progress. */
 			break;
 		default:
-			archive_set_error(&(a->archive),
+			tk_archive_set_error(&(a->archive),
 			    ARCHIVE_ERRNO_MISC,
 			    "bzip decompression failed");
 			return (ARCHIVE_FAILED);
@@ -1375,7 +1375,7 @@ decompress(struct archive_read *a, struct _7zip *zip,
 		case Z_OK: /* Decompressor made some progress.*/
 			break;
 		default:
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "File decompression failed (%d)", r);
 			return (ARCHIVE_FAILED);
 		}
@@ -1389,7 +1389,7 @@ decompress(struct archive_read *a, struct _7zip *zip,
 
 		if (!zip->ppmd7_valid || zip->ppmd7_stat < 0 ||
 		    t_avail_out <= 0) {
-			archive_set_error(&(a->archive),
+			tk_archive_set_error(&(a->archive),
 			    ARCHIVE_ERRNO_MISC,
 			    "Decompression internal error");
 			return (ARCHIVE_FAILED);
@@ -1402,11 +1402,11 @@ decompress(struct archive_read *a, struct _7zip *zip,
 			zip->bytein.a = a;
 			zip->bytein.Read = &ppmd_read;
 			zip->range_dec.Stream = &zip->bytein;
-			r = __archive_ppmd7_functions.Ppmd7z_RangeDec_Init(
+			r = __tk_archive_ppmd7_functions.Ppmd7z_RangeDec_Init(
 				&(zip->range_dec));
 			if (r == 0) {
 				zip->ppmd7_stat = -1;
-				archive_set_error(&a->archive,
+				tk_archive_set_error(&a->archive,
 				    ARCHIVE_ERRNO_MISC,
 				    "Failed to initialize PPMd range decorder");
 				return (ARCHIVE_FAILED);
@@ -1427,11 +1427,11 @@ decompress(struct archive_read *a, struct _7zip *zip,
 		do {
 			int sym;
 			
-			sym = __archive_ppmd7_functions.Ppmd7_DecodeSymbol(
+			sym = __tk_archive_ppmd7_functions.Ppmd7_DecodeSymbol(
 				&(zip->ppmd7_context), &(zip->range_dec.p));
 			if (sym < 0) {
 				zip->ppmd7_stat = -1;
-				archive_set_error(&a->archive,
+				tk_archive_set_error(&a->archive,
 				    ARCHIVE_ERRNO_FILE_FORMAT,
 				    "Failed to decode PPMd");
 				return (ARCHIVE_FAILED);
@@ -1453,7 +1453,7 @@ decompress(struct archive_read *a, struct _7zip *zip,
 		break;
 	}
 	default:
-		archive_set_error(&(a->archive), ARCHIVE_ERRNO_MISC,
+		tk_archive_set_error(&(a->archive), ARCHIVE_ERRNO_MISC,
 		    "Decompression internal error");
 		return (ARCHIVE_FAILED);
 	}
@@ -1493,7 +1493,7 @@ decompress(struct archive_read *a, struct _7zip *zip,
 		zip->tmp_stream_bytes_remaining = zip->tmp_stream_bytes_avail;
 		bytes = Bcj2_Decode(zip, bcj2_next_out, bcj2_avail_out);
 		if (bytes < 0) {
-			archive_set_error(&(a->archive),
+			tk_archive_set_error(&(a->archive),
 			    ARCHIVE_ERRNO_MISC, "BCJ2 conversion Failed");
 			return (ARCHIVE_FAILED);
 		}
@@ -1508,7 +1508,7 @@ decompress(struct archive_read *a, struct _7zip *zip,
 }
 
 static int
-free_decompression(struct archive_read *a, struct _7zip *zip)
+free_decompression(struct tk_archive_read *a, struct _7zip *zip)
 {
 	int r = ARCHIVE_OK;
 
@@ -1523,7 +1523,7 @@ free_decompression(struct archive_read *a, struct _7zip *zip)
 #if defined(HAVE_BZLIB_H) && defined(BZ_CONFIG_ERROR)
 	if (zip->bzstream_valid) {
 		if (BZ2_bzDecompressEnd(&(zip->bzstream)) != BZ_OK) {
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_MISC,
 			    "Failed to clean up bzip2 decompressor");
 			r = ARCHIVE_FATAL;
@@ -1534,7 +1534,7 @@ free_decompression(struct archive_read *a, struct _7zip *zip)
 #ifdef HAVE_ZLIB_H
 	if (zip->stream_valid) {
 		if (inflateEnd(&(zip->stream)) != Z_OK) {
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_MISC,
 			    "Failed to clean up zlib decompressor");
 			r = ARCHIVE_FATAL;
@@ -1543,7 +1543,7 @@ free_decompression(struct archive_read *a, struct _7zip *zip)
 	}
 #endif
 	if (zip->ppmd7_valid) {
-		__archive_ppmd7_functions.Ppmd7_Free(
+		__tk_archive_ppmd7_functions.Ppmd7_Free(
 			&zip->ppmd7_context, &g_szalloc);
 		zip->ppmd7_valid = 0;
 	}
@@ -1551,7 +1551,7 @@ free_decompression(struct archive_read *a, struct _7zip *zip)
 }
 
 static int
-parse_7zip_uint64(struct archive_read *a, uint64_t *val)
+parse_7zip_uint64(struct tk_archive_read *a, uint64_t *val)
 {
 	const unsigned char *p;
 	unsigned char avail, mask;
@@ -1577,7 +1577,7 @@ parse_7zip_uint64(struct archive_read *a, uint64_t *val)
 }
 
 static int
-read_Bools(struct archive_read *a, unsigned char *data, size_t num)
+read_Bools(struct tk_archive_read *a, unsigned char *data, size_t num)
 {
 	const unsigned char *p;
 	unsigned i, mask = 0, avail = 0;
@@ -1603,7 +1603,7 @@ free_Digest(struct _7z_digests *d)
 }
 
 static int
-read_Digests(struct archive_read *a, struct _7z_digests *d, size_t num)
+read_Digests(struct tk_archive_read *a, struct _7z_digests *d, size_t num)
 {
 	const unsigned char *p;
 	unsigned i;
@@ -1634,7 +1634,7 @@ read_Digests(struct archive_read *a, struct _7z_digests *d, size_t num)
 		if (d->defineds[i]) {
 			if ((p = header_bytes(a, 4)) == NULL)
 				return (-1);
-			d->digests[i] = archive_le32dec(p);
+			d->digests[i] = tk_archive_le32dec(p);
 		}
 	}
 
@@ -1650,7 +1650,7 @@ free_PackInfo(struct _7z_pack_info *pi)
 }
 
 static int
-read_PackInfo(struct archive_read *a, struct _7z_pack_info *pi)
+read_PackInfo(struct tk_archive_read *a, struct _7z_pack_info *pi)
 {
 	const unsigned char *p;
 	unsigned i;
@@ -1742,7 +1742,7 @@ free_Folder(struct _7z_folder *f)
 }
 
 static int
-read_Folder(struct archive_read *a, struct _7z_folder *f)
+read_Folder(struct tk_archive_read *a, struct _7z_folder *f)
 {
 	struct _7zip *zip = (struct _7zip *)a->format->data;
 	const unsigned char *p;
@@ -1897,7 +1897,7 @@ free_CodersInfo(struct _7z_coders_info *ci)
 }
 
 static int
-read_CodersInfo(struct archive_read *a, struct _7z_coders_info *ci)
+read_CodersInfo(struct tk_archive_read *a, struct _7z_coders_info *ci)
 {
 	const unsigned char *p;
 	struct _7z_digests digest;
@@ -2019,7 +2019,7 @@ free_SubStreamsInfo(struct _7z_substream_info *ss)
 }
 
 static int
-read_SubStreamsInfo(struct archive_read *a, struct _7z_substream_info *ss,
+read_SubStreamsInfo(struct tk_archive_read *a, struct _7z_substream_info *ss,
     struct _7z_folder *f, size_t numFolders)
 {
 	const unsigned char *p;
@@ -2152,7 +2152,7 @@ free_StreamsInfo(struct _7z_stream_info *si)
 }
 
 static int
-read_StreamsInfo(struct archive_read *a, struct _7z_stream_info *si)
+read_StreamsInfo(struct tk_archive_read *a, struct _7z_stream_info *si)
 {
 	struct _7zip *zip = (struct _7zip *)a->format->data;
 	const unsigned char *p;
@@ -2231,7 +2231,7 @@ free_Header(struct _7z_header_info *h)
 }
 
 static int
-read_Header(struct archive_read *a, struct _7z_header_info *h,
+read_Header(struct tk_archive_read *a, struct _7z_header_info *h,
     int check_header_id)
 {
 	struct _7zip *zip = (struct _7zip *)a->format->data;
@@ -2447,7 +2447,7 @@ read_Header(struct archive_read *a, struct _7z_header_info *h,
 				if (h->attrBools[i]) {
 					if ((p = header_bytes(a, 4)) == NULL)
 						return (-1);
-					entries[i].attr = archive_le32dec(p);
+					entries[i].attr = tk_archive_le32dec(p);
 				}
 			}
 			break;
@@ -2561,7 +2561,7 @@ fileTimeToUtc(uint64_t fileTime, time_t *timep, long *ns)
 }
 
 static int
-read_Times(struct archive_read *a, struct _7z_header_info *h, int type)
+read_Times(struct tk_archive_read *a, struct _7z_header_info *h, int type)
 {
 	struct _7zip *zip = (struct _7zip *)a->format->data;
 	const unsigned char *p;
@@ -2602,19 +2602,19 @@ read_Times(struct archive_read *a, struct _7z_header_info *h, int type)
 			goto failed;
 		switch (type) {
 		case kCTime:
-			fileTimeToUtc(archive_le64dec(p),
+			fileTimeToUtc(tk_archive_le64dec(p),
 			    &(entries[i].ctime),
 			    &(entries[i].ctime_ns));
 			entries[i].flg |= CTIME_IS_SET;
 			break;
 		case kATime:
-			fileTimeToUtc(archive_le64dec(p),
+			fileTimeToUtc(tk_archive_le64dec(p),
 			    &(entries[i].atime),
 			    &(entries[i].atime_ns));
 			entries[i].flg |= ATIME_IS_SET;
 			break;
 		case kMTime:
-			fileTimeToUtc(archive_le64dec(p),
+			fileTimeToUtc(tk_archive_le64dec(p),
 			    &(entries[i].mtime),
 			    &(entries[i].mtime_ns));
 			entries[i].flg |= MTIME_IS_SET;
@@ -2630,30 +2630,30 @@ failed:
 }
 
 static int
-decode_encoded_header_info(struct archive_read *a, struct _7z_stream_info *si)
+decode_encoded_header_info(struct tk_archive_read *a, struct _7z_stream_info *si)
 {
 	struct _7zip *zip = (struct _7zip *)a->format->data;
 
 	errno = 0;
 	if (read_StreamsInfo(a, si) < 0) {
 		if (errno == ENOMEM)
-			archive_set_error(&a->archive, -1,
+			tk_archive_set_error(&a->archive, -1,
 			    "Couldn't allocate memory");
 		else
-			archive_set_error(&a->archive, -1,
+			tk_archive_set_error(&a->archive, -1,
 			    "Malformed 7-Zip archive");
 		return (ARCHIVE_FATAL);
 	}
 
 	if (si->pi.numPackStreams == 0 || si->ci.numFolders == 0) {
-		archive_set_error(&a->archive, -1, "Malformed 7-Zip archive");
+		tk_archive_set_error(&a->archive, -1, "Malformed 7-Zip archive");
 		return (ARCHIVE_FATAL);
 	}
 
 	if (zip->header_offset < si->pi.pos + si->pi.sizes[0] ||
 	    (int64_t)(si->pi.pos + si->pi.sizes[0]) < 0 ||
 	    si->pi.sizes[0] == 0 || (int64_t)si->pi.pos < 0) {
-		archive_set_error(&a->archive, -1, "Malformed Header offset");
+		tk_archive_set_error(&a->archive, -1, "Malformed Header offset");
 		return (ARCHIVE_FATAL);
 	}
 
@@ -2661,7 +2661,7 @@ decode_encoded_header_info(struct archive_read *a, struct _7z_stream_info *si)
 }
 
 static const unsigned char *
-header_bytes(struct archive_read *a, size_t rbytes)
+header_bytes(struct tk_archive_read *a, size_t rbytes)
 {
 	struct _7zip *zip = (struct _7zip *)a->format->data;
 	const unsigned char *p;
@@ -2672,7 +2672,7 @@ header_bytes(struct archive_read *a, size_t rbytes)
 		read_consume(a);
 
 	if (zip->header_is_encoded == 0) {
-		p = __archive_read_ahead(a, rbytes, NULL);
+		p = __tk_archive_read_ahead(a, rbytes, NULL);
 		if (p == NULL)
 			return (NULL);
 		zip->header_bytes_remaining -= rbytes;
@@ -2694,7 +2694,7 @@ header_bytes(struct archive_read *a, size_t rbytes)
 }
 
 static int
-slurp_central_directory(struct archive_read *a, struct _7zip *zip,
+slurp_central_directory(struct tk_archive_read *a, struct _7zip *zip,
     struct _7z_header_info *header)
 {
 	const unsigned char *p;
@@ -2704,7 +2704,7 @@ slurp_central_directory(struct archive_read *a, struct _7zip *zip,
 	ssize_t bytes_avail;
 	int check_header_crc, r;
 
-	if ((p = __archive_read_ahead(a, 32, &bytes_avail)) == NULL)
+	if ((p = __tk_archive_read_ahead(a, 32, &bytes_avail)) == NULL)
 		return (ARCHIVE_FATAL);
 
 	if ((p[0] == 'M' && p[1] == 'Z') || memcmp(p, "\x7F\x45LF", 4) == 0) {
@@ -2712,40 +2712,40 @@ slurp_central_directory(struct archive_read *a, struct _7zip *zip,
 		r = skip_sfx(a, bytes_avail);
 		if (r < ARCHIVE_WARN)
 			return (r);
-		if ((p = __archive_read_ahead(a, 32, &bytes_avail)) == NULL)
+		if ((p = __tk_archive_read_ahead(a, 32, &bytes_avail)) == NULL)
 			return (ARCHIVE_FATAL);
 	}
 	zip->seek_base += 32;
 
 	if (memcmp(p, _7ZIP_SIGNATURE, 6) != 0) {
-		archive_set_error(&a->archive, -1, "Not 7-Zip archive file");
+		tk_archive_set_error(&a->archive, -1, "Not 7-Zip archive file");
 		return (ARCHIVE_FATAL);
 	}
 
 	/* CRC check. */
 	if (crc32(0, (const unsigned char *)p + 12, 20)
-	    != archive_le32dec(p + 8)) {
-		archive_set_error(&a->archive, -1, "Header CRC error");
+	    != tk_archive_le32dec(p + 8)) {
+		tk_archive_set_error(&a->archive, -1, "Header CRC error");
 		return (ARCHIVE_FATAL);
 	}
 
-	next_header_offset = archive_le64dec(p + 12);
-	next_header_size = archive_le64dec(p + 20);
-	next_header_crc = archive_le32dec(p + 28);
+	next_header_offset = tk_archive_le64dec(p + 12);
+	next_header_size = tk_archive_le64dec(p + 20);
+	next_header_crc = tk_archive_le32dec(p + 28);
 
 	if (next_header_size == 0)
 		/* There is no entry in an archive file. */
 		return (ARCHIVE_EOF);
 
 	if (((int64_t)next_header_offset) < 0) {
-		archive_set_error(&a->archive, -1, "Malformed 7-Zip archive");
+		tk_archive_set_error(&a->archive, -1, "Malformed 7-Zip archive");
 		return (ARCHIVE_FATAL);
 	}
-	__archive_read_consume(a, 32);
+	__tk_archive_read_consume(a, 32);
 	if (next_header_offset != 0) {
 		if (bytes_avail >= (ssize_t)next_header_offset)
-			__archive_read_consume(a, next_header_offset);
-		else if (__archive_read_seek(a,
+			__tk_archive_read_consume(a, next_header_offset);
+		else if (__tk_archive_read_seek(a,
 		    next_header_offset + zip->seek_base, SEEK_SET) < 0)
 			return (ARCHIVE_FATAL);
 	}
@@ -2758,7 +2758,7 @@ slurp_central_directory(struct archive_read *a, struct _7zip *zip,
 	check_header_crc = 1;
 
 	if ((p = header_bytes(a, 1)) == NULL) {
-		archive_set_error(&a->archive,
+		tk_archive_set_error(&a->archive,
 		    ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Truncated 7-Zip file body");
 		return (ARCHIVE_FATAL);
@@ -2774,7 +2774,7 @@ slurp_central_directory(struct archive_read *a, struct _7zip *zip,
 
 		/* Check the EncodedHeader CRC.*/
 		if (r == 0 && zip->header_crc32 != next_header_crc) {
-			archive_set_error(&a->archive, -1,
+			tk_archive_set_error(&a->archive, -1,
 			    "Damaged 7-Zip archive");
 			r = -1;
 		}
@@ -2808,10 +2808,10 @@ slurp_central_directory(struct archive_read *a, struct _7zip *zip,
 		r = read_Header(a, header, zip->header_is_encoded);
 		if (r < 0) {
 			if (errno == ENOMEM)
-				archive_set_error(&a->archive, -1,
+				tk_archive_set_error(&a->archive, -1,
 				    "Couldn't allocate memory");
 			else
-				archive_set_error(&a->archive, -1,
+				tk_archive_set_error(&a->archive, -1,
 				    "Damaged 7-Zip archive");
 			return (ARCHIVE_FATAL);
 		}
@@ -2820,20 +2820,20 @@ slurp_central_directory(struct archive_read *a, struct _7zip *zip,
 		 *  Must be kEnd.
 		 */
 		if ((p = header_bytes(a, 1)) == NULL ||*p != kEnd) {
-			archive_set_error(&a->archive, -1,
+			tk_archive_set_error(&a->archive, -1,
 			    "Malformed 7-Zip archive");
 			return (ARCHIVE_FATAL);
 		}
 
 		/* Check the Header CRC.*/
 		if (check_header_crc && zip->header_crc32 != next_header_crc) {
-			archive_set_error(&a->archive, -1,
+			tk_archive_set_error(&a->archive, -1,
 			    "Malformed 7-Zip archive");
 			return (ARCHIVE_FATAL);
 		}
 		break;
 	default:
-		archive_set_error(&a->archive, -1,
+		tk_archive_set_error(&a->archive, -1,
 		    "Unexpected Property ID = %X", p[0]);
 		return (ARCHIVE_FATAL);
 	}
@@ -2850,7 +2850,7 @@ slurp_central_directory(struct archive_read *a, struct _7zip *zip,
 }
 
 static ssize_t
-get_uncompressed_data(struct archive_read *a, const void **buff, size_t size,
+get_uncompressed_data(struct tk_archive_read *a, const void **buff, size_t size,
     size_t minimum)
 {
 	struct _7zip *zip = (struct _7zip *)a->format->data;
@@ -2865,9 +2865,9 @@ get_uncompressed_data(struct archive_read *a, const void **buff, size_t size,
 		 * available bytes; asking for more than that forces the
 		 * decompressor to combine reads by copying data.
 		 */
-		*buff = __archive_read_ahead(a, 1, &bytes_avail);
+		*buff = __tk_archive_read_ahead(a, 1, &bytes_avail);
 		if (bytes_avail <= 0) {
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "Truncated 7-Zip file data");
 			return (ARCHIVE_FATAL);
@@ -2882,7 +2882,7 @@ get_uncompressed_data(struct archive_read *a, const void **buff, size_t size,
 		zip->pack_stream_bytes_unconsumed = bytes_avail;
 	} else if (zip->uncompressed_buffer_pointer == NULL) {
 		/* Decompression has failed. */
-		archive_set_error(&(a->archive),
+		tk_archive_set_error(&(a->archive),
 		    ARCHIVE_ERRNO_MISC, "Damaged 7-Zip archive");
 		return (ARCHIVE_FATAL);
 	} else {
@@ -2909,7 +2909,7 @@ get_uncompressed_data(struct archive_read *a, const void **buff, size_t size,
 }
 
 static ssize_t
-extract_pack_stream(struct archive_read *a, size_t minimum)
+extract_pack_stream(struct tk_archive_read *a, size_t minimum)
 {
 	struct _7zip *zip = (struct _7zip *)a->format->data;
 	ssize_t bytes_avail;
@@ -2918,9 +2918,9 @@ extract_pack_stream(struct archive_read *a, size_t minimum)
 	if (zip->codec == _7Z_COPY && zip->codec2 == (unsigned long)-1) {
 		if (minimum == 0)
 			minimum = 1;
-		if (__archive_read_ahead(a, minimum, &bytes_avail) == NULL
+		if (__tk_archive_read_ahead(a, minimum, &bytes_avail) == NULL
 		    || bytes_avail <= 0) {
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "Truncated 7-Zip file body");
 			return (ARCHIVE_FATAL);
@@ -2945,7 +2945,7 @@ extract_pack_stream(struct archive_read *a, size_t minimum)
 		zip->uncompressed_buffer =
 		    malloc(zip->uncompressed_buffer_size);
 		if (zip->uncompressed_buffer == NULL) {
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "No memory for 7-Zip decompression");
 			return (ARCHIVE_FATAL);
 		}
@@ -2975,7 +2975,7 @@ extract_pack_stream(struct archive_read *a, size_t minimum)
 			new_size &= ~0x3ff;
 			p = realloc(zip->uncompressed_buffer, new_size);
 			if (p == NULL) {
-				archive_set_error(&a->archive, ENOMEM,
+				tk_archive_set_error(&a->archive, ENOMEM,
 				    "No memory for 7-Zip decompression");
 				return (ARCHIVE_FATAL);
 			}
@@ -3005,9 +3005,9 @@ extract_pack_stream(struct archive_read *a, size_t minimum)
 		 * available bytes; asking for more than that forces the
 		 * decompressor to combine reads by copying data.
 		 */
-		buff_in = __archive_read_ahead(a, 1, &bytes_avail);
+		buff_in = __tk_archive_read_ahead(a, 1, &bytes_avail);
 		if (bytes_avail <= 0) {
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "Truncated 7-Zip file body");
 			return (ARCHIVE_FATAL);
@@ -3054,14 +3054,14 @@ extract_pack_stream(struct archive_read *a, size_t minimum)
 		    zip->folder_outbytes_remaining == 0)
 			break;
 		if (end_of_data || (bytes_in == 0 && bytes_out == 0)) {
-			archive_set_error(&(a->archive),
+			tk_archive_set_error(&(a->archive),
 			    ARCHIVE_ERRNO_MISC, "Damaged 7-Zip archive");
 			return (ARCHIVE_FATAL);
 		}
 		read_consume(a);
 	}
 	if (zip->uncompressed_buffer_bytes_remaining < minimum) {
-		archive_set_error(&(a->archive),
+		tk_archive_set_error(&(a->archive),
 		    ARCHIVE_ERRNO_MISC, "Damaged 7-Zip archive");
 		return (ARCHIVE_FATAL);
 	}
@@ -3070,13 +3070,13 @@ extract_pack_stream(struct archive_read *a, size_t minimum)
 }
 
 static int
-seek_pack(struct archive_read *a)
+seek_pack(struct tk_archive_read *a)
 {
 	struct _7zip *zip = (struct _7zip *)a->format->data;
 	int64_t pack_offset;
 
 	if (zip->pack_stream_remaining <= 0) {
-		archive_set_error(&(a->archive),
+		tk_archive_set_error(&(a->archive),
 		    ARCHIVE_ERRNO_MISC, "Damaged 7-Zip archive");
 		return (ARCHIVE_FATAL);
 	}
@@ -3084,7 +3084,7 @@ seek_pack(struct archive_read *a)
 	    zip->si.pi.sizes[zip->pack_stream_index];
 	pack_offset = zip->si.pi.positions[zip->pack_stream_index];
 	if (zip->stream_offset != pack_offset) {
-		if (0 > __archive_read_seek(a, pack_offset + zip->seek_base,
+		if (0 > __tk_archive_read_seek(a, pack_offset + zip->seek_base,
 		    SEEK_SET))
 			return (ARCHIVE_FATAL);
 		zip->stream_offset = pack_offset;
@@ -3095,7 +3095,7 @@ seek_pack(struct archive_read *a)
 }
 
 static ssize_t
-read_stream(struct archive_read *a, const void **buff, size_t size,
+read_stream(struct tk_archive_read *a, const void **buff, size_t size,
     size_t minimum)
 {
 	struct _7zip *zip = (struct _7zip *)a->format->data;
@@ -3125,7 +3125,7 @@ read_stream(struct archive_read *a, const void **buff, size_t size,
 		if (zip->header_is_being_read) {
 			/* Invalid sequence. This might happen when
 			 * reading a malformed archive. */
-			archive_set_error(&(a->archive),
+			tk_archive_set_error(&(a->archive),
 			    ARCHIVE_ERRNO_MISC, "Malformed 7-Zip archive");
 			return (ARCHIVE_FATAL);
 		}
@@ -3186,7 +3186,7 @@ read_stream(struct archive_read *a, const void **buff, size_t size,
 				if (r < 0)
 					return (r);
 			} else {
-				archive_set_error(&a->archive,
+				tk_archive_set_error(&a->archive,
 				    ARCHIVE_ERRNO_FILE_FORMAT,
 				    "Truncated 7-Zip file body");
 				return (ARCHIVE_FATAL);
@@ -3205,7 +3205,7 @@ read_stream(struct archive_read *a, const void **buff, size_t size,
 }
 
 static int
-setup_decode_folder(struct archive_read *a, struct _7z_folder *folder,
+setup_decode_folder(struct tk_archive_read *a, struct _7z_folder *folder,
     int header)
 {
 	struct _7zip *zip = (struct _7zip *)a->format->data;
@@ -3236,7 +3236,7 @@ setup_decode_folder(struct archive_read *a, struct _7z_folder *folder,
 	 */
 	for (i = 0; i < folder->numCoders; i++) {
 		if (folder->coders[i].codec == _7Z_CRYPTO) {
-			archive_set_error(&(a->archive),
+			tk_archive_set_error(&(a->archive),
 			    ARCHIVE_ERRNO_MISC,
 			    "The %s is encrypted, "
 			    "but currently not supported", cname);
@@ -3246,7 +3246,7 @@ setup_decode_folder(struct archive_read *a, struct _7z_folder *folder,
 			found_bcj2++;
 	}
 	if ((folder->numCoders > 2 && !found_bcj2) || found_bcj2 > 1) {
-		archive_set_error(&(a->archive),
+		tk_archive_set_error(&(a->archive),
 		    ARCHIVE_ERRNO_MISC,
 		    "The %s is encoded with many filters, "
 		    "but currently not supported", cname);
@@ -3316,7 +3316,7 @@ setup_decode_folder(struct archive_read *a, struct _7z_folder *folder,
 				    fc[2].codec == _7Z_COPY)
 					coder1 = &(folder->coders[0]);
 				else {
-					archive_set_error(&(a->archive),
+					tk_archive_set_error(&(a->archive),
 					    ARCHIVE_ERRNO_MISC,
 					    "Unsupported form of "
 					    "BCJ2 streams");
@@ -3334,7 +3334,7 @@ setup_decode_folder(struct archive_read *a, struct _7z_folder *folder,
 				(size_t)folder->unPackSize[0];
 		} else {
 			/* We got an unexpected form. */
-			archive_set_error(&(a->archive),
+			tk_archive_set_error(&(a->archive),
 			    ARCHIVE_ERRNO_MISC,
 			    "Unsupported form of BCJ2 streams");
 			return (ARCHIVE_FATAL);
@@ -3373,7 +3373,7 @@ setup_decode_folder(struct archive_read *a, struct _7z_folder *folder,
 			b[i] = malloc((size_t)zip->folder_outbytes_remaining);
 			if (b[i] == NULL) {
 				free(b[0]); free(b[1]); free(b[2]);
-				archive_set_error(&a->archive, ENOMEM,
+				tk_archive_set_error(&a->archive, ENOMEM,
 				    "No memory for 7-Zip decompression");
 				return (ARCHIVE_FATAL);
 			}
@@ -3412,7 +3412,7 @@ setup_decode_folder(struct archive_read *a, struct _7z_folder *folder,
 			zip->tmp_stream_buff =
 			    malloc(zip->tmp_stream_buff_size);
 			if (zip->tmp_stream_buff == NULL) {
-				archive_set_error(&a->archive, ENOMEM,
+				tk_archive_set_error(&a->archive, ENOMEM,
 				    "No memory for 7-Zip decompression");
 				return (ARCHIVE_FATAL);
 			}
@@ -3443,7 +3443,7 @@ setup_decode_folder(struct archive_read *a, struct _7z_folder *folder,
 }
 
 static int64_t
-skip_stream(struct archive_read *a, size_t skip_bytes)
+skip_stream(struct tk_archive_read *a, size_t skip_bytes)
 {
 	struct _7zip *zip = (struct _7zip *)a->format->data;
 	const void *p;
@@ -3465,7 +3465,7 @@ skip_stream(struct archive_read *a, size_t skip_bytes)
 		if (skipped_bytes < 0)
 			return (skipped_bytes);
 		if (skipped_bytes == 0) {
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "Truncated 7-Zip file body");
 			return (ARCHIVE_FATAL);

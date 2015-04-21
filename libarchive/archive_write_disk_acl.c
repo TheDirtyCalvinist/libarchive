@@ -46,8 +46,8 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_write_disk.c 201159 2009-12-29 0
 #if !defined(HAVE_POSIX_ACL) || !defined(ACL_TYPE_NFS4)
 /* Default empty function body to satisfy mainline code. */
 int
-archive_write_disk_set_acls(struct archive *a, int fd, const char *name,
-	 struct archive_acl *abstract_acl)
+tk_archive_write_disk_set_acls(struct archive *a, int fd, const char *name,
+	 struct tk_archive_acl *abstract_acl)
 {
 	(void)a; /* UNUSED */
 	(void)fd; /* UNUSED */
@@ -59,19 +59,19 @@ archive_write_disk_set_acls(struct archive *a, int fd, const char *name,
 #else
 
 static int	set_acl(struct archive *, int fd, const char *,
-			struct archive_acl *,
-			acl_type_t, int archive_entry_acl_type, const char *tn);
+			struct tk_archive_acl *,
+			acl_type_t, int tk_archive_entry_acl_type, const char *tn);
 
 /*
  * XXX TODO: What about ACL types other than ACCESS and DEFAULT?
  */
 int
-archive_write_disk_set_acls(struct archive *a, int fd, const char *name,
-	 struct archive_acl *abstract_acl)
+tk_archive_write_disk_set_acls(struct archive *a, int fd, const char *name,
+	 struct tk_archive_acl *abstract_acl)
 {
 	int		 ret;
 
-	if (archive_acl_count(abstract_acl, ARCHIVE_ENTRY_ACL_TYPE_POSIX1E) > 0) {
+	if (tk_archive_acl_count(abstract_acl, ARCHIVE_ENTRY_ACL_TYPE_POSIX1E) > 0) {
 		ret = set_acl(a, fd, name, abstract_acl, ACL_TYPE_ACCESS,
 		    ARCHIVE_ENTRY_ACL_TYPE_ACCESS, "access");
 		if (ret != ARCHIVE_OK)
@@ -79,7 +79,7 @@ archive_write_disk_set_acls(struct archive *a, int fd, const char *name,
 		ret = set_acl(a, fd, name, abstract_acl, ACL_TYPE_DEFAULT,
 		    ARCHIVE_ENTRY_ACL_TYPE_DEFAULT, "default");
 		return (ret);
-	} else if (archive_acl_count(abstract_acl, ARCHIVE_ENTRY_ACL_TYPE_NFS4) > 0) {
+	} else if (tk_archive_acl_count(abstract_acl, ARCHIVE_ENTRY_ACL_TYPE_NFS4) > 0) {
 		ret = set_acl(a, fd, name, abstract_acl, ACL_TYPE_NFS4,
 		    ARCHIVE_ENTRY_ACL_TYPE_NFS4, "nfs4");
 		return (ret);
@@ -88,7 +88,7 @@ archive_write_disk_set_acls(struct archive *a, int fd, const char *name,
 }
 
 static struct {
-	int archive_perm;
+	int tk_archive_perm;
 	int platform_perm;
 } acl_perm_map[] = {
 	{ARCHIVE_ENTRY_ACL_EXECUTE, ACL_EXECUTE},
@@ -113,7 +113,7 @@ static struct {
 };
 
 static struct {
-	int archive_inherit;
+	int tk_archive_inherit;
 	int platform_inherit;
 } acl_inherit_map[] = {
 	{ARCHIVE_ENTRY_ACL_ENTRY_FILE_INHERIT, ACL_ENTRY_FILE_INHERIT},
@@ -124,7 +124,7 @@ static struct {
 
 static int
 set_acl(struct archive *a, int fd, const char *name,
-    struct archive_acl *abstract_acl,
+    struct tk_archive_acl *abstract_acl,
     acl_type_t acl_type, int ae_requested_type, const char *tname)
 {
 	acl_t		 acl;
@@ -140,23 +140,23 @@ set_acl(struct archive *a, int fd, const char *name,
 	int		 i;
 
 	ret = ARCHIVE_OK;
-	entries = archive_acl_reset(abstract_acl, ae_requested_type);
+	entries = tk_archive_acl_reset(abstract_acl, ae_requested_type);
 	if (entries == 0)
 		return (ARCHIVE_OK);
 	acl = acl_init(entries);
-	while (archive_acl_next(a, abstract_acl, ae_requested_type, &ae_type,
+	while (tk_archive_acl_next(a, abstract_acl, ae_requested_type, &ae_type,
 		   &ae_permset, &ae_tag, &ae_id, &ae_name) == ARCHIVE_OK) {
 		acl_create_entry(&acl, &acl_entry);
 
 		switch (ae_tag) {
 		case ARCHIVE_ENTRY_ACL_USER:
 			acl_set_tag_type(acl_entry, ACL_USER);
-			ae_uid = archive_write_disk_uid(a, ae_name, ae_id);
+			ae_uid = tk_archive_write_disk_uid(a, ae_name, ae_id);
 			acl_set_qualifier(acl_entry, &ae_uid);
 			break;
 		case ARCHIVE_ENTRY_ACL_GROUP:
 			acl_set_tag_type(acl_entry, ACL_GROUP);
-			ae_gid = archive_write_disk_gid(a, ae_name, ae_id);
+			ae_gid = tk_archive_write_disk_gid(a, ae_name, ae_id);
 			acl_set_qualifier(acl_entry, &ae_gid);
 			break;
 		case ARCHIVE_ENTRY_ACL_USER_OBJ:
@@ -205,7 +205,7 @@ set_acl(struct archive *a, int fd, const char *name,
 		acl_clear_perms(acl_permset);
 
 		for (i = 0; i < (int)(sizeof(acl_perm_map) / sizeof(acl_perm_map[0])); ++i) {
-			if (ae_permset & acl_perm_map[i].archive_perm)
+			if (ae_permset & acl_perm_map[i].tk_archive_perm)
 				acl_add_perm(acl_permset,
 					     acl_perm_map[i].platform_perm);
 		}
@@ -213,7 +213,7 @@ set_acl(struct archive *a, int fd, const char *name,
 		acl_get_flagset_np(acl_entry, &acl_flagset);
 		acl_clear_flags_np(acl_flagset);
 		for (i = 0; i < (int)(sizeof(acl_inherit_map) / sizeof(acl_inherit_map[0])); ++i) {
-			if (ae_permset & acl_inherit_map[i].archive_inherit)
+			if (ae_permset & acl_inherit_map[i].tk_archive_inherit)
 				acl_add_flag_np(acl_flagset,
 						acl_inherit_map[i].platform_inherit);
 		}
@@ -233,13 +233,13 @@ set_acl(struct archive *a, int fd, const char *name,
 #endif
 #if HAVE_ACL_SET_LINK_NP
 	  if (acl_set_link_np(name, acl_type, acl) != 0) {
-		archive_set_error(a, errno, "Failed to set %s acl", tname);
+		tk_archive_set_error(a, errno, "Failed to set %s acl", tname);
 		ret = ARCHIVE_WARN;
 	  }
 #else
 	/* TODO: Skip this if 'name' is a symlink. */
 	if (acl_set_file(name, acl_type, acl) != 0) {
-		archive_set_error(a, errno, "Failed to set %s acl", tname);
+		tk_archive_set_error(a, errno, "Failed to set %s acl", tname);
 		ret = ARCHIVE_WARN;
 	}
 #endif

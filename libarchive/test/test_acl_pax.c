@@ -79,13 +79,13 @@ static struct acl_t acls2[] = {
 };
 
 static void
-set_acls(struct archive_entry *ae, struct acl_t *acls, int n)
+set_acls(struct tk_archive_entry *ae, struct acl_t *acls, int n)
 {
 	int i;
 
-	archive_entry_acl_clear(ae);
+	tk_archive_entry_acl_clear(ae);
 	for (i = 0; i < n; i++) {
-		archive_entry_acl_add_entry(ae,
+		tk_archive_entry_acl_add_entry(ae,
 		    acls[i].type, acls[i].permset, acls[i].tag, acls[i].qual,
 		    acls[i].name);
 	}
@@ -116,7 +116,7 @@ acl_match(struct acl_t *acl, int type, int permset, int tag, int qual, const cha
 }
 
 static void
-compare_acls(struct archive_entry *ae, struct acl_t *acls, int n, int mode)
+compare_acls(struct tk_archive_entry *ae, struct acl_t *acls, int n, int mode)
 {
 	int *marker = malloc(sizeof(marker[0]) * n);
 	int i;
@@ -128,7 +128,7 @@ compare_acls(struct archive_entry *ae, struct acl_t *acls, int n, int mode)
 	for (i = 0; i < n; i++)
 		marker[i] = i;
 
-	while (0 == (r = archive_entry_acl_next(ae,
+	while (0 == (r = tk_archive_entry_acl_next(ae,
 			 ARCHIVE_ENTRY_ACL_TYPE_ACCESS,
 			 &type, &permset, &tag, &qual, &name))) {
 		for (i = 0, matched = 0; i < n && !matched; i++) {
@@ -163,7 +163,7 @@ compare_acls(struct archive_entry *ae, struct acl_t *acls, int n, int mode)
 		}
 	}
 	assertEqualInt(ARCHIVE_EOF, r);
-	assert((mode_t)(mode & 0777) == (archive_entry_mode(ae) & 0777));
+	assert((mode_t)(mode & 0777) == (tk_archive_entry_mode(ae) & 0777));
 	failure("Could not find match for ACL "
 	    "(type=%d,permset=%d,tag=%d,qual=%d,name=``%s'')",
 	    acls[marker[0]].type, acls[marker[0]].permset,
@@ -175,51 +175,51 @@ compare_acls(struct archive_entry *ae, struct acl_t *acls, int n, int mode)
 DEFINE_TEST(test_acl_pax)
 {
 	struct archive *a;
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	size_t used;
 	FILE *f;
 	void *reference;
 	size_t reference_size;
 
 	/* Write an archive to memory. */
-	assert(NULL != (a = archive_write_new()));
-	assertA(0 == archive_write_set_format_pax(a));
-	assertA(0 == archive_write_add_filter_none(a));
-	assertA(0 == archive_write_set_bytes_per_block(a, 1));
-	assertA(0 == archive_write_set_bytes_in_last_block(a, 1));
-	assertA(0 == archive_write_open_memory(a, buff, sizeof(buff), &used));
+	assert(NULL != (a = tk_archive_write_new()));
+	assertA(0 == tk_archive_write_set_format_pax(a));
+	assertA(0 == tk_archive_write_add_filter_none(a));
+	assertA(0 == tk_archive_write_set_bytes_per_block(a, 1));
+	assertA(0 == tk_archive_write_set_bytes_in_last_block(a, 1));
+	assertA(0 == tk_archive_write_open_memory(a, buff, sizeof(buff), &used));
 
 	/* Write a series of files to the archive with different ACL info. */
 
 	/* Create a simple archive_entry. */
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_set_pathname(ae, "file");
-        archive_entry_set_mode(ae, S_IFREG | 0777);
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_pathname(ae, "file");
+        tk_archive_entry_set_mode(ae, S_IFREG | 0777);
 
 	/* Basic owner/owning group should just update mode bits. */
 	set_acls(ae, acls0, sizeof(acls0)/sizeof(acls0[0]));
-	assertA(0 == archive_write_header(a, ae));
+	assertA(0 == tk_archive_write_header(a, ae));
 
 	/* With any extended ACL entry, we should read back a full set. */
 	set_acls(ae, acls1, sizeof(acls1)/sizeof(acls1[0]));
-	assertA(0 == archive_write_header(a, ae));
+	assertA(0 == tk_archive_write_header(a, ae));
 
 
 	/* A more extensive set of ACLs. */
 	set_acls(ae, acls2, sizeof(acls2)/sizeof(acls2[0]));
-	assertA(0 == archive_write_header(a, ae));
+	assertA(0 == tk_archive_write_header(a, ae));
 
 	/*
 	 * Check that clearing ACLs gets rid of them all by repeating
 	 * the first test.
 	 */
 	set_acls(ae, acls0, sizeof(acls0)/sizeof(acls0[0]));
-	assertA(0 == archive_write_header(a, ae));
-	archive_entry_free(ae);
+	assertA(0 == tk_archive_write_header(a, ae));
+	tk_archive_entry_free(ae);
 
 	/* Close out the archive. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 
 	/* Write out the data we generated to a file for manual inspection. */
 	assert(NULL != (f = fopen("testout", "wb")));
@@ -238,45 +238,45 @@ DEFINE_TEST(test_acl_pax)
 	free(reference);
 
 	/* Read back each entry and check that the ACL data is right. */
-	assert(NULL != (a = archive_read_new()));
-	assertA(0 == archive_read_support_format_all(a));
-	assertA(0 == archive_read_support_filter_all(a));
-	assertA(0 == archive_read_open_memory(a, buff, used));
+	assert(NULL != (a = tk_archive_read_new()));
+	assertA(0 == tk_archive_read_support_format_all(a));
+	assertA(0 == tk_archive_read_support_filter_all(a));
+	assertA(0 == tk_archive_read_open_memory(a, buff, used));
 
 	/* First item has no ACLs */
-	assertA(0 == archive_read_next_header(a, &ae));
+	assertA(0 == tk_archive_read_next_header(a, &ae));
 	failure("Basic ACLs shouldn't be stored as extended ACLs");
-	assert(0 == archive_entry_acl_reset(ae, ARCHIVE_ENTRY_ACL_TYPE_ACCESS));
+	assert(0 == tk_archive_entry_acl_reset(ae, ARCHIVE_ENTRY_ACL_TYPE_ACCESS));
 	failure("Basic ACLs should set mode to 0142, not %04o",
-	    archive_entry_mode(ae)&0777);
-	assert((archive_entry_mode(ae) & 0777) == 0142);
+	    tk_archive_entry_mode(ae)&0777);
+	assert((tk_archive_entry_mode(ae) & 0777) == 0142);
 
 	/* Second item has a few ACLs */
-	assertA(0 == archive_read_next_header(a, &ae));
+	assertA(0 == tk_archive_read_next_header(a, &ae));
 	failure("One extended ACL should flag all ACLs to be returned.");
-	assert(4 == archive_entry_acl_reset(ae, ARCHIVE_ENTRY_ACL_TYPE_ACCESS));
+	assert(4 == tk_archive_entry_acl_reset(ae, ARCHIVE_ENTRY_ACL_TYPE_ACCESS));
 	compare_acls(ae, acls1, sizeof(acls1)/sizeof(acls1[0]), 0142);
 	failure("Basic ACLs should set mode to 0142, not %04o",
-	    archive_entry_mode(ae)&0777);
-	assert((archive_entry_mode(ae) & 0777) == 0142);
+	    tk_archive_entry_mode(ae)&0777);
+	assert((tk_archive_entry_mode(ae) & 0777) == 0142);
 
 	/* Third item has pretty extensive ACLs */
-	assertA(0 == archive_read_next_header(a, &ae));
-	assertEqualInt(6, archive_entry_acl_reset(ae, ARCHIVE_ENTRY_ACL_TYPE_ACCESS));
+	assertA(0 == tk_archive_read_next_header(a, &ae));
+	assertEqualInt(6, tk_archive_entry_acl_reset(ae, ARCHIVE_ENTRY_ACL_TYPE_ACCESS));
 	compare_acls(ae, acls2, sizeof(acls2)/sizeof(acls2[0]), 0543);
 	failure("Basic ACLs should set mode to 0543, not %04o",
-	    archive_entry_mode(ae)&0777);
-	assert((archive_entry_mode(ae) & 0777) == 0543);
+	    tk_archive_entry_mode(ae)&0777);
+	assert((tk_archive_entry_mode(ae) & 0777) == 0543);
 
 	/* Fourth item has no ACLs */
-	assertA(0 == archive_read_next_header(a, &ae));
+	assertA(0 == tk_archive_read_next_header(a, &ae));
 	failure("Basic ACLs shouldn't be stored as extended ACLs");
-	assert(0 == archive_entry_acl_reset(ae, ARCHIVE_ENTRY_ACL_TYPE_ACCESS));
+	assert(0 == tk_archive_entry_acl_reset(ae, ARCHIVE_ENTRY_ACL_TYPE_ACCESS));
 	failure("Basic ACLs should set mode to 0142, not %04o",
-	    archive_entry_mode(ae)&0777);
-	assert((archive_entry_mode(ae) & 0777) == 0142);
+	    tk_archive_entry_mode(ae)&0777);
+	assert((tk_archive_entry_mode(ae) & 0777) == 0142);
 
 	/* Close the archive. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }

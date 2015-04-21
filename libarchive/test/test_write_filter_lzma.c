@@ -34,7 +34,7 @@ __FBSDID("$FreeBSD: head/lib/libarchive/test/test_write_compress_lzma.c 191183 2
 
 DEFINE_TEST(test_write_filter_lzma)
 {
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	struct archive* a;
 	char *buff, *data;
 	size_t buffsize, datasize;
@@ -58,141 +58,141 @@ DEFINE_TEST(test_write_filter_lzma)
 	/*
 	 * Write a 100 files and read them all back.
 	 */
-	assert((a = archive_write_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_set_format_ustar(a));
-	r = archive_write_add_filter_lzma(a);
+	assert((a = tk_archive_write_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_set_format_ustar(a));
+	r = tk_archive_write_add_filter_lzma(a);
 	if (r == ARCHIVE_FATAL) {
 		skipping("lzma writing not supported on this platform");
-		assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+		assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 		free(buff);
 		free(data);
 		return;
 	}
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_write_set_bytes_per_block(a, 10));
-	assertEqualInt(ARCHIVE_FILTER_LZMA, archive_filter_code(a, 0));
-	assertEqualString("lzma", archive_filter_name(a, 0));
+	    tk_archive_write_set_bytes_per_block(a, 10));
+	assertEqualInt(ARCHIVE_FILTER_LZMA, tk_archive_filter_code(a, 0));
+	assertEqualString("lzma", tk_archive_filter_name(a, 0));
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_write_open_memory(a, buff, buffsize, &used1));
-	assertEqualInt(ARCHIVE_FILTER_LZMA, archive_filter_code(a, 0));
-	assertEqualString("lzma", archive_filter_name(a, 0));
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_set_filetype(ae, AE_IFREG);
-	archive_entry_set_size(ae, datasize);
+	    tk_archive_write_open_memory(a, buff, buffsize, &used1));
+	assertEqualInt(ARCHIVE_FILTER_LZMA, tk_archive_filter_code(a, 0));
+	assertEqualString("lzma", tk_archive_filter_name(a, 0));
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_filetype(ae, AE_IFREG);
+	tk_archive_entry_set_size(ae, datasize);
 	for (i = 0; i < 100; i++) {
 		sprintf(path, "file%03d", i);
-		archive_entry_copy_pathname(ae, path);
-		assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
+		tk_archive_entry_copy_pathname(ae, path);
+		assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_header(a, ae));
 		assertA(datasize
-		    == (size_t)archive_write_data(a, data, datasize));
+		    == (size_t)tk_archive_write_data(a, data, datasize));
 	}
-	archive_entry_free(ae);
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+	tk_archive_entry_free(ae);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
-	r = archive_read_support_filter_lzma(a);
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
+	r = tk_archive_read_support_filter_lzma(a);
 	if (r == ARCHIVE_WARN) {
 		skipping("Can't verify lzma writing by reading back;"
 		    " lzma reading not fully supported on this platform");
 	} else {
 		assertEqualIntA(a, ARCHIVE_OK,
-		    archive_read_support_filter_all(a));
+		    tk_archive_read_support_filter_all(a));
 		assertEqualIntA(a, ARCHIVE_OK,
-		    archive_read_open_memory(a, buff, used1));
+		    tk_archive_read_open_memory(a, buff, used1));
 		for (i = 0; i < 100; i++) {
 			sprintf(path, "file%03d", i);
 			if (!assertEqualInt(ARCHIVE_OK,
-				archive_read_next_header(a, &ae)))
+				tk_archive_read_next_header(a, &ae)))
 				break;
-			assertEqualString(path, archive_entry_pathname(ae));
-			assertEqualInt((int)datasize, archive_entry_size(ae));
+			assertEqualString(path, tk_archive_entry_pathname(ae));
+			assertEqualInt((int)datasize, tk_archive_entry_size(ae));
 		}
-		assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
+		assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_close(a));
 	}
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 
 	/*
 	 * Repeat the cycle again, this time setting some compression
 	 * options.
 	 */
-	assert((a = archive_write_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_set_format_ustar(a));
+	assert((a = tk_archive_write_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_set_format_ustar(a));
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_write_set_bytes_per_block(a, 10));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_add_filter_lzma(a));
+	    tk_archive_write_set_bytes_per_block(a, 10));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_add_filter_lzma(a));
 	assertEqualIntA(a, ARCHIVE_FAILED,
-	    archive_write_set_filter_option(a, NULL, "nonexistent-option", "0"));
+	    tk_archive_write_set_filter_option(a, NULL, "nonexistent-option", "0"));
 	assertEqualIntA(a, ARCHIVE_FAILED,
-	    archive_write_set_filter_option(a, NULL, "compression-level", "abc"));
+	    tk_archive_write_set_filter_option(a, NULL, "compression-level", "abc"));
 	assertEqualIntA(a, ARCHIVE_FAILED,
-	    archive_write_set_filter_option(a, NULL, "compression-level", "99"));
+	    tk_archive_write_set_filter_option(a, NULL, "compression-level", "99"));
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_write_set_filter_option(a, NULL, "compression-level", "9"));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_open_memory(a, buff, buffsize, &used2));
+	    tk_archive_write_set_filter_option(a, NULL, "compression-level", "9"));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_open_memory(a, buff, buffsize, &used2));
 	for (i = 0; i < 100; i++) {
 		sprintf(path, "file%03d", i);
-		assert((ae = archive_entry_new()) != NULL);
-		archive_entry_copy_pathname(ae, path);
-		archive_entry_set_size(ae, datasize);
-		archive_entry_set_filetype(ae, AE_IFREG);
-		assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
-		assertA(datasize == (size_t)archive_write_data(a, data, datasize));
-		archive_entry_free(ae);
+		assert((ae = tk_archive_entry_new()) != NULL);
+		tk_archive_entry_copy_pathname(ae, path);
+		tk_archive_entry_set_size(ae, datasize);
+		tk_archive_entry_set_filetype(ae, AE_IFREG);
+		assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_header(a, ae));
+		assertA(datasize == (size_t)tk_archive_write_data(a, data, datasize));
+		tk_archive_entry_free(ae);
 	}
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 
 
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
-	r = archive_read_support_filter_lzma(a);
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
+	r = tk_archive_read_support_filter_lzma(a);
 	if (r == ARCHIVE_WARN) {
 		skipping("lzma reading not fully supported on this platform");
 	} else {
 		assertEqualIntA(a, ARCHIVE_OK,
-		    archive_read_support_filter_all(a));
+		    tk_archive_read_support_filter_all(a));
 		assertEqualIntA(a, ARCHIVE_OK,
-		    archive_read_open_memory(a, buff, used2));
+		    tk_archive_read_open_memory(a, buff, used2));
 		for (i = 0; i < 100; i++) {
 			sprintf(path, "file%03d", i);
 			failure("Trying to read %s", path);
 			if (!assertEqualIntA(a, ARCHIVE_OK,
-				archive_read_next_header(a, &ae)))
+				tk_archive_read_next_header(a, &ae)))
 				break;
-			assertEqualString(path, archive_entry_pathname(ae));
-			assertEqualInt((int)datasize, archive_entry_size(ae));
+			assertEqualString(path, tk_archive_entry_pathname(ae));
+			assertEqualInt((int)datasize, tk_archive_entry_size(ae));
 		}
-		assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
+		assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_close(a));
 	}
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 
 	/*
 	 * Repeat again, with much lower compression.
 	 */
-	assert((a = archive_write_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_set_format_ustar(a));
+	assert((a = tk_archive_write_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_set_format_ustar(a));
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_write_set_bytes_per_block(a, 10));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_add_filter_lzma(a));
+	    tk_archive_write_set_bytes_per_block(a, 10));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_add_filter_lzma(a));
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_write_set_filter_option(a, NULL, "compression-level", "0"));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_open_memory(a, buff, buffsize, &used2));
+	    tk_archive_write_set_filter_option(a, NULL, "compression-level", "0"));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_open_memory(a, buff, buffsize, &used2));
 	for (i = 0; i < 100; i++) {
 		sprintf(path, "file%03d", i);
-		assert((ae = archive_entry_new()) != NULL);
-		archive_entry_copy_pathname(ae, path);
-		archive_entry_set_size(ae, datasize);
-		archive_entry_set_filetype(ae, AE_IFREG);
-		assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
+		assert((ae = tk_archive_entry_new()) != NULL);
+		tk_archive_entry_copy_pathname(ae, path);
+		tk_archive_entry_set_size(ae, datasize);
+		tk_archive_entry_set_filetype(ae, AE_IFREG);
+		assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_header(a, ae));
 		failure("Writing file %s", path);
 		assertEqualIntA(a, datasize,
-		    (size_t)archive_write_data(a, data, datasize));
-		archive_entry_free(ae);
+		    (size_t)tk_archive_write_data(a, data, datasize));
+		tk_archive_entry_free(ae);
 	}
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 
 	/* It would be nice to assert that compression-level=0 produced
 	 * consistently larger/smaller results than the default compression,
@@ -204,52 +204,52 @@ DEFINE_TEST(test_write_filter_lzma)
 	assert(used2 > used1);
 	*/
 
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	r = archive_read_support_filter_lzma(a);
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_filter_all(a));
+	r = tk_archive_read_support_filter_lzma(a);
 	if (r == ARCHIVE_WARN) {
 		skipping("lzma reading not fully supported on this platform");
 	} else {
 		assertEqualIntA(a, ARCHIVE_OK,
-		    archive_read_open_memory(a, buff, used2));
+		    tk_archive_read_open_memory(a, buff, used2));
 		for (i = 0; i < 100; i++) {
 			sprintf(path, "file%03d", i);
 			if (!assertEqualInt(ARCHIVE_OK,
-				archive_read_next_header(a, &ae)))
+				tk_archive_read_next_header(a, &ae)))
 				break;
-			assertEqualString(path, archive_entry_pathname(ae));
-			assertEqualInt((int)datasize, archive_entry_size(ae));
+			assertEqualString(path, tk_archive_entry_pathname(ae));
+			assertEqualInt((int)datasize, tk_archive_entry_size(ae));
 		}
-		assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
+		assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_close(a));
 	}
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 
 	/*
 	 * Test various premature shutdown scenarios to make sure we
 	 * don't crash or leak memory.
 	 */
-	assert((a = archive_write_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_add_filter_lzma(a));
-	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+	assert((a = tk_archive_write_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_add_filter_lzma(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 
-	assert((a = archive_write_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_add_filter_lzma(a));
-	assertEqualInt(ARCHIVE_OK, archive_write_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+	assert((a = tk_archive_write_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_add_filter_lzma(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 
-	assert((a = archive_write_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_set_format_ustar(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_add_filter_lzma(a));
-	assertEqualInt(ARCHIVE_OK, archive_write_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+	assert((a = tk_archive_write_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_set_format_ustar(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_add_filter_lzma(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 
-	assert((a = archive_write_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_set_format_ustar(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_add_filter_lzma(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_open_memory(a, buff, buffsize, &used2));
-	assertEqualInt(ARCHIVE_OK, archive_write_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+	assert((a = tk_archive_write_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_set_format_ustar(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_add_filter_lzma(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_open_memory(a, buff, buffsize, &used2));
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 
 	/*
 	 * Clean up.

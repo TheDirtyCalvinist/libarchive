@@ -71,8 +71,8 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_string.c 201095 2009-12-28 02:33
 #define wmemcpy(a,b,i)  (wchar_t *)memcpy((a), (b), (i) * sizeof(wchar_t))
 #endif
 
-struct archive_string_conv {
-	struct archive_string_conv	*next;
+struct tk_archive_string_conv {
+	struct tk_archive_string_conv	*next;
 	char				*from_charset;
 	char				*to_charset;
 	unsigned			 from_cp;
@@ -111,9 +111,9 @@ struct archive_string_conv {
 				 	       * Windows. */
 #endif
 	/* A temporary buffer for normalization. */
-	struct archive_string		 utftmp;
-	int (*converter[2])(struct archive_string *, const void *, size_t,
-	    struct archive_string_conv *);
+	struct tk_archive_string		 utftmp;
+	int (*converter[2])(struct tk_archive_string *, const void *, size_t,
+	    struct tk_archive_string_conv *);
 	int				 nconverter;
 };
 
@@ -134,13 +134,13 @@ struct archive_string_conv {
 } while (0)
 #define UTF8_R_CHAR_SIZE	3
 
-static struct archive_string_conv *find_sconv_object(struct archive *,
+static struct tk_archive_string_conv *find_sconv_object(struct archive *,
 	const char *, const char *);
-static void add_sconv_object(struct archive *, struct archive_string_conv *);
-static struct archive_string_conv *create_sconv_object(const char *,
+static void add_sconv_object(struct archive *, struct tk_archive_string_conv *);
+static struct tk_archive_string_conv *create_sconv_object(const char *,
 	const char *, unsigned, int);
-static void free_sconv_object(struct archive_string_conv *);
-static struct archive_string_conv *get_sconv_object(struct archive *,
+static void free_sconv_object(struct tk_archive_string_conv *);
+static struct tk_archive_string_conv *get_sconv_object(struct archive *,
 	const char *, const char *, int);
 static unsigned make_codepage_from_charset(const char *);
 static unsigned get_current_codepage(void);
@@ -148,37 +148,37 @@ static unsigned get_current_oemcp(void);
 static size_t mbsnbytes(const void *, size_t);
 static size_t utf16nbytes(const void *, size_t);
 #if defined(_WIN32) && !defined(__CYGWIN__)
-static int archive_wstring_append_from_mbs_in_codepage(
-    struct archive_wstring *, const char *, size_t,
-    struct archive_string_conv *);
-static int archive_string_append_from_wcs_in_codepage(struct archive_string *,
-    const wchar_t *, size_t, struct archive_string_conv *);
+static int tk_archive_wstring_append_from_mbs_in_codepage(
+    struct tk_archive_wstring *, const char *, size_t,
+    struct tk_archive_string_conv *);
+static int tk_archive_string_append_from_wcs_in_codepage(struct tk_archive_string *,
+    const wchar_t *, size_t, struct tk_archive_string_conv *);
 static int is_big_endian(void);
-static int strncat_in_codepage(struct archive_string *, const void *,
-    size_t, struct archive_string_conv *);
-static int win_strncat_from_utf16be(struct archive_string *, const void *,
-    size_t, struct archive_string_conv *);
-static int win_strncat_from_utf16le(struct archive_string *, const void *,
-    size_t, struct archive_string_conv *);
-static int win_strncat_to_utf16be(struct archive_string *, const void *,
-    size_t, struct archive_string_conv *);
-static int win_strncat_to_utf16le(struct archive_string *, const void *,
-    size_t, struct archive_string_conv *);
+static int strncat_in_codepage(struct tk_archive_string *, const void *,
+    size_t, struct tk_archive_string_conv *);
+static int win_strncat_from_utf16be(struct tk_archive_string *, const void *,
+    size_t, struct tk_archive_string_conv *);
+static int win_strncat_from_utf16le(struct tk_archive_string *, const void *,
+    size_t, struct tk_archive_string_conv *);
+static int win_strncat_to_utf16be(struct tk_archive_string *, const void *,
+    size_t, struct tk_archive_string_conv *);
+static int win_strncat_to_utf16le(struct tk_archive_string *, const void *,
+    size_t, struct tk_archive_string_conv *);
 #endif
-static int best_effort_strncat_from_utf16be(struct archive_string *,
-    const void *, size_t, struct archive_string_conv *);
-static int best_effort_strncat_from_utf16le(struct archive_string *,
-    const void *, size_t, struct archive_string_conv *);
-static int best_effort_strncat_to_utf16be(struct archive_string *,
-    const void *, size_t, struct archive_string_conv *);
-static int best_effort_strncat_to_utf16le(struct archive_string *,
-    const void *, size_t, struct archive_string_conv *);
+static int best_effort_strncat_from_utf16be(struct tk_archive_string *,
+    const void *, size_t, struct tk_archive_string_conv *);
+static int best_effort_strncat_from_utf16le(struct tk_archive_string *,
+    const void *, size_t, struct tk_archive_string_conv *);
+static int best_effort_strncat_to_utf16be(struct tk_archive_string *,
+    const void *, size_t, struct tk_archive_string_conv *);
+static int best_effort_strncat_to_utf16le(struct tk_archive_string *,
+    const void *, size_t, struct tk_archive_string_conv *);
 #if defined(HAVE_ICONV)
-static int iconv_strncat_in_locale(struct archive_string *, const void *,
-    size_t, struct archive_string_conv *);
+static int iconv_strncat_in_locale(struct tk_archive_string *, const void *,
+    size_t, struct tk_archive_string_conv *);
 #endif
-static int best_effort_strncat_in_locale(struct archive_string *,
-    const void *, size_t, struct archive_string_conv *);
+static int best_effort_strncat_in_locale(struct tk_archive_string *,
+    const void *, size_t, struct tk_archive_string_conv *);
 static int _utf8_to_unicode(uint32_t *, const char *, size_t);
 static int utf8_to_unicode(uint32_t *, const char *, size_t);
 static inline uint32_t combine_surrogate_pair(uint32_t, uint32_t);
@@ -187,21 +187,21 @@ static size_t unicode_to_utf8(char *, size_t, uint32_t);
 static int utf16_to_unicode(uint32_t *, const char *, size_t, int);
 static size_t unicode_to_utf16be(char *, size_t, uint32_t);
 static size_t unicode_to_utf16le(char *, size_t, uint32_t);
-static int strncat_from_utf8_libarchive2(struct archive_string *,
-    const void *, size_t, struct archive_string_conv *);
-static int strncat_from_utf8_to_utf8(struct archive_string *, const void *,
-    size_t, struct archive_string_conv *);
-static int archive_string_normalize_C(struct archive_string *, const void *,
-    size_t, struct archive_string_conv *);
-static int archive_string_normalize_D(struct archive_string *, const void *,
-    size_t, struct archive_string_conv *);
-static int archive_string_append_unicode(struct archive_string *,
-    const void *, size_t, struct archive_string_conv *);
+static int strncat_from_utf8_libarchive2(struct tk_archive_string *,
+    const void *, size_t, struct tk_archive_string_conv *);
+static int strncat_from_utf8_to_utf8(struct tk_archive_string *, const void *,
+    size_t, struct tk_archive_string_conv *);
+static int tk_archive_string_normalize_C(struct tk_archive_string *, const void *,
+    size_t, struct tk_archive_string_conv *);
+static int tk_archive_string_normalize_D(struct tk_archive_string *, const void *,
+    size_t, struct tk_archive_string_conv *);
+static int tk_archive_string_append_unicode(struct tk_archive_string *,
+    const void *, size_t, struct tk_archive_string_conv *);
 
-static struct archive_string *
-archive_string_append(struct archive_string *as, const char *p, size_t s)
+static struct tk_archive_string *
+tk_archive_string_append(struct tk_archive_string *as, const char *p, size_t s)
 {
-	if (archive_string_ensure(as, as->length + s + 1) == NULL)
+	if (tk_archive_string_ensure(as, as->length + s + 1) == NULL)
 		return (NULL);
 	memcpy(as->s + as->length, p, s);
 	as->length += s;
@@ -209,10 +209,10 @@ archive_string_append(struct archive_string *as, const char *p, size_t s)
 	return (as);
 }
 
-static struct archive_wstring *
-archive_wstring_append(struct archive_wstring *as, const wchar_t *p, size_t s)
+static struct tk_archive_wstring *
+tk_archive_wstring_append(struct tk_archive_wstring *as, const wchar_t *p, size_t s)
 {
-	if (archive_wstring_ensure(as, as->length + s + 1) == NULL)
+	if (tk_archive_wstring_ensure(as, as->length + s + 1) == NULL)
 		return (NULL);
 	wmemcpy(as->s + as->length, p, s);
 	as->length += s;
@@ -221,22 +221,22 @@ archive_wstring_append(struct archive_wstring *as, const wchar_t *p, size_t s)
 }
 
 void
-archive_string_concat(struct archive_string *dest, struct archive_string *src)
+tk_archive_string_concat(struct tk_archive_string *dest, struct tk_archive_string *src)
 {
-	if (archive_string_append(dest, src->s, src->length) == NULL)
-		__archive_errx(1, "Out of memory");
+	if (tk_archive_string_append(dest, src->s, src->length) == NULL)
+		__tk_archive_errx(1, "Out of memory");
 }
 
 void
-archive_wstring_concat(struct archive_wstring *dest,
-    struct archive_wstring *src)
+tk_archive_wstring_concat(struct tk_archive_wstring *dest,
+    struct tk_archive_wstring *src)
 {
-	if (archive_wstring_append(dest, src->s, src->length) == NULL)
-		__archive_errx(1, "Out of memory");
+	if (tk_archive_wstring_append(dest, src->s, src->length) == NULL)
+		__tk_archive_errx(1, "Out of memory");
 }
 
 void
-archive_string_free(struct archive_string *as)
+tk_archive_string_free(struct tk_archive_string *as)
 {
 	as->length = 0;
 	as->buffer_length = 0;
@@ -245,7 +245,7 @@ archive_string_free(struct archive_string *as)
 }
 
 void
-archive_wstring_free(struct archive_wstring *as)
+tk_archive_wstring_free(struct tk_archive_wstring *as)
 {
 	as->length = 0;
 	as->buffer_length = 0;
@@ -253,17 +253,17 @@ archive_wstring_free(struct archive_wstring *as)
 	as->s = NULL;
 }
 
-struct archive_wstring *
-archive_wstring_ensure(struct archive_wstring *as, size_t s)
+struct tk_archive_wstring *
+tk_archive_wstring_ensure(struct tk_archive_wstring *as, size_t s)
 {
-	return (struct archive_wstring *)
-		archive_string_ensure((struct archive_string *)as,
+	return (struct tk_archive_wstring *)
+		tk_archive_string_ensure((struct tk_archive_string *)as,
 					s * sizeof(wchar_t));
 }
 
 /* Returns NULL on any allocation failure. */
-struct archive_string *
-archive_string_ensure(struct archive_string *as, size_t s)
+struct tk_archive_string *
+tk_archive_string_ensure(struct tk_archive_string *as, size_t s)
 {
 	char *p;
 	size_t new_length;
@@ -291,7 +291,7 @@ archive_string_ensure(struct archive_string *as, size_t s)
 		/* Be safe: If size wraps, fail. */
 		if (new_length < as->buffer_length) {
 			/* On failure, wipe the string and return NULL. */
-			archive_string_free(as);
+			tk_archive_string_free(as);
 			errno = ENOMEM;/* Make sure errno has ENOMEM. */
 			return (NULL);
 		}
@@ -307,7 +307,7 @@ archive_string_ensure(struct archive_string *as, size_t s)
 	p = (char *)realloc(as->s, new_length);
 	if (p == NULL) {
 		/* On failure, wipe the string and return NULL. */
-		archive_string_free(as);
+		tk_archive_string_free(as);
 		errno = ENOMEM;/* Make sure errno has ENOMEM. */
 		return (NULL);
 	}
@@ -324,8 +324,8 @@ archive_string_ensure(struct archive_string *as, size_t s)
  * always called with pretty short arguments, so
  * such an optimization might not help).
  */
-struct archive_string *
-archive_strncat(struct archive_string *as, const void *_p, size_t n)
+struct tk_archive_string *
+tk_archive_strncat(struct tk_archive_string *as, const void *_p, size_t n)
 {
 	size_t s;
 	const char *p, *pp;
@@ -339,13 +339,13 @@ archive_strncat(struct archive_string *as, const void *_p, size_t n)
 		pp++;
 		s++;
 	}
-	if ((as = archive_string_append(as, p, s)) == NULL)
-		__archive_errx(1, "Out of memory");
+	if ((as = tk_archive_string_append(as, p, s)) == NULL)
+		__tk_archive_errx(1, "Out of memory");
 	return (as);
 }
 
-struct archive_wstring *
-archive_wstrncat(struct archive_wstring *as, const wchar_t *p, size_t n)
+struct tk_archive_wstring *
+tk_archive_wstrncat(struct tk_archive_wstring *as, const wchar_t *p, size_t n)
 {
 	size_t s;
 	const wchar_t *pp;
@@ -357,13 +357,13 @@ archive_wstrncat(struct archive_wstring *as, const wchar_t *p, size_t n)
 		pp++;
 		s++;
 	}
-	if ((as = archive_wstring_append(as, p, s)) == NULL)
-		__archive_errx(1, "Out of memory");
+	if ((as = tk_archive_wstring_append(as, p, s)) == NULL)
+		__tk_archive_errx(1, "Out of memory");
 	return (as);
 }
 
-struct archive_string *
-archive_strcat(struct archive_string *as, const void *p)
+struct tk_archive_string *
+tk_archive_strcat(struct tk_archive_string *as, const void *p)
 {
 	/* strcat is just strncat without an effective limit. 
 	 * Assert that we'll never get called with a source
@@ -371,29 +371,29 @@ archive_strcat(struct archive_string *as, const void *p)
 	 * TODO: Review all uses of strcat in the source
 	 * and try to replace them with strncat().
 	 */
-	return archive_strncat(as, p, 0x1000000);
+	return tk_archive_strncat(as, p, 0x1000000);
 }
 
-struct archive_wstring *
-archive_wstrcat(struct archive_wstring *as, const wchar_t *p)
+struct tk_archive_wstring *
+tk_archive_wstrcat(struct tk_archive_wstring *as, const wchar_t *p)
 {
 	/* Ditto. */
-	return archive_wstrncat(as, p, 0x1000000);
+	return tk_archive_wstrncat(as, p, 0x1000000);
 }
 
-struct archive_string *
-archive_strappend_char(struct archive_string *as, char c)
+struct tk_archive_string *
+tk_archive_strappend_char(struct tk_archive_string *as, char c)
 {
-	if ((as = archive_string_append(as, &c, 1)) == NULL)
-		__archive_errx(1, "Out of memory");
+	if ((as = tk_archive_string_append(as, &c, 1)) == NULL)
+		__tk_archive_errx(1, "Out of memory");
 	return (as);
 }
 
-struct archive_wstring *
-archive_wstrappend_wchar(struct archive_wstring *as, wchar_t c)
+struct tk_archive_wstring *
+tk_archive_wstrappend_wchar(struct tk_archive_wstring *as, wchar_t c)
 {
-	if ((as = archive_wstring_append(as, &c, 1)) == NULL)
-		__archive_errx(1, "Out of memory");
+	if ((as = tk_archive_wstring_append(as, &c, 1)) == NULL)
+		__tk_archive_errx(1, "Out of memory");
 	return (as);
 }
 
@@ -431,15 +431,15 @@ default_iconv_charset(const char *charset) {
  * Note: returns -1 if conversion fails.
  */
 int
-archive_wstring_append_from_mbs(struct archive_wstring *dest,
+tk_archive_wstring_append_from_mbs(struct tk_archive_wstring *dest,
     const char *p, size_t len)
 {
-	return archive_wstring_append_from_mbs_in_codepage(dest, p, len, NULL);
+	return tk_archive_wstring_append_from_mbs_in_codepage(dest, p, len, NULL);
 }
 
 static int
-archive_wstring_append_from_mbs_in_codepage(struct archive_wstring *dest,
-    const char *s, size_t length, struct archive_string_conv *sc)
+tk_archive_wstring_append_from_mbs_in_codepage(struct tk_archive_wstring *dest,
+    const char *s, size_t length, struct tk_archive_string_conv *sc)
 {
 	int count, ret = 0;
 	UINT from_cp;
@@ -456,7 +456,7 @@ archive_wstring_append_from_mbs_in_codepage(struct archive_wstring *dest,
 		wchar_t *ws;
 		const unsigned char *mp;
 
-		if (NULL == archive_wstring_ensure(dest,
+		if (NULL == tk_archive_wstring_ensure(dest,
 		    dest->length + length + 1))
 			return (-1);
 
@@ -473,7 +473,7 @@ archive_wstring_append_from_mbs_in_codepage(struct archive_wstring *dest,
 		 * Normalize UTF-8 and UTF-16BE and convert it directly
 		 * to UTF-16 as wchar_t.
 		 */
-		struct archive_string u16;
+		struct tk_archive_string u16;
 		int saved_flag = sc->flag;/* save current flag. */
 
 		if (is_big_endian())
@@ -498,9 +498,9 @@ archive_wstring_append_from_mbs_in_codepage(struct archive_wstring *dest,
 		u16.length = dest->length << 1;;
 		u16.buffer_length = dest->buffer_length;
 		if (sc->flag & SCONV_NORMALIZATION_C)
-			ret = archive_string_normalize_C(&u16, s, count, sc);
+			ret = tk_archive_string_normalize_C(&u16, s, count, sc);
 		else
-			ret = archive_string_normalize_D(&u16, s, count, sc);
+			ret = tk_archive_string_normalize_D(&u16, s, count, sc);
 		dest->s = (wchar_t *)u16.s;
 		dest->length = u16.length >> 1;
 		dest->buffer_length = u16.buffer_length;
@@ -510,7 +510,7 @@ archive_wstring_append_from_mbs_in_codepage(struct archive_wstring *dest,
 		count = (int)utf16nbytes(s, length);
 		count >>= 1; /* to be WCS length */
 		/* Allocate memory for WCS. */
-		if (NULL == archive_wstring_ensure(dest,
+		if (NULL == tk_archive_wstring_ensure(dest,
 		    dest->length + count + 1))
 			return (-1);
 		wmemcpy(dest->s + dest->length, (const wchar_t *)s, count);
@@ -518,15 +518,15 @@ archive_wstring_append_from_mbs_in_codepage(struct archive_wstring *dest,
 			uint16_t *u16 = (uint16_t *)(dest->s + dest->length);
 			int b;
 			for (b = 0; b < count; b++) {
-				uint16_t val = archive_le16dec(u16+b);
-				archive_be16enc(u16+b, val);
+				uint16_t val = tk_archive_le16dec(u16+b);
+				tk_archive_be16enc(u16+b, val);
 			}
 		} else if ((sc->flag & SCONV_FROM_UTF16LE) && is_big_endian()) {
 			uint16_t *u16 = (uint16_t *)(dest->s + dest->length);
 			int b;
 			for (b = 0; b < count; b++) {
-				uint16_t val = archive_be16dec(u16+b);
-				archive_le16enc(u16+b, val);
+				uint16_t val = tk_archive_be16dec(u16+b);
+				tk_archive_le16enc(u16+b, val);
 			}
 		}
 	} else {
@@ -546,7 +546,7 @@ archive_wstring_append_from_mbs_in_codepage(struct archive_wstring *dest,
 		buffsize = dest->length + length + 1;
 		do {
 			/* Allocate memory for WCS. */
-			if (NULL == archive_wstring_ensure(dest, buffsize))
+			if (NULL == tk_archive_wstring_ensure(dest, buffsize))
 				return (-1);
 			/* Convert MBS to WCS. */
 			count = MultiByteToWideChar(from_cp,
@@ -574,7 +574,7 @@ archive_wstring_append_from_mbs_in_codepage(struct archive_wstring *dest,
  * Note: returns -1 if conversion fails.
  */
 int
-archive_wstring_append_from_mbs(struct archive_wstring *dest,
+tk_archive_wstring_append_from_mbs(struct tk_archive_wstring *dest,
     const char *p, size_t len)
 {
 	size_t r;
@@ -592,7 +592,7 @@ archive_wstring_append_from_mbs(struct archive_wstring *dest,
 
 	memset(&shift_state, 0, sizeof(shift_state));
 #endif
-	if (NULL == archive_wstring_ensure(dest, dest->length + wcs_length + 1))
+	if (NULL == tk_archive_wstring_ensure(dest, dest->length + wcs_length + 1))
 		return (-1);
 	wcs = dest->s + dest->length;
 	/*
@@ -605,7 +605,7 @@ archive_wstring_append_from_mbs(struct archive_wstring *dest,
 			dest->length = wcs - dest->s;
 			dest->s[dest->length] = L'\0';
 			wcs_length = mbs_length;
-			if (NULL == archive_wstring_ensure(dest,
+			if (NULL == tk_archive_wstring_ensure(dest,
 			    dest->length + wcs_length + 1))
 				return (-1);
 			wcs = dest->s + dest->length;
@@ -650,15 +650,15 @@ archive_wstring_append_from_mbs(struct archive_wstring *dest,
  * wrapper is going to know.)
  */
 int
-archive_string_append_from_wcs(struct archive_string *as,
+tk_archive_string_append_from_wcs(struct tk_archive_string *as,
     const wchar_t *w, size_t len)
 {
-	return archive_string_append_from_wcs_in_codepage(as, w, len, NULL);
+	return tk_archive_string_append_from_wcs_in_codepage(as, w, len, NULL);
 }
 
 static int
-archive_string_append_from_wcs_in_codepage(struct archive_string *as,
-    const wchar_t *ws, size_t len, struct archive_string_conv *sc)
+tk_archive_string_append_from_wcs_in_codepage(struct tk_archive_string *as,
+    const wchar_t *ws, size_t len, struct tk_archive_string_conv *sc)
 {
 	BOOL defchar_used, *dp;
 	int count, ret = 0;
@@ -677,7 +677,7 @@ archive_string_append_from_wcs_in_codepage(struct archive_string *as,
 		const wchar_t *wp = ws;
 		char *p;
 
-		if (NULL == archive_string_ensure(as,
+		if (NULL == tk_archive_string_ensure(as,
 		    as->length + wslen +1))
 			return (-1);
 		p = as->s + as->length;
@@ -696,20 +696,20 @@ archive_string_append_from_wcs_in_codepage(struct archive_string *as,
 		uint16_t *u16;
 
 		if (NULL ==
-		    archive_string_ensure(as, as->length + len * 2 + 2))
+		    tk_archive_string_ensure(as, as->length + len * 2 + 2))
 			return (-1);
 		u16 = (uint16_t *)(as->s + as->length);
 		count = 0;
 		defchar_used = 0;
 		if (sc->flag & SCONV_TO_UTF16BE) {
 			while (count < (int)len && *ws) {
-				archive_be16enc(u16+count, *ws);
+				tk_archive_be16enc(u16+count, *ws);
 				ws++;
 				count++;
 			}
 		} else {
 			while (count < (int)len && *ws) {
-				archive_le16enc(u16+count, *ws);
+				tk_archive_le16enc(u16+count, *ws);
 				ws++;
 				count++;
 			}
@@ -718,7 +718,7 @@ archive_string_append_from_wcs_in_codepage(struct archive_string *as,
 	} else {
 		/* Make sure the MBS buffer has plenty to set. */
 		if (NULL ==
-		    archive_string_ensure(as, as->length + len * 2 + 1))
+		    tk_archive_string_ensure(as, as->length + len * 2 + 1))
 			return (-1);
 		do {
 			defchar_used = 0;
@@ -731,7 +731,7 @@ archive_string_append_from_wcs_in_codepage(struct archive_string *as,
 			if (count == 0 &&
 			    GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
 				/* Expand the MBS buffer and retry. */
-				if (NULL == archive_string_ensure(as,
+				if (NULL == tk_archive_string_ensure(as,
 					as->buffer_length + len))
 					return (-1);
 				continue;
@@ -753,7 +753,7 @@ archive_string_append_from_wcs_in_codepage(struct archive_string *as,
  * fails.
  */
 int
-archive_string_append_from_wcs(struct archive_string *as,
+tk_archive_string_append_from_wcs(struct tk_archive_string *as,
     const wchar_t *w, size_t len)
 {
 	/* We cannot use the standard wcstombs() here because it
@@ -778,7 +778,7 @@ archive_string_append_from_wcs(struct archive_string *as,
 	 * We need this allocation here since it is possible that
 	 * as->s is still NULL.
 	 */
-	if (archive_string_ensure(as, as->length + len + 1) == NULL)
+	if (tk_archive_string_ensure(as, as->length + len + 1) == NULL)
 		return (-1);
 
 	p = as->s + as->length;
@@ -788,7 +788,7 @@ archive_string_append_from_wcs(struct archive_string *as,
 			as->length = p - as->s;
 			as->s[as->length] = '\0';
 			/* Re-allocate buffer for MBS. */
-			if (archive_string_ensure(as,
+			if (tk_archive_string_ensure(as,
 			    as->length + len * 2 + 1) == NULL)
 				return (-1);
 			p = as->s + as->length;
@@ -826,7 +826,7 @@ archive_string_append_from_wcs(struct archive_string *as,
  * either of these, fall back to the built-in UTF8 conversion.
  */
 int
-archive_string_append_from_wcs(struct archive_string *as,
+tk_archive_string_append_from_wcs(struct tk_archive_string *as,
     const wchar_t *w, size_t len)
 {
 	(void)as;/* UNUSED */
@@ -843,10 +843,10 @@ archive_string_append_from_wcs(struct archive_string *as,
  * and 'to' charset name from an archive object.
  * Return NULL if not found.
  */
-static struct archive_string_conv *
+static struct tk_archive_string_conv *
 find_sconv_object(struct archive *a, const char *fc, const char *tc)
 {
-	struct archive_string_conv *sc; 
+	struct tk_archive_string_conv *sc;
 
 	if (a == NULL)
 		return (NULL);
@@ -863,9 +863,9 @@ find_sconv_object(struct archive *a, const char *fc, const char *tc)
  * Register a string object to an archive object.
  */
 static void
-add_sconv_object(struct archive *a, struct archive_string_conv *sc)
+add_sconv_object(struct archive *a, struct tk_archive_string_conv *sc)
 {
-	struct archive_string_conv **psc; 
+	struct tk_archive_string_conv **psc;
 
 	/* Add a new sconv to sconv list. */
 	psc = &(a->sconv);
@@ -875,17 +875,17 @@ add_sconv_object(struct archive *a, struct archive_string_conv *sc)
 }
 
 static void
-add_converter(struct archive_string_conv *sc, int (*converter)
-    (struct archive_string *, const void *, size_t,
-     struct archive_string_conv *))
+add_converter(struct tk_archive_string_conv *sc, int (*converter)
+    (struct tk_archive_string *, const void *, size_t,
+     struct tk_archive_string_conv *))
 {
 	if (sc == NULL || sc->nconverter >= 2)
-		__archive_errx(1, "Programing error");
+		__tk_archive_errx(1, "Programing error");
 	sc->converter[sc->nconverter++] = converter;
 }
 
 static void
-setup_converter(struct archive_string_conv *sc)
+setup_converter(struct tk_archive_string_conv *sc)
 {
 
 	/* Reset. */
@@ -909,7 +909,7 @@ setup_converter(struct archive_string_conv *sc)
 		 * a UTF-8 string into a UTF-16BE string.
 		 */
 		if (sc->flag & SCONV_FROM_UTF8) {
-			add_converter(sc, archive_string_append_unicode);
+			add_converter(sc, tk_archive_string_append_unicode);
 			return;
 		}
 
@@ -951,9 +951,9 @@ setup_converter(struct archive_string_conv *sc)
 		 * At least we should normalize a UTF-16BE string.
 		 */
 		if (sc->flag & SCONV_NORMALIZATION_D)
-			add_converter(sc,archive_string_normalize_D);
+			add_converter(sc,tk_archive_string_normalize_D);
 		else if (sc->flag & SCONV_NORMALIZATION_C)
-			add_converter(sc, archive_string_normalize_C);
+			add_converter(sc, tk_archive_string_normalize_C);
 
 		if (sc->flag & SCONV_TO_UTF8) {
 			/*
@@ -963,7 +963,7 @@ setup_converter(struct archive_string_conv *sc)
 			if (!(sc->flag &
 			    (SCONV_NORMALIZATION_D |SCONV_NORMALIZATION_C)))
 				add_converter(sc,
-				    archive_string_append_unicode);
+				    tk_archive_string_append_unicode);
 			return;
 		}
 
@@ -1001,9 +1001,9 @@ setup_converter(struct archive_string_conv *sc)
 		 * At least we should normalize a UTF-8 string.
 		 */
 		if (sc->flag & SCONV_NORMALIZATION_D)
-			add_converter(sc,archive_string_normalize_D);
+			add_converter(sc,tk_archive_string_normalize_D);
 		else if (sc->flag & SCONV_NORMALIZATION_C)
-			add_converter(sc, archive_string_normalize_C);
+			add_converter(sc, tk_archive_string_normalize_C);
 
 		/*
 		 * Copy UTF-8 string with a check of CESU-8.
@@ -1044,7 +1044,7 @@ setup_converter(struct archive_string_conv *sc)
 		if ((sc->flag & SCONV_FROM_CHARSET) &&
 		    (sc->flag & SCONV_TO_UTF8)) {
 			if (sc->flag & SCONV_NORMALIZATION_D)
-				add_converter(sc, archive_string_normalize_D);
+				add_converter(sc, tk_archive_string_normalize_D);
 		}
 		return;
 	}
@@ -1103,11 +1103,11 @@ canonical_charset_name(const char *charset)
 /*
  * Create a string conversion object.
  */
-static struct archive_string_conv *
+static struct tk_archive_string_conv *
 create_sconv_object(const char *fc, const char *tc,
     unsigned current_codepage, int flag)
 {
-	struct archive_string_conv *sc; 
+	struct tk_archive_string_conv *sc;
 
 	sc = calloc(1, sizeof(*sc));
 	if (sc == NULL)
@@ -1124,7 +1124,7 @@ create_sconv_object(const char *fc, const char *tc,
 		free(sc);
 		return (NULL);
 	}
-	archive_string_init(&sc->utftmp);
+	tk_archive_string_init(&sc->utftmp);
 
 	if (flag & SCONV_TO_CHARSET) {
 		/*
@@ -1289,11 +1289,11 @@ create_sconv_object(const char *fc, const char *tc,
  * Free a string conversion object.
  */
 static void
-free_sconv_object(struct archive_string_conv *sc)
+free_sconv_object(struct tk_archive_string_conv *sc)
 {
 	free(sc->from_charset);
 	free(sc->to_charset);
-	archive_string_free(&sc->utftmp);
+	tk_archive_string_free(&sc->utftmp);
 #if HAVE_ICONV
 	if (sc->cd != (iconv_t)-1)
 		iconv_close(sc->cd);
@@ -1615,10 +1615,10 @@ get_current_oemcp(void)
 /*
  * Return a string conversion object.
  */
-static struct archive_string_conv *
+static struct tk_archive_string_conv *
 get_sconv_object(struct archive *a, const char *fc, const char *tc, int flag)
 {
-	struct archive_string_conv *sc;
+	struct tk_archive_string_conv *sc;
 	unsigned current_codepage;
 
 	/* Check if we have made the sconv object. */
@@ -1635,7 +1635,7 @@ get_sconv_object(struct archive *a, const char *fc, const char *tc, int flag)
 	    canonical_charset_name(tc), current_codepage, flag);
 	if (sc == NULL) {
 		if (a != NULL)
-			archive_set_error(a, ENOMEM,
+			tk_archive_set_error(a, ENOMEM,
 			    "Could not allocate memory for "
 			    "a string conversion object");
 		return (NULL);
@@ -1648,11 +1648,11 @@ get_sconv_object(struct archive *a, const char *fc, const char *tc, int flag)
 	if (sc->nconverter == 0) {
 		if (a != NULL) {
 #if HAVE_ICONV
-			archive_set_error(a, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(a, ARCHIVE_ERRNO_MISC,
 			    "iconv_open failed : Cannot handle ``%s''",
 			    (flag & SCONV_TO_CHARSET)?tc:fc);
 #else
-			archive_set_error(a, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(a, ARCHIVE_ERRNO_MISC,
 			    "A character-set conversion not fully supported "
 			    "on this platform");
 #endif
@@ -1696,8 +1696,8 @@ get_current_charset(struct archive *a)
  * unless memory allocation for the object fails, but the conversion
  * might fail when non-ASCII code is found.
  */
-struct archive_string_conv *
-archive_string_conversion_to_charset(struct archive *a, const char *charset,
+struct tk_archive_string_conv *
+tk_archive_string_conversion_to_charset(struct archive *a, const char *charset,
     int best_effort)
 {
 	int flag = SCONV_TO_CHARSET;
@@ -1707,8 +1707,8 @@ archive_string_conversion_to_charset(struct archive *a, const char *charset,
 	return (get_sconv_object(a, get_current_charset(a), charset, flag));
 }
 
-struct archive_string_conv *
-archive_string_conversion_from_charset(struct archive *a, const char *charset,
+struct tk_archive_string_conv *
+tk_archive_string_conversion_from_charset(struct archive *a, const char *charset,
     int best_effort)
 {
 	int flag = SCONV_FROM_CHARSET;
@@ -1728,8 +1728,8 @@ archive_string_conversion_from_charset(struct archive *a, const char *charset,
  * for compatibillty.
  */
 #if defined(_WIN32) && !defined(__CYGWIN__)
-struct archive_string_conv *
-archive_string_default_conversion_for_read(struct archive *a)
+struct tk_archive_string_conv *
+tk_archive_string_default_conversion_for_read(struct archive *a)
 {
 	const char *cur_charset = get_current_charset(a);
 	char oemcp[16];
@@ -1749,8 +1749,8 @@ archive_string_default_conversion_for_read(struct archive *a)
 	    SCONV_FROM_CHARSET));
 }
 
-struct archive_string_conv *
-archive_string_default_conversion_for_write(struct archive *a)
+struct tk_archive_string_conv *
+tk_archive_string_default_conversion_for_write(struct archive *a)
 {
 	const char *cur_charset = get_current_charset(a);
 	char oemcp[16];
@@ -1770,15 +1770,15 @@ archive_string_default_conversion_for_write(struct archive *a)
 	    SCONV_TO_CHARSET));
 }
 #else
-struct archive_string_conv *
-archive_string_default_conversion_for_read(struct archive *a)
+struct tk_archive_string_conv *
+tk_archive_string_default_conversion_for_read(struct archive *a)
 {
 	(void)a; /* UNUSED */
 	return (NULL);
 }
 
-struct archive_string_conv *
-archive_string_default_conversion_for_write(struct archive *a)
+struct tk_archive_string_conv *
+tk_archive_string_default_conversion_for_write(struct archive *a)
 {
 	(void)a; /* UNUSED */
 	return (NULL);
@@ -1789,10 +1789,10 @@ archive_string_default_conversion_for_write(struct archive *a)
  * Dispose of all character conversion objects in the archive object.
  */
 void
-archive_string_conversion_free(struct archive *a)
+tk_archive_string_conversion_free(struct archive *a)
 {
-	struct archive_string_conv *sc; 
-	struct archive_string_conv *sc_next; 
+	struct tk_archive_string_conv *sc;
+	struct tk_archive_string_conv *sc_next;
 
 	for (sc = a->sconv; sc != NULL; sc = sc_next) {
 		sc_next = sc->next;
@@ -1807,7 +1807,7 @@ archive_string_conversion_free(struct archive *a)
  * Return a conversion charset name.
  */
 const char *
-archive_string_conversion_charset_name(struct archive_string_conv *sc)
+tk_archive_string_conversion_charset_name(struct tk_archive_string_conv *sc)
 {
 	if (sc->flag & SCONV_TO_CHARSET)
 		return (sc->to_charset);
@@ -1819,7 +1819,7 @@ archive_string_conversion_charset_name(struct archive_string_conv *sc)
  * Change the behavior of a string conversion.
  */
 void
-archive_string_conversion_set_opt(struct archive_string_conv *sc, int opt)
+tk_archive_string_conversion_set_opt(struct tk_archive_string_conv *sc, int opt)
 {
 	switch (opt) {
 	/*
@@ -1926,16 +1926,16 @@ utf16nbytes(const void *_p, size_t n)
 }
 
 int
-archive_strncpy_l(struct archive_string *as, const void *_p, size_t n,
-    struct archive_string_conv *sc)
+tk_archive_strncpy_l(struct tk_archive_string *as, const void *_p, size_t n,
+    struct tk_archive_string_conv *sc)
 {
 	as->length = 0;
-	return (archive_strncat_l(as, _p, n, sc));
+	return (tk_archive_strncat_l(as, _p, n, sc));
 }
 
 int
-archive_strncat_l(struct archive_string *as, const void *_p, size_t n,
-    struct archive_string_conv *sc)
+tk_archive_strncat_l(struct tk_archive_string *as, const void *_p, size_t n,
+    struct tk_archive_string_conv *sc)
 {
 	const void *s;
 	size_t length;
@@ -1947,7 +1947,7 @@ archive_strncat_l(struct archive_string *as, const void *_p, size_t n,
 		int tn = 1;
 		if (sc != NULL && (sc->flag & SCONV_TO_UTF16))
 			tn = 2;
-		if (archive_string_ensure(as, as->length + tn) == NULL)
+		if (tk_archive_string_ensure(as, as->length + tn) == NULL)
 			return (-1);
 		as->s[as->length] = 0;
 		if (tn == 2)
@@ -1960,7 +1960,7 @@ archive_strncat_l(struct archive_string *as, const void *_p, size_t n,
 	 */
 	if (sc == NULL) {
 		length = mbsnbytes(_p, n);
-		if (archive_string_append(as, _p, length) == NULL)
+		if (tk_archive_string_append(as, _p, length) == NULL)
 			return (-1);/* No memory */
 		return (0);
 	}
@@ -1994,8 +1994,8 @@ archive_strncat_l(struct archive_string *as, const void *_p, size_t n,
  * Return -1 if conversion failes.
  */
 static int
-iconv_strncat_in_locale(struct archive_string *as, const void *_p,
-    size_t length, struct archive_string_conv *sc)
+iconv_strncat_in_locale(struct tk_archive_string *as, const void *_p,
+    size_t length, struct tk_archive_string_conv *sc)
 {
 	ICONV_CONST char *itp;
 	size_t remaining;
@@ -2014,7 +2014,7 @@ iconv_strncat_in_locale(struct archive_string *as, const void *_p,
 	else
 		from_size = 1;
 
-	if (archive_string_ensure(as, as->length + length*2+to_size) == NULL)
+	if (tk_archive_string_ensure(as, as->length + length*2+to_size) == NULL)
 		return (-1);
 
 	cd = sc->cd;
@@ -2046,7 +2046,7 @@ iconv_strncat_in_locale(struct archive_string *as, const void *_p,
 					bs = as->buffer_length +
 					    (remaining * to_size) + rbytes;
 					if (NULL ==
-					    archive_string_ensure(as, bs))
+					    tk_archive_string_ensure(as, bs))
 						return (-1);
 					outp = as->s + as->length;
 					avail = as->buffer_length
@@ -2055,9 +2055,9 @@ iconv_strncat_in_locale(struct archive_string *as, const void *_p,
 				if (sc->flag & SCONV_TO_UTF8)
 					UTF8_SET_R_CHAR(outp);
 				else if (sc->flag & SCONV_TO_UTF16BE)
-					archive_be16enc(outp, UNICODE_R_CHAR);
+					tk_archive_be16enc(outp, UNICODE_R_CHAR);
 				else
-					archive_le16enc(outp, UNICODE_R_CHAR);
+					tk_archive_le16enc(outp, UNICODE_R_CHAR);
 				outp += rbytes;
 				avail -= rbytes;
 			} else {
@@ -2073,7 +2073,7 @@ iconv_strncat_in_locale(struct archive_string *as, const void *_p,
 			 * Increase an output buffer.  */
 			as->length = outp - as->s;
 			bs = as->buffer_length + remaining * 2;
-			if (NULL == archive_string_ensure(as, bs))
+			if (NULL == tk_archive_string_ensure(as, bs))
 				return (-1);
 			outp = as->s + as->length;
 			avail = as->buffer_length - as->length - to_size;
@@ -2096,32 +2096,32 @@ iconv_strncat_in_locale(struct archive_string *as, const void *_p,
  * Windows APIs, and copy the result. Return -1 if conversion failes.
  */
 static int
-strncat_in_codepage(struct archive_string *as,
-    const void *_p, size_t length, struct archive_string_conv *sc)
+strncat_in_codepage(struct tk_archive_string *as,
+    const void *_p, size_t length, struct tk_archive_string_conv *sc)
 {
 	const char *s = (const char *)_p;
-	struct archive_wstring aws;
+	struct tk_archive_wstring aws;
 	size_t l;
 	int r, saved_flag;
 
-	archive_string_init(&aws);
+	tk_archive_string_init(&aws);
 	saved_flag = sc->flag;
 	sc->flag &= ~(SCONV_NORMALIZATION_D | SCONV_NORMALIZATION_C);
-	r = archive_wstring_append_from_mbs_in_codepage(&aws, s, length, sc);
+	r = tk_archive_wstring_append_from_mbs_in_codepage(&aws, s, length, sc);
 	sc->flag = saved_flag;
 	if (r != 0) {
-		archive_wstring_free(&aws);
+		tk_archive_wstring_free(&aws);
 		if (errno != ENOMEM)
-			archive_string_append(as, s, length);
+			tk_archive_string_append(as, s, length);
 		return (-1);
 	}
 
 	l = as->length;
-	r = archive_string_append_from_wcs_in_codepage(
+	r = tk_archive_string_append_from_wcs_in_codepage(
 	    as, aws.s, aws.length, sc);
 	if (r != 0 && errno != ENOMEM && l == as->length)
-		archive_string_append(as, s, length);
-	archive_wstring_free(&aws);
+		tk_archive_string_append(as, s, length);
+	tk_archive_wstring_free(&aws);
 	return (r);
 }
 
@@ -2129,7 +2129,7 @@ strncat_in_codepage(struct archive_string *as,
  * Test whether MBS ==> WCS is okay.
  */
 static int
-invalid_mbs(const void *_p, size_t n, struct archive_string_conv *sc)
+invalid_mbs(const void *_p, size_t n, struct tk_archive_string_conv *sc)
 {
 	const char *p = (const char *)_p;
 	unsigned codepage;
@@ -2156,7 +2156,7 @@ invalid_mbs(const void *_p, size_t n, struct archive_string_conv *sc)
  * Test whether MBS ==> WCS is okay.
  */
 static int
-invalid_mbs(const void *_p, size_t n, struct archive_string_conv *sc)
+invalid_mbs(const void *_p, size_t n, struct tk_archive_string_conv *sc)
 {
 	const char *p = (const char *)_p;
 	size_t r;
@@ -2198,8 +2198,8 @@ invalid_mbs(const void *_p, size_t n, struct archive_string_conv *sc)
  * can be WCS with no error.
  */
 static int
-best_effort_strncat_in_locale(struct archive_string *as, const void *_p,
-    size_t length, struct archive_string_conv *sc)
+best_effort_strncat_in_locale(struct tk_archive_string *as, const void *_p,
+    size_t length, struct tk_archive_string_conv *sc)
 {
 	size_t remaining;
 	char *otp;
@@ -2212,7 +2212,7 @@ best_effort_strncat_in_locale(struct archive_string *as, const void *_p,
 	 * And then this checks all copied MBS can be WCS if so returns 0.
 	 */
 	if (sc->same) {
-		if (archive_string_append(as, _p, length) == NULL)
+		if (tk_archive_string_append(as, _p, length) == NULL)
 			return (-1);/* No memory */
 		return (invalid_mbs(_p, length, sc));
 	}
@@ -2223,7 +2223,7 @@ best_effort_strncat_in_locale(struct archive_string *as, const void *_p,
 	 * byte sequence 0xEF 0xBD 0xBD, which are code point U+FFFD,
 	 * a Replacement Character in Unicode.
 	 */
-	if (archive_string_ensure(as, as->length + length + 1) == NULL)
+	if (tk_archive_string_ensure(as, as->length + length + 1) == NULL)
 		return (-1);
 
 	remaining = length;
@@ -2234,7 +2234,7 @@ best_effort_strncat_in_locale(struct archive_string *as, const void *_p,
 		if (*itp > 127 && (sc->flag & SCONV_TO_UTF8)) {
 			if (avail < UTF8_R_CHAR_SIZE) {
 				as->length = otp - as->s;
-				if (NULL == archive_string_ensure(as,
+				if (NULL == tk_archive_string_ensure(as,
 				    as->buffer_length + remaining +
 				    UTF8_R_CHAR_SIZE))
 					return (-1);
@@ -2551,9 +2551,9 @@ utf16_to_unicode(uint32_t *pwc, const char *s, size_t n, int be)
 	}
 
 	if (be)
-		uc = archive_be16dec(utf16);
+		uc = tk_archive_be16dec(utf16);
 	else
-		uc = archive_le16dec(utf16);
+		uc = tk_archive_le16dec(utf16);
 	utf16 += 2;
 		
 	/* If this is a surrogate pair, assemble the full code point.*/
@@ -2562,9 +2562,9 @@ utf16_to_unicode(uint32_t *pwc, const char *s, size_t n, int be)
 
 		if (n >= 4) {
 			if (be)
-				uc2 = archive_be16dec(utf16);
+				uc2 = tk_archive_be16dec(utf16);
 			else
-				uc2 = archive_le16dec(utf16);
+				uc2 = tk_archive_le16dec(utf16);
 		} else
 			uc2 = 0;
 		if (IS_LOW_SURROGATE_LA(uc2)) {
@@ -2606,13 +2606,13 @@ unicode_to_utf16be(char *p, size_t remaining, uint32_t uc)
 		if (remaining < 4)
 			return (0);
 		uc -= 0x10000;
-		archive_be16enc(utf16, ((uc >> 10) & 0x3ff) + 0xD800);
-		archive_be16enc(utf16+2, (uc & 0x3ff) + 0xDC00);
+		tk_archive_be16enc(utf16, ((uc >> 10) & 0x3ff) + 0xD800);
+		tk_archive_be16enc(utf16+2, (uc & 0x3ff) + 0xDC00);
 		return (4);
 	} else {
 		if (remaining < 2)
 			return (0);
-		archive_be16enc(utf16, uc);
+		tk_archive_be16enc(utf16, uc);
 		return (2);
 	}
 }
@@ -2628,13 +2628,13 @@ unicode_to_utf16le(char *p, size_t remaining, uint32_t uc)
 		if (remaining < 4)
 			return (0);
 		uc -= 0x10000;
-		archive_le16enc(utf16, ((uc >> 10) & 0x3ff) + 0xD800);
-		archive_le16enc(utf16+2, (uc & 0x3ff) + 0xDC00);
+		tk_archive_le16enc(utf16, ((uc >> 10) & 0x3ff) + 0xD800);
+		tk_archive_le16enc(utf16+2, (uc & 0x3ff) + 0xDC00);
 		return (4);
 	} else {
 		if (remaining < 2)
 			return (0);
-		archive_le16enc(utf16, uc);
+		tk_archive_le16enc(utf16, uc);
 		return (2);
 	}
 }
@@ -2644,8 +2644,8 @@ unicode_to_utf16le(char *p, size_t remaining, uint32_t uc)
  * If any surrogate pair are found, it would be canonicalized.
  */
 static int
-strncat_from_utf8_to_utf8(struct archive_string *as, const void *_p,
-    size_t len, struct archive_string_conv *sc)
+strncat_from_utf8_to_utf8(struct tk_archive_string *as, const void *_p,
+    size_t len, struct tk_archive_string_conv *sc)
 {
 	const char *s;
 	char *p, *endp;
@@ -2653,7 +2653,7 @@ strncat_from_utf8_to_utf8(struct archive_string *as, const void *_p,
 
 	(void)sc; /* UNUSED */
 
-	if (archive_string_ensure(as, as->length + len + 1) == NULL)
+	if (tk_archive_string_ensure(as, as->length + len + 1) == NULL)
 		return (-1);
 
 	s = (const char *)_p;
@@ -2674,7 +2674,7 @@ strncat_from_utf8_to_utf8(struct archive_string *as, const void *_p,
 		if (ss < s) {
 			if (p + (s - ss) > endp) {
 				as->length = p - as->s;
-				if (archive_string_ensure(as,
+				if (tk_archive_string_ensure(as,
 				    as->buffer_length + len + 1) == NULL)
 					return (-1);
 				p = as->s + as->length;
@@ -2701,7 +2701,7 @@ strncat_from_utf8_to_utf8(struct archive_string *as, const void *_p,
 			/* Rebuild UTF-8 byte sequence. */
 			while ((w = unicode_to_utf8(p, endp - p, uc)) == 0) {
 				as->length = p - as->s;
-				if (archive_string_ensure(as,
+				if (tk_archive_string_ensure(as,
 				    as->buffer_length + len + 1) == NULL)
 					return (-1);
 				p = as->s + as->length;
@@ -2718,8 +2718,8 @@ strncat_from_utf8_to_utf8(struct archive_string *as, const void *_p,
 }
 
 static int
-archive_string_append_unicode(struct archive_string *as, const void *_p,
-    size_t len, struct archive_string_conv *sc)
+tk_archive_string_append_unicode(struct tk_archive_string *as, const void *_p,
+    size_t len, struct tk_archive_string_conv *sc)
 {
 	const char *s;
 	char *p, *endp;
@@ -2766,7 +2766,7 @@ archive_string_append_unicode(struct archive_string *as, const void *_p,
 		tm = ts;
 	}
 
-	if (archive_string_ensure(as, as->length + len * tm + ts) == NULL)
+	if (tk_archive_string_ensure(as, as->length + len * tm + ts) == NULL)
 		return (-1);
 
 	s = (const char *)_p;
@@ -2784,7 +2784,7 @@ archive_string_append_unicode(struct archive_string *as, const void *_p,
 			/* There is not enough output buffer so
 			 * we have to expand it. */
 			as->length = p - as->s;
-			if (archive_string_ensure(as,
+			if (tk_archive_string_ensure(as,
 			    as->buffer_length + len * tm + ts) == NULL)
 				return (-1);
 			p = as->s + as->length;
@@ -2858,7 +2858,7 @@ get_nfc(uint32_t uc, uint32_t uc2)
 
 #define EXPAND_BUFFER() do {			\
 	as->length = p - as->s;			\
-	if (archive_string_ensure(as,		\
+	if (tk_archive_string_ensure(as,		\
 	    as->buffer_length + len * tm + ts) == NULL)\
 		return (-1);			\
 	p = as->s + as->length;			\
@@ -2933,8 +2933,8 @@ get_nfc(uint32_t uc, uint32_t uc2)
  * from NFC,NFD,NFKC and NFKD, to Form C.
  */
 static int
-archive_string_normalize_C(struct archive_string *as, const void *_p,
-    size_t len, struct archive_string_conv *sc)
+tk_archive_string_normalize_C(struct tk_archive_string *as, const void *_p,
+    size_t len, struct tk_archive_string_conv *sc)
 {
 	const char *s = (const char *)_p;
 	char *p, *endp;
@@ -2991,7 +2991,7 @@ archive_string_normalize_C(struct archive_string *as, const void *_p,
 		spair = 6;/* surrogate pair size in UTF-8. */
 	}
 
-	if (archive_string_ensure(as, as->length + len * tm + ts) == NULL)
+	if (tk_archive_string_ensure(as, as->length + len * tm + ts) == NULL)
 		return (-1);
 
 	p = as->s + as->length;
@@ -3240,8 +3240,8 @@ get_nfd(uint32_t *cp1, uint32_t *cp2, uint32_t uc)
  * Normalize UTF-8 characters to Form D and copy the result.
  */
 static int
-archive_string_normalize_D(struct archive_string *as, const void *_p,
-    size_t len, struct archive_string_conv *sc)
+tk_archive_string_normalize_D(struct tk_archive_string *as, const void *_p,
+    size_t len, struct tk_archive_string_conv *sc)
 {
 	const char *s = (const char *)_p;
 	char *p, *endp;
@@ -3298,7 +3298,7 @@ archive_string_normalize_D(struct archive_string *as, const void *_p,
 		spair = 6;/* surrogate pair size in UTF-8. */
 	}
 
-	if (archive_string_ensure(as, as->length + len * tm + ts) == NULL)
+	if (tk_archive_string_ensure(as, as->length + len * tm + ts) == NULL)
 		return (-1);
 
 	p = as->s + as->length;
@@ -3421,8 +3421,8 @@ check_first_code:
  * Note: returns -1 if conversion fails.
  */
 static int
-strncat_from_utf8_libarchive2(struct archive_string *as,
-    const void *_p, size_t len, struct archive_string_conv *sc)
+strncat_from_utf8_libarchive2(struct tk_archive_string *as,
+    const void *_p, size_t len, struct tk_archive_string_conv *sc)
 {
 	const char *s;
 	int n;
@@ -3443,7 +3443,7 @@ strncat_from_utf8_libarchive2(struct archive_string *as,
 	 * We need this allocation here since it is possible that
 	 * as->s is still NULL.
 	 */
-	if (archive_string_ensure(as, as->length + len + 1) == NULL)
+	if (tk_archive_string_ensure(as, as->length + len + 1) == NULL)
 		return (-1);
 
 	s = (const char *)_p;
@@ -3455,7 +3455,7 @@ strncat_from_utf8_libarchive2(struct archive_string *as,
 		if (p >= end) {
 			as->length = p - as->s;
 			/* Re-allocate buffer for MBS. */
-			if (archive_string_ensure(as,
+			if (tk_archive_string_ensure(as,
 			    as->length + len * 2 + 1) == NULL)
 				return (-1);
 			p = as->s + as->length;
@@ -3505,10 +3505,10 @@ strncat_from_utf8_libarchive2(struct archive_string *as,
  * Return -1 if conversion failes.
  */
 static int
-win_strncat_from_utf16(struct archive_string *as, const void *_p, size_t bytes,
-    struct archive_string_conv *sc, int be)
+win_strncat_from_utf16(struct tk_archive_string *as, const void *_p, size_t bytes,
+    struct tk_archive_string_conv *sc, int be)
 {
-	struct archive_string tmp;
+	struct tk_archive_string tmp;
 	const char *u16;
 	int ll;
 	BOOL defchar;
@@ -3517,7 +3517,7 @@ win_strncat_from_utf16(struct archive_string *as, const void *_p, size_t bytes,
 	int ret = 0;
 
 	bytes &= ~1;
-	if (archive_string_ensure(as, as->length + bytes +1) == NULL)
+	if (tk_archive_string_ensure(as, as->length + bytes +1) == NULL)
 		return (-1);
 
 	mbs = as->s + as->length;
@@ -3532,9 +3532,9 @@ win_strncat_from_utf16(struct archive_string *as, const void *_p, size_t bytes,
 		for (b = 0; b < bytes; b += 2) {
 			uint16_t val;
 			if (be)
-				val = archive_be16dec(u16+b);
+				val = tk_archive_be16dec(u16+b);
 			else
-				val = archive_le16dec(u16+b);
+				val = tk_archive_le16dec(u16+b);
 			if (val > 255) {
 				*mbs++ = '?';
 				ret = -1;
@@ -3547,17 +3547,17 @@ win_strncat_from_utf16(struct archive_string *as, const void *_p, size_t bytes,
 		return (ret);
 	}
 
-	archive_string_init(&tmp);
+	tk_archive_string_init(&tmp);
 	if (be) {
 		if (is_big_endian()) {
 			u16 = _p;
 		} else {
-			if (archive_string_ensure(&tmp, bytes+2) == NULL)
+			if (tk_archive_string_ensure(&tmp, bytes+2) == NULL)
 				return (-1);
 			memcpy(tmp.s, _p, bytes);
 			for (b = 0; b < bytes; b += 2) {
-				uint16_t val = archive_be16dec(tmp.s+b);
-				archive_le16enc(tmp.s+b, val);
+				uint16_t val = tk_archive_be16dec(tmp.s+b);
+				tk_archive_le16enc(tmp.s+b, val);
 			}
 			u16 = tmp.s;
 		}
@@ -3565,12 +3565,12 @@ win_strncat_from_utf16(struct archive_string *as, const void *_p, size_t bytes,
 		if (!is_big_endian()) {
 			u16 = _p;
 		} else {
-			if (archive_string_ensure(&tmp, bytes+2) == NULL)
+			if (tk_archive_string_ensure(&tmp, bytes+2) == NULL)
 				return (-1);
 			memcpy(tmp.s, _p, bytes);
 			for (b = 0; b < bytes; b += 2) {
-				uint16_t val = archive_le16dec(tmp.s+b);
-				archive_be16enc(tmp.s+b, val);
+				uint16_t val = tk_archive_le16dec(tmp.s+b);
+				tk_archive_be16enc(tmp.s+b, val);
 			}
 			u16 = tmp.s;
 		}
@@ -3586,14 +3586,14 @@ win_strncat_from_utf16(struct archive_string *as, const void *_p, size_t bytes,
 			/* Need more buffer for MBS. */
 			ll = WideCharToMultiByte(sc->to_cp, 0,
 			    (LPCWSTR)u16, (int)bytes, NULL, 0, NULL, NULL);
-			if (archive_string_ensure(as, ll +1) == NULL)
+			if (tk_archive_string_ensure(as, ll +1) == NULL)
 				return (-1);
 			mbs = as->s + as->length;
 			mbs_size = as->buffer_length - as->length -1;
 			continue;
 		}
 	} while (0);
-	archive_string_free(&tmp);
+	tk_archive_string_free(&tmp);
 	as->length += ll;
 	as->s[as->length] = '\0';
 	if (ll == 0 || defchar)
@@ -3602,15 +3602,15 @@ win_strncat_from_utf16(struct archive_string *as, const void *_p, size_t bytes,
 }
 
 static int
-win_strncat_from_utf16be(struct archive_string *as, const void *_p,
-    size_t bytes, struct archive_string_conv *sc)
+win_strncat_from_utf16be(struct tk_archive_string *as, const void *_p,
+    size_t bytes, struct tk_archive_string_conv *sc)
 {
 	return (win_strncat_from_utf16(as, _p, bytes, sc, 1));
 }
 
 static int
-win_strncat_from_utf16le(struct archive_string *as, const void *_p,
-    size_t bytes, struct archive_string_conv *sc)
+win_strncat_from_utf16le(struct tk_archive_string *as, const void *_p,
+    size_t bytes, struct tk_archive_string_conv *sc)
 {
 	return (win_strncat_from_utf16(as, _p, bytes, sc, 0));
 }
@@ -3620,7 +3620,7 @@ is_big_endian(void)
 {
 	uint16_t d = 1;
 
-	return (archive_be16dec(&d) == 1);
+	return (tk_archive_be16dec(&d) == 1);
 }
 
 /*
@@ -3628,14 +3628,14 @@ is_big_endian(void)
  * Return -1 if conversion failes.
  */
 static int
-win_strncat_to_utf16(struct archive_string *as16, const void *_p,
-    size_t length, struct archive_string_conv *sc, int bigendian)
+win_strncat_to_utf16(struct tk_archive_string *as16, const void *_p,
+    size_t length, struct tk_archive_string_conv *sc, int bigendian)
 {
 	const char *s = (const char *)_p;
 	char *u16;
 	size_t count, avail;
 
-	if (archive_string_ensure(as16,
+	if (tk_archive_string_ensure(as16,
 	    as16->length + (length + 1) * 2) == NULL)
 		return (-1);
 
@@ -3648,9 +3648,9 @@ win_strncat_to_utf16(struct archive_string *as16, const void *_p,
 		count = 0;
 		while (count < length && *s) {
 			if (bigendian)
-				archive_be16enc(u16, *s);
+				tk_archive_be16enc(u16, *s);
 			else
-				archive_le16enc(u16, *s);
+				tk_archive_le16enc(u16, *s);
 			u16 += 2;
 			s++;
 			count++;
@@ -3668,7 +3668,7 @@ win_strncat_to_utf16(struct archive_string *as16, const void *_p,
 			/* Need more buffer for UTF-16 string */
 			count = MultiByteToWideChar(sc->from_cp,
 			    MB_PRECOMPOSED, s, (int)length, NULL, 0);
-			if (archive_string_ensure(as16, (count +1) * 2)
+			if (tk_archive_string_ensure(as16, (count +1) * 2)
 			    == NULL)
 				return (-1);
 			u16 = as16->s + as16->length;
@@ -3685,8 +3685,8 @@ win_strncat_to_utf16(struct archive_string *as16, const void *_p,
 	if (is_big_endian()) {
 		if (!bigendian) {
 			while (count > 0) {
-				uint16_t v = archive_be16dec(u16);
-				archive_le16enc(u16, v);
+				uint16_t v = tk_archive_be16dec(u16);
+				tk_archive_le16enc(u16, v);
 				u16 += 2;
 				count--;
 			}
@@ -3694,8 +3694,8 @@ win_strncat_to_utf16(struct archive_string *as16, const void *_p,
 	} else {
 		if (bigendian) {
 			while (count > 0) {
-				uint16_t v = archive_le16dec(u16);
-				archive_be16enc(u16, v);
+				uint16_t v = tk_archive_le16dec(u16);
+				tk_archive_be16enc(u16, v);
 				u16 += 2;
 				count--;
 			}
@@ -3705,15 +3705,15 @@ win_strncat_to_utf16(struct archive_string *as16, const void *_p,
 }
 
 static int
-win_strncat_to_utf16be(struct archive_string *as16, const void *_p,
-    size_t length, struct archive_string_conv *sc)
+win_strncat_to_utf16be(struct tk_archive_string *as16, const void *_p,
+    size_t length, struct tk_archive_string_conv *sc)
 {
 	return (win_strncat_to_utf16(as16, _p, length, sc, 1));
 }
 
 static int
-win_strncat_to_utf16le(struct archive_string *as16, const void *_p,
-    size_t length, struct archive_string_conv *sc)
+win_strncat_to_utf16le(struct tk_archive_string *as16, const void *_p,
+    size_t length, struct tk_archive_string_conv *sc)
 {
 	return (win_strncat_to_utf16(as16, _p, length, sc, 0));
 }
@@ -3732,8 +3732,8 @@ win_strncat_to_utf16le(struct archive_string *as16, const void *_p,
  * Return -1 if conversion failes.
  */
 static int
-best_effort_strncat_from_utf16(struct archive_string *as, const void *_p,
-    size_t bytes, struct archive_string_conv *sc, int be)
+best_effort_strncat_from_utf16(struct tk_archive_string *as, const void *_p,
+    size_t bytes, struct tk_archive_string_conv *sc, int be)
 {
 	const char *utf16 = (const char *)_p;
 	char *mbs;
@@ -3747,7 +3747,7 @@ best_effort_strncat_from_utf16(struct archive_string *as, const void *_p,
 	 * if not , we set a alternative character and return -1.
 	 */
 	ret = 0;
-	if (archive_string_ensure(as, as->length + bytes +1) == NULL)
+	if (tk_archive_string_ensure(as, as->length + bytes +1) == NULL)
 		return (-1);
 	mbs = as->s + as->length;
 
@@ -3772,15 +3772,15 @@ best_effort_strncat_from_utf16(struct archive_string *as, const void *_p,
 }
 
 static int
-best_effort_strncat_from_utf16be(struct archive_string *as, const void *_p,
-    size_t bytes, struct archive_string_conv *sc)
+best_effort_strncat_from_utf16be(struct tk_archive_string *as, const void *_p,
+    size_t bytes, struct tk_archive_string_conv *sc)
 {
 	return (best_effort_strncat_from_utf16(as, _p, bytes, sc, 1));
 }
 
 static int
-best_effort_strncat_from_utf16le(struct archive_string *as, const void *_p,
-    size_t bytes, struct archive_string_conv *sc)
+best_effort_strncat_from_utf16le(struct tk_archive_string *as, const void *_p,
+    size_t bytes, struct tk_archive_string_conv *sc)
 {
 	return (best_effort_strncat_from_utf16(as, _p, bytes, sc, 0));
 }
@@ -3790,8 +3790,8 @@ best_effort_strncat_from_utf16le(struct archive_string *as, const void *_p,
  * Return -1 if conversion failes.
  */
 static int
-best_effort_strncat_to_utf16(struct archive_string *as16, const void *_p,
-    size_t length, struct archive_string_conv *sc, int bigendian)
+best_effort_strncat_to_utf16(struct tk_archive_string *as16, const void *_p,
+    size_t length, struct tk_archive_string_conv *sc, int bigendian)
 {
 	const char *s = (const char *)_p;
 	char *utf16;
@@ -3807,7 +3807,7 @@ best_effort_strncat_to_utf16(struct archive_string *as16, const void *_p,
 	ret = 0;
 	remaining = length;
 
-	if (archive_string_ensure(as16,
+	if (tk_archive_string_ensure(as16,
 	    as16->length + (length + 1) * 2) == NULL)
 		return (-1);
 
@@ -3820,9 +3820,9 @@ best_effort_strncat_to_utf16(struct archive_string *as16, const void *_p,
 			ret = -1;
 		}
 		if (bigendian)
-			archive_be16enc(utf16, c);
+			tk_archive_be16enc(utf16, c);
 		else
-			archive_le16enc(utf16, c);
+			tk_archive_le16enc(utf16, c);
 		utf16 += 2;
 	}
 	as16->length = utf16 - as16->s;
@@ -3832,15 +3832,15 @@ best_effort_strncat_to_utf16(struct archive_string *as16, const void *_p,
 }
 
 static int
-best_effort_strncat_to_utf16be(struct archive_string *as16, const void *_p,
-    size_t length, struct archive_string_conv *sc)
+best_effort_strncat_to_utf16be(struct tk_archive_string *as16, const void *_p,
+    size_t length, struct tk_archive_string_conv *sc)
 {
 	return (best_effort_strncat_to_utf16(as16, _p, length, sc, 1));
 }
 
 static int
-best_effort_strncat_to_utf16le(struct archive_string *as16, const void *_p,
-    size_t length, struct archive_string_conv *sc)
+best_effort_strncat_to_utf16le(struct tk_archive_string *as16, const void *_p,
+    size_t length, struct tk_archive_string_conv *sc)
 {
 	return (best_effort_strncat_to_utf16(as16, _p, length, sc, 0));
 }
@@ -3851,29 +3851,29 @@ best_effort_strncat_to_utf16le(struct archive_string *as16, const void *_p,
  */
 
 void
-archive_mstring_clean(struct archive_mstring *aes)
+tk_archive_mstring_clean(struct tk_archive_mstring *aes)
 {
-	archive_wstring_free(&(aes->aes_wcs));
-	archive_string_free(&(aes->aes_mbs));
-	archive_string_free(&(aes->aes_utf8));
-	archive_string_free(&(aes->aes_mbs_in_locale));
+	tk_archive_wstring_free(&(aes->aes_wcs));
+	tk_archive_string_free(&(aes->aes_mbs));
+	tk_archive_string_free(&(aes->aes_utf8));
+	tk_archive_string_free(&(aes->aes_mbs_in_locale));
 	aes->aes_set = 0;
 }
 
 void
-archive_mstring_copy(struct archive_mstring *dest, struct archive_mstring *src)
+tk_archive_mstring_copy(struct tk_archive_mstring *dest, struct tk_archive_mstring *src)
 {
 	dest->aes_set = src->aes_set;
-	archive_string_copy(&(dest->aes_mbs), &(src->aes_mbs));
-	archive_string_copy(&(dest->aes_utf8), &(src->aes_utf8));
-	archive_wstring_copy(&(dest->aes_wcs), &(src->aes_wcs));
+	tk_archive_string_copy(&(dest->aes_mbs), &(src->aes_mbs));
+	tk_archive_string_copy(&(dest->aes_utf8), &(src->aes_utf8));
+	tk_archive_wstring_copy(&(dest->aes_wcs), &(src->aes_wcs));
 }
 
 int
-archive_mstring_get_utf8(struct archive *a, struct archive_mstring *aes,
+tk_archive_mstring_get_utf8(struct archive *a, struct tk_archive_mstring *aes,
   const char **p)
 {
-	struct archive_string_conv *sc;
+	struct tk_archive_string_conv *sc;
 	int r;
 
 	/* If we already have a UTF8 form, return that immediately. */
@@ -3884,10 +3884,10 @@ archive_mstring_get_utf8(struct archive *a, struct archive_mstring *aes,
 
 	*p = NULL;
 	if (aes->aes_set & AES_SET_MBS) {
-		sc = archive_string_conversion_to_charset(a, "UTF-8", 1);
+		sc = tk_archive_string_conversion_to_charset(a, "UTF-8", 1);
 		if (sc == NULL)
 			return (-1);/* Couldn't allocate memory for sc. */
-		r = archive_strncpy_l(&(aes->aes_mbs), aes->aes_mbs.s,
+		r = tk_archive_strncpy_l(&(aes->aes_mbs), aes->aes_mbs.s,
 		    aes->aes_mbs.length, sc);
 		if (a == NULL)
 			free_sconv_object(sc);
@@ -3902,7 +3902,7 @@ archive_mstring_get_utf8(struct archive *a, struct archive_mstring *aes,
 }
 
 int
-archive_mstring_get_mbs(struct archive *a, struct archive_mstring *aes,
+tk_archive_mstring_get_mbs(struct archive *a, struct tk_archive_mstring *aes,
     const char **p)
 {
 	int r, ret = 0;
@@ -3917,8 +3917,8 @@ archive_mstring_get_mbs(struct archive *a, struct archive_mstring *aes,
 	*p = NULL;
 	/* If there's a WCS form, try converting with the native locale. */
 	if (aes->aes_set & AES_SET_WCS) {
-		archive_string_empty(&(aes->aes_mbs));
-		r = archive_string_append_from_wcs(&(aes->aes_mbs),
+		tk_archive_string_empty(&(aes->aes_mbs));
+		r = tk_archive_string_append_from_wcs(&(aes->aes_mbs),
 		    aes->aes_wcs.s, aes->aes_wcs.length);
 		*p = aes->aes_mbs.s;
 		if (r == 0) {
@@ -3936,7 +3936,7 @@ archive_mstring_get_mbs(struct archive *a, struct archive_mstring *aes,
 }
 
 int
-archive_mstring_get_wcs(struct archive *a, struct archive_mstring *aes,
+tk_archive_mstring_get_wcs(struct archive *a, struct tk_archive_mstring *aes,
     const wchar_t **wp)
 {
 	int r, ret = 0;
@@ -3951,8 +3951,8 @@ archive_mstring_get_wcs(struct archive *a, struct archive_mstring *aes,
 	*wp = NULL;
 	/* Try converting MBS to WCS using native locale. */
 	if (aes->aes_set & AES_SET_MBS) {
-		archive_wstring_empty(&(aes->aes_wcs));
-		r = archive_wstring_append_from_mbs(&(aes->aes_wcs),
+		tk_archive_wstring_empty(&(aes->aes_wcs));
+		r = tk_archive_wstring_append_from_mbs(&(aes->aes_wcs),
 		    aes->aes_mbs.s, aes->aes_mbs.length);
 		if (r == 0) {
 			aes->aes_set |= AES_SET_WCS;
@@ -3964,8 +3964,8 @@ archive_mstring_get_wcs(struct archive *a, struct archive_mstring *aes,
 }
 
 int
-archive_mstring_get_mbs_l(struct archive_mstring *aes,
-    const char **p, size_t *length, struct archive_string_conv *sc)
+tk_archive_mstring_get_mbs_l(struct tk_archive_mstring *aes,
+    const char **p, size_t *length, struct tk_archive_string_conv *sc)
 {
 	int r, ret = 0;
 
@@ -3975,8 +3975,8 @@ archive_mstring_get_mbs_l(struct archive_mstring *aes,
 	 * characters because Windows platform cannot make locale UTF-8.
 	 */
 	if (sc != NULL && (aes->aes_set & AES_SET_WCS) != 0) {
-		archive_string_empty(&(aes->aes_mbs_in_locale));
-		r = archive_string_append_from_wcs_in_codepage(
+		tk_archive_string_empty(&(aes->aes_mbs_in_locale));
+		r = tk_archive_string_append_from_wcs_in_codepage(
 		    &(aes->aes_mbs_in_locale), aes->aes_wcs.s,
 		    aes->aes_wcs.length, sc);
 		if (r == 0) {
@@ -3996,8 +3996,8 @@ archive_mstring_get_mbs_l(struct archive_mstring *aes,
 	 * character-set. */
 	if ((aes->aes_set & AES_SET_MBS) == 0 &&
 	    (aes->aes_set & AES_SET_WCS) != 0) {
-		archive_string_empty(&(aes->aes_mbs));
-		r = archive_string_append_from_wcs(&(aes->aes_mbs),
+		tk_archive_string_empty(&(aes->aes_mbs));
+		r = tk_archive_string_append_from_wcs(&(aes->aes_mbs),
 		    aes->aes_wcs.s, aes->aes_wcs.length);
 		if (r == 0)
 			aes->aes_set |= AES_SET_MBS;
@@ -4016,7 +4016,7 @@ archive_mstring_get_mbs_l(struct archive_mstring *aes,
 				*length = aes->aes_mbs.length;
 			return (0);
 		}
-		ret = archive_strncpy_l(&(aes->aes_mbs_in_locale),
+		ret = tk_archive_strncpy_l(&(aes->aes_mbs_in_locale),
 		    aes->aes_mbs.s, aes->aes_mbs.length, sc);
 		*p = aes->aes_mbs_in_locale.s;
 		if (length != NULL)
@@ -4030,17 +4030,17 @@ archive_mstring_get_mbs_l(struct archive_mstring *aes,
 }
 
 int
-archive_mstring_copy_mbs(struct archive_mstring *aes, const char *mbs)
+tk_archive_mstring_copy_mbs(struct tk_archive_mstring *aes, const char *mbs)
 {
 	if (mbs == NULL) {
 		aes->aes_set = 0;
 		return (0);
 	}
-	return (archive_mstring_copy_mbs_len(aes, mbs, strlen(mbs)));
+	return (tk_archive_mstring_copy_mbs_len(aes, mbs, strlen(mbs)));
 }
 
 int
-archive_mstring_copy_mbs_len(struct archive_mstring *aes, const char *mbs,
+tk_archive_mstring_copy_mbs_len(struct tk_archive_mstring *aes, const char *mbs,
     size_t len)
 {
 	if (mbs == NULL) {
@@ -4048,36 +4048,36 @@ archive_mstring_copy_mbs_len(struct archive_mstring *aes, const char *mbs,
 		return (0);
 	}
 	aes->aes_set = AES_SET_MBS; /* Only MBS form is set now. */
-	archive_strncpy(&(aes->aes_mbs), mbs, len);
-	archive_string_empty(&(aes->aes_utf8));
-	archive_wstring_empty(&(aes->aes_wcs));
+	tk_archive_strncpy(&(aes->aes_mbs), mbs, len);
+	tk_archive_string_empty(&(aes->aes_utf8));
+	tk_archive_wstring_empty(&(aes->aes_wcs));
 	return (0);
 }
 
 int
-archive_mstring_copy_wcs(struct archive_mstring *aes, const wchar_t *wcs)
+tk_archive_mstring_copy_wcs(struct tk_archive_mstring *aes, const wchar_t *wcs)
 {
-	return archive_mstring_copy_wcs_len(aes, wcs,
+	return tk_archive_mstring_copy_wcs_len(aes, wcs,
 				wcs == NULL ? 0 : wcslen(wcs));
 }
 
 int
-archive_mstring_copy_wcs_len(struct archive_mstring *aes, const wchar_t *wcs,
+tk_archive_mstring_copy_wcs_len(struct tk_archive_mstring *aes, const wchar_t *wcs,
     size_t len)
 {
 	if (wcs == NULL) {
 		aes->aes_set = 0;
 	}
 	aes->aes_set = AES_SET_WCS; /* Only WCS form set. */
-	archive_string_empty(&(aes->aes_mbs));
-	archive_string_empty(&(aes->aes_utf8));
-	archive_wstrncpy(&(aes->aes_wcs), wcs, len);
+	tk_archive_string_empty(&(aes->aes_mbs));
+	tk_archive_string_empty(&(aes->aes_utf8));
+	tk_archive_wstrncpy(&(aes->aes_wcs), wcs, len);
 	return (0);
 }
 
 int
-archive_mstring_copy_mbs_len_l(struct archive_mstring *aes,
-    const char *mbs, size_t len, struct archive_string_conv *sc)
+tk_archive_mstring_copy_mbs_len_l(struct tk_archive_mstring *aes,
+    const char *mbs, size_t len, struct tk_archive_string_conv *sc)
 {
 	int r;
 
@@ -4085,16 +4085,16 @@ archive_mstring_copy_mbs_len_l(struct archive_mstring *aes,
 		aes->aes_set = 0;
 		return (0);
 	}
-	archive_string_empty(&(aes->aes_mbs));
-	archive_wstring_empty(&(aes->aes_wcs));
-	archive_string_empty(&(aes->aes_utf8));
+	tk_archive_string_empty(&(aes->aes_mbs));
+	tk_archive_wstring_empty(&(aes->aes_wcs));
+	tk_archive_string_empty(&(aes->aes_utf8));
 #if defined(_WIN32) && !defined(__CYGWIN__)
 	/*
 	 * Internationalization programing on Windows must use Wide
 	 * characters because Windows platform cannot make locale UTF-8.
 	 */
 	if (sc == NULL) {
-		if (archive_string_append(&(aes->aes_mbs),
+		if (tk_archive_string_append(&(aes->aes_mbs),
 			mbs, mbsnbytes(mbs, len)) == NULL) {
 			aes->aes_set = 0;
 			r = -1;
@@ -4117,7 +4117,7 @@ archive_mstring_copy_mbs_len_l(struct archive_mstring *aes,
 		 * Translate multi-bytes from some character-set to UTF-8.
 		 */ 
 		sc->cd = sc->cd_w;
-		r = archive_strncpy_l(&(aes->aes_utf8), mbs, len, sc);
+		r = tk_archive_strncpy_l(&(aes->aes_utf8), mbs, len, sc);
 		sc->cd = cd;
 		if (r != 0) {
 			aes->aes_set = 0;
@@ -4133,7 +4133,7 @@ archive_mstring_copy_mbs_len_l(struct archive_mstring *aes,
 				| SCONV_TO_UTF16| SCONV_FROM_UTF16);
 		from_cp = sc->from_cp;
 		sc->from_cp = CP_UTF8;
-		r = archive_wstring_append_from_mbs_in_codepage(&(aes->aes_wcs),
+		r = tk_archive_wstring_append_from_mbs_in_codepage(&(aes->aes_wcs),
 			aes->aes_utf8.s, aes->aes_utf8.length, sc);
 		sc->flag = flag;
 		sc->from_cp = from_cp;
@@ -4141,7 +4141,7 @@ archive_mstring_copy_mbs_len_l(struct archive_mstring *aes,
 			aes->aes_set |= AES_SET_WCS;
 #endif
 	} else {
-		r = archive_wstring_append_from_mbs_in_codepage(
+		r = tk_archive_wstring_append_from_mbs_in_codepage(
 		    &(aes->aes_wcs), mbs, len, sc);
 		if (r == 0)
 			aes->aes_set = AES_SET_WCS;
@@ -4149,7 +4149,7 @@ archive_mstring_copy_mbs_len_l(struct archive_mstring *aes,
 			aes->aes_set = 0;
 	}
 #else
-	r = archive_strncpy_l(&(aes->aes_mbs), mbs, len, sc);
+	r = tk_archive_strncpy_l(&(aes->aes_mbs), mbs, len, sc);
 	if (r == 0)
 		aes->aes_set = AES_SET_MBS; /* Only MBS form is set now. */
 	else
@@ -4169,10 +4169,10 @@ archive_mstring_copy_mbs_len_l(struct archive_mstring *aes,
  * usable values even if some of the character conversions are failing.)
  */
 int
-archive_mstring_update_utf8(struct archive *a, struct archive_mstring *aes,
+tk_archive_mstring_update_utf8(struct archive *a, struct tk_archive_mstring *aes,
     const char *utf8)
 {
-	struct archive_string_conv *sc;
+	struct tk_archive_string_conv *sc;
 	int r;
 
 	if (utf8 == NULL) {
@@ -4181,19 +4181,19 @@ archive_mstring_update_utf8(struct archive *a, struct archive_mstring *aes,
 	}
 
 	/* Save the UTF8 string. */
-	archive_strcpy(&(aes->aes_utf8), utf8);
+	tk_archive_strcpy(&(aes->aes_utf8), utf8);
 
 	/* Empty the mbs and wcs strings. */
-	archive_string_empty(&(aes->aes_mbs));
-	archive_wstring_empty(&(aes->aes_wcs));
+	tk_archive_string_empty(&(aes->aes_mbs));
+	tk_archive_wstring_empty(&(aes->aes_wcs));
 
 	aes->aes_set = AES_SET_UTF8;	/* Only UTF8 is set now. */
 
 	/* Try converting UTF-8 to MBS, return false on failure. */
-	sc = archive_string_conversion_from_charset(a, "UTF-8", 1);
+	sc = tk_archive_string_conversion_from_charset(a, "UTF-8", 1);
 	if (sc == NULL)
 		return (-1);/* Couldn't allocate memory for sc. */
-	r = archive_strcpy_l(&(aes->aes_mbs), utf8, sc);
+	r = tk_archive_strcpy_l(&(aes->aes_mbs), utf8, sc);
 	if (a == NULL)
 		free_sconv_object(sc);
 	if (r != 0)
@@ -4201,7 +4201,7 @@ archive_mstring_update_utf8(struct archive *a, struct archive_mstring *aes,
 	aes->aes_set = AES_SET_UTF8 | AES_SET_MBS; /* Both UTF8 and MBS set. */
 
 	/* Try converting MBS to WCS, return false on failure. */
-	if (archive_wstring_append_from_mbs(&(aes->aes_wcs), aes->aes_mbs.s,
+	if (tk_archive_wstring_append_from_mbs(&(aes->aes_wcs), aes->aes_mbs.s,
 	    aes->aes_mbs.length))
 		return (-1);
 	aes->aes_set = AES_SET_UTF8 | AES_SET_WCS | AES_SET_MBS;

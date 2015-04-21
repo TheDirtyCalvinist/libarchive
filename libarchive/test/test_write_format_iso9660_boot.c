@@ -91,7 +91,7 @@ _test_write_format_iso9660_boot(int write_info_tbl)
 {
 	unsigned char nullb[2048];
 	struct archive *a;
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	unsigned char *buff;
 	size_t buffsize = 39 * 2048;
 	size_t used;
@@ -102,35 +102,35 @@ _test_write_format_iso9660_boot(int write_info_tbl)
 	assert(buff != NULL);
 
 	/* ISO9660 format: Create a new archive in memory. */
-	assert((a = archive_write_new()) != NULL);
-	assertA(0 == archive_write_set_format_iso9660(a));
-	assertA(0 == archive_write_add_filter_none(a));
-	assertA(0 == archive_write_set_option(a, NULL, "boot", "boot.img"));
+	assert((a = tk_archive_write_new()) != NULL);
+	assertA(0 == tk_archive_write_set_format_iso9660(a));
+	assertA(0 == tk_archive_write_add_filter_none(a));
+	assertA(0 == tk_archive_write_set_option(a, NULL, "boot", "boot.img"));
 	if (write_info_tbl)
-		assertA(0 == archive_write_set_option(a, NULL, "boot-info-table", "1"));
-	assertA(0 == archive_write_set_option(a, NULL, "pad", NULL));
-	assertA(0 == archive_write_open_memory(a, buff, buffsize, &used));
+		assertA(0 == tk_archive_write_set_option(a, NULL, "boot-info-table", "1"));
+	assertA(0 == tk_archive_write_set_option(a, NULL, "pad", NULL));
+	assertA(0 == tk_archive_write_open_memory(a, buff, buffsize, &used));
 
 	/*
 	 * "boot.img" has a bunch of attributes and 10K bytes of null data.
 	 */
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_set_atime(ae, 2, 20);
-	archive_entry_set_birthtime(ae, 3, 30);
-	archive_entry_set_ctime(ae, 4, 40);
-	archive_entry_set_mtime(ae, 5, 50);
-	archive_entry_copy_pathname(ae, "boot.img");
-	archive_entry_set_mode(ae, S_IFREG | 0755);
-	archive_entry_set_nlink(ae, 1);
-	archive_entry_set_size(ae, 10*1024);
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
-	archive_entry_free(ae);
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_atime(ae, 2, 20);
+	tk_archive_entry_set_birthtime(ae, 3, 30);
+	tk_archive_entry_set_ctime(ae, 4, 40);
+	tk_archive_entry_set_mtime(ae, 5, 50);
+	tk_archive_entry_copy_pathname(ae, "boot.img");
+	tk_archive_entry_set_mode(ae, S_IFREG | 0755);
+	tk_archive_entry_set_nlink(ae, 1);
+	tk_archive_entry_set_size(ae, 10*1024);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_header(a, ae));
+	tk_archive_entry_free(ae);
 	for (i = 0; i < 10; i++)
-		assertEqualIntA(a, 1024, archive_write_data(a, nullb, 1024));
+		assertEqualIntA(a, 1024, tk_archive_write_data(a, nullb, 1024));
 
 	/* Close out the archive. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_free(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_close(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_free(a));
 
 	assert(used == 2048 * 38);
 	/* Check System Area. */
@@ -206,51 +206,51 @@ _test_write_format_iso9660_boot(int write_info_tbl)
 	/*
 	 * Read ISO image.
 	 */
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, 0, archive_read_support_format_all(a));
-	assertEqualIntA(a, 0, archive_read_support_filter_all(a));
-	assertEqualIntA(a, 0, archive_read_open_memory(a, buff, used));
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, 0, tk_archive_read_support_format_all(a));
+	assertEqualIntA(a, 0, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, 0, tk_archive_read_open_memory(a, buff, used));
 
 	/*
 	 * Read Root Directory
 	 * Root Directory entry must be in ISO image.
 	 */
-	assertEqualIntA(a, 0, archive_read_next_header(a, &ae));
-	assertEqualInt(archive_entry_atime(ae), archive_entry_ctime(ae));
-	assertEqualInt(archive_entry_atime(ae), archive_entry_mtime(ae));
-	assertEqualString(".", archive_entry_pathname(ae));
-	assert((S_IFDIR | 0555) == archive_entry_mode(ae));
-	assertEqualInt(2048, archive_entry_size(ae));
+	assertEqualIntA(a, 0, tk_archive_read_next_header(a, &ae));
+	assertEqualInt(tk_archive_entry_atime(ae), tk_archive_entry_ctime(ae));
+	assertEqualInt(tk_archive_entry_atime(ae), tk_archive_entry_mtime(ae));
+	assertEqualString(".", tk_archive_entry_pathname(ae));
+	assert((S_IFDIR | 0555) == tk_archive_entry_mode(ae));
+	assertEqualInt(2048, tk_archive_entry_size(ae));
 
 	/*
 	 * Read "boot.catalog".
 	 */
-	assertEqualIntA(a, 0, archive_read_next_header(a, &ae));
-	assertEqualString("boot.catalog", archive_entry_pathname(ae));
+	assertEqualIntA(a, 0, tk_archive_read_next_header(a, &ae));
+	assertEqualString("boot.catalog", tk_archive_entry_pathname(ae));
 #if !defined(_WIN32) && !defined(__CYGWIN__)
-	assert((S_IFREG | 0444) == archive_entry_mode(ae));
+	assert((S_IFREG | 0444) == tk_archive_entry_mode(ae));
 #else
 	/* On Windows and CYGWIN, always set all exec bit ON by default. */ 
-	assert((S_IFREG | 0555) == archive_entry_mode(ae));
+	assert((S_IFREG | 0555) == tk_archive_entry_mode(ae));
 #endif
-	assertEqualInt(1, archive_entry_nlink(ae));
-	assertEqualInt(2*1024, archive_entry_size(ae));
-	assertEqualIntA(a, 1024, archive_read_data(a, buff2, 1024));
+	assertEqualInt(1, tk_archive_entry_nlink(ae));
+	assertEqualInt(2*1024, tk_archive_entry_size(ae));
+	assertEqualIntA(a, 1024, tk_archive_read_data(a, buff2, 1024));
 	assertEqualMem(buff2, boot_catalog, 64);
 
 	/*
 	 * Read "boot.img".
 	 */
-	assertEqualIntA(a, 0, archive_read_next_header(a, &ae));
-	assertEqualInt(2, archive_entry_atime(ae));
-	assertEqualInt(3, archive_entry_birthtime(ae));
-	assertEqualInt(4, archive_entry_ctime(ae));
-	assertEqualInt(5, archive_entry_mtime(ae));
-	assertEqualString("boot.img", archive_entry_pathname(ae));
-	assert((S_IFREG | 0555) == archive_entry_mode(ae));
-	assertEqualInt(1, archive_entry_nlink(ae));
-	assertEqualInt(10*1024, archive_entry_size(ae));
-	assertEqualIntA(a, 1024, archive_read_data(a, buff2, 1024));
+	assertEqualIntA(a, 0, tk_archive_read_next_header(a, &ae));
+	assertEqualInt(2, tk_archive_entry_atime(ae));
+	assertEqualInt(3, tk_archive_entry_birthtime(ae));
+	assertEqualInt(4, tk_archive_entry_ctime(ae));
+	assertEqualInt(5, tk_archive_entry_mtime(ae));
+	assertEqualString("boot.img", tk_archive_entry_pathname(ae));
+	assert((S_IFREG | 0555) == tk_archive_entry_mode(ae));
+	assertEqualInt(1, tk_archive_entry_nlink(ae));
+	assertEqualInt(10*1024, tk_archive_entry_size(ae));
+	assertEqualIntA(a, 1024, tk_archive_read_data(a, buff2, 1024));
 	if (write_info_tbl) {
 		assertEqualMem(buff2, nullb, 8);
 		assertEqualMem(buff2+8, info_table, 56);
@@ -261,9 +261,9 @@ _test_write_format_iso9660_boot(int write_info_tbl)
 	/*
 	 * Verify the end of the archive.
 	 */
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_free(a));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_free(a));
 
 	free(buff);
 }

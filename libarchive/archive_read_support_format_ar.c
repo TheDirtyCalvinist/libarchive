@@ -81,48 +81,48 @@ struct ar {
 #define AR_fmag_offset 58
 #define AR_fmag_size 2
 
-static int	archive_read_format_ar_bid(struct archive_read *a, int);
-static int	archive_read_format_ar_cleanup(struct archive_read *a);
-static int	archive_read_format_ar_read_data(struct archive_read *a,
+static int	tk_archive_read_format_ar_bid(struct tk_archive_read *a, int);
+static int	tk_archive_read_format_ar_cleanup(struct tk_archive_read *a);
+static int	tk_archive_read_format_ar_read_data(struct tk_archive_read *a,
 		    const void **buff, size_t *size, int64_t *offset);
-static int	archive_read_format_ar_skip(struct archive_read *a);
-static int	archive_read_format_ar_read_header(struct archive_read *a,
-		    struct archive_entry *e);
+static int	tk_archive_read_format_ar_skip(struct tk_archive_read *a);
+static int	tk_archive_read_format_ar_read_header(struct tk_archive_read *a,
+		    struct tk_archive_entry *e);
 static uint64_t	ar_atol8(const char *p, unsigned char_cnt);
 static uint64_t	ar_atol10(const char *p, unsigned char_cnt);
-static int	ar_parse_gnu_filename_table(struct archive_read *a);
-static int	ar_parse_common_header(struct ar *ar, struct archive_entry *,
+static int	ar_parse_gnu_filename_table(struct tk_archive_read *a);
+static int	ar_parse_common_header(struct ar *ar, struct tk_archive_entry *,
 		    const char *h);
 
 int
-archive_read_support_format_ar(struct archive *_a)
+tk_archive_read_support_format_ar(struct archive *_a)
 {
-	struct archive_read *a = (struct archive_read *)_a;
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
 	struct ar *ar;
 	int r;
 
-	archive_check_magic(_a, ARCHIVE_READ_MAGIC,
-	    ARCHIVE_STATE_NEW, "archive_read_support_format_ar");
+	tk_archive_check_magic(_a, ARCHIVE_READ_MAGIC,
+	    ARCHIVE_STATE_NEW, "tk_archive_read_support_format_ar");
 
 	ar = (struct ar *)malloc(sizeof(*ar));
 	if (ar == NULL) {
-		archive_set_error(&a->archive, ENOMEM,
+		tk_archive_set_error(&a->archive, ENOMEM,
 		    "Can't allocate ar data");
 		return (ARCHIVE_FATAL);
 	}
 	memset(ar, 0, sizeof(*ar));
 	ar->strtab = NULL;
 
-	r = __archive_read_register_format(a,
+	r = __tk_archive_read_register_format(a,
 	    ar,
 	    "ar",
-	    archive_read_format_ar_bid,
+	    tk_archive_read_format_ar_bid,
 	    NULL,
-	    archive_read_format_ar_read_header,
-	    archive_read_format_ar_read_data,
-	    archive_read_format_ar_skip,
+	    tk_archive_read_format_ar_read_header,
+	    tk_archive_read_format_ar_read_data,
+	    tk_archive_read_format_ar_skip,
 	    NULL,
-	    archive_read_format_ar_cleanup);
+	    tk_archive_read_format_ar_cleanup);
 
 	if (r != ARCHIVE_OK) {
 		free(ar);
@@ -132,7 +132,7 @@ archive_read_support_format_ar(struct archive *_a)
 }
 
 static int
-archive_read_format_ar_cleanup(struct archive_read *a)
+tk_archive_read_format_ar_cleanup(struct tk_archive_read *a)
 {
 	struct ar *ar;
 
@@ -145,7 +145,7 @@ archive_read_format_ar_cleanup(struct archive_read *a)
 }
 
 static int
-archive_read_format_ar_bid(struct archive_read *a, int best_bid)
+tk_archive_read_format_ar_bid(struct tk_archive_read *a, int best_bid)
 {
 	const void *h;
 
@@ -155,7 +155,7 @@ archive_read_format_ar_bid(struct archive_read *a, int best_bid)
 	 * Verify the 8-byte file signature.
 	 * TODO: Do we need to check more than this?
 	 */
-	if ((h = __archive_read_ahead(a, 8, NULL)) == NULL)
+	if ((h = __tk_archive_read_ahead(a, 8, NULL)) == NULL)
 		return (-1);
 	if (memcmp(h, "!<arch>\n", 8) == 0) {
 		return (64);
@@ -164,7 +164,7 @@ archive_read_format_ar_bid(struct archive_read *a, int best_bid)
 }
 
 static int
-_ar_read_header(struct archive_read *a, struct archive_entry *entry,
+_ar_read_header(struct tk_archive_read *a, struct tk_archive_entry *entry,
 	struct ar *ar, const char *h, size_t *unconsumed)
 {
 	char filename[AR_name_size + 1];
@@ -176,7 +176,7 @@ _ar_read_header(struct archive_read *a, struct archive_entry *entry,
 
 	/* Verify the magic signature on the file header. */
 	if (strncmp(h + AR_fmag_offset, "`\n", 2) != 0) {
-		archive_set_error(&a->archive, EINVAL,
+		tk_archive_set_error(&a->archive, EINVAL,
 		    "Incorrect file header signature");
 		return (ARCHIVE_WARN);
 	}
@@ -188,7 +188,7 @@ _ar_read_header(struct archive_read *a, struct archive_entry *entry,
 	/*
 	 * Guess the format variant based on the filename.
 	 */
-	if (a->archive.archive_format == ARCHIVE_FORMAT_AR) {
+	if (a->archive.tk_archive_format == ARCHIVE_FORMAT_AR) {
 		/* We don't already know the variant, so let's guess. */
 		/*
 		 * Biggest clue is presence of '/': GNU starts special
@@ -197,11 +197,11 @@ _ar_read_header(struct archive_read *a, struct archive_entry *entry,
 		 * GNU except for BSD long filenames.
 		 */
 		if (strncmp(filename, "#1/", 3) == 0)
-			a->archive.archive_format = ARCHIVE_FORMAT_AR_BSD;
+			a->archive.tk_archive_format = ARCHIVE_FORMAT_AR_BSD;
 		else if (strchr(filename, '/') != NULL)
-			a->archive.archive_format = ARCHIVE_FORMAT_AR_GNU;
+			a->archive.tk_archive_format = ARCHIVE_FORMAT_AR_GNU;
 		else if (strncmp(filename, "__.SYMDEF", 9) == 0)
-			a->archive.archive_format = ARCHIVE_FORMAT_AR_BSD;
+			a->archive.tk_archive_format = ARCHIVE_FORMAT_AR_BSD;
 		/*
 		 * XXX Do GNU/SVR4 'ar' programs ever omit trailing '/'
 		 * if name exactly fills 16-byte field?  If so, we
@@ -210,12 +210,12 @@ _ar_read_header(struct archive_read *a, struct archive_entry *entry,
 	}
 
 	/* Update format name from the code. */
-	if (a->archive.archive_format == ARCHIVE_FORMAT_AR_GNU)
-		a->archive.archive_format_name = "ar (GNU/SVR4)";
-	else if (a->archive.archive_format == ARCHIVE_FORMAT_AR_BSD)
-		a->archive.archive_format_name = "ar (BSD)";
+	if (a->archive.tk_archive_format == ARCHIVE_FORMAT_AR_GNU)
+		a->archive.tk_archive_format_name = "ar (GNU/SVR4)";
+	else if (a->archive.tk_archive_format == ARCHIVE_FORMAT_AR_BSD)
+		a->archive.tk_archive_format_name = "ar (BSD)";
 	else
-		a->archive.archive_format_name = "ar";
+		a->archive.tk_archive_format_name = "ar";
 
 	/*
 	 * Remove trailing spaces from the filename.  GNU and BSD
@@ -247,23 +247,23 @@ _ar_read_header(struct archive_read *a, struct archive_entry *entry,
 	if (strcmp(filename, "//") == 0) {
 		/* This must come before any call to _read_ahead. */
 		ar_parse_common_header(ar, entry, h);
-		archive_entry_copy_pathname(entry, filename);
-		archive_entry_set_filetype(entry, AE_IFREG);
+		tk_archive_entry_copy_pathname(entry, filename);
+		tk_archive_entry_set_filetype(entry, AE_IFREG);
 		/* Get the size of the filename table. */
 		number = ar_atol10(h + AR_size_offset, AR_size_size);
 		if (number > SIZE_MAX) {
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "Filename table too large");
 			return (ARCHIVE_FATAL);
 		}
 		entry_size = (size_t)number;
 		if (entry_size == 0) {
-			archive_set_error(&a->archive, EINVAL,
+			tk_archive_set_error(&a->archive, EINVAL,
 			    "Invalid string table");
 			return (ARCHIVE_WARN);
 		}
 		if (ar->strtab != NULL) {
-			archive_set_error(&a->archive, EINVAL,
+			tk_archive_set_error(&a->archive, EINVAL,
 			    "More than one string tables exist");
 			return (ARCHIVE_WARN);
 		}
@@ -271,7 +271,7 @@ _ar_read_header(struct archive_read *a, struct archive_entry *entry,
 		/* Read the filename table into memory. */
 		st = malloc(entry_size);
 		if (st == NULL) {
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate filename table buffer");
 			return (ARCHIVE_FATAL);
 		}
@@ -279,17 +279,17 @@ _ar_read_header(struct archive_read *a, struct archive_entry *entry,
 		ar->strtab_size = entry_size;
 
 		if (*unconsumed) {
-			__archive_read_consume(a, *unconsumed);
+			__tk_archive_read_consume(a, *unconsumed);
 			*unconsumed = 0;
 		}
 
-		if ((b = __archive_read_ahead(a, entry_size, NULL)) == NULL)
+		if ((b = __tk_archive_read_ahead(a, entry_size, NULL)) == NULL)
 			return (ARCHIVE_FATAL);
 		memcpy(st, b, entry_size);
-		__archive_read_consume(a, entry_size);
+		__tk_archive_read_consume(a, entry_size);
 		/* All contents are consumed. */
 		ar->entry_bytes_remaining = 0;
-		archive_entry_set_size(entry, ar->entry_bytes_remaining);
+		tk_archive_entry_set_size(entry, ar->entry_bytes_remaining);
 
 		/* Parse the filename table. */
 		return (ar_parse_gnu_filename_table(a));
@@ -308,15 +308,15 @@ _ar_read_header(struct archive_read *a, struct archive_entry *entry,
 		 * the entry with the wrong name.
 		 */
 		if (ar->strtab == NULL || number > ar->strtab_size) {
-			archive_set_error(&a->archive, EINVAL,
+			tk_archive_set_error(&a->archive, EINVAL,
 			    "Can't find long filename for entry");
-			archive_entry_copy_pathname(entry, filename);
+			tk_archive_entry_copy_pathname(entry, filename);
 			/* Parse the time, owner, mode, size fields. */
 			ar_parse_common_header(ar, entry, h);
 			return (ARCHIVE_WARN);
 		}
 
-		archive_entry_copy_pathname(entry, &ar->strtab[(size_t)number]);
+		tk_archive_entry_copy_pathname(entry, &ar->strtab[(size_t)number]);
 		/* Parse the time, owner, mode, size fields. */
 		return (ar_parse_common_header(ar, entry, h));
 	}
@@ -339,38 +339,38 @@ _ar_read_header(struct archive_read *a, struct archive_entry *entry,
 		 * being larger than the entire entry. */
 		if (number > (uint64_t)(bsd_name_length + 1)
 		    || (int64_t)bsd_name_length > ar->entry_bytes_remaining) {
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "Bad input file size");
 			return (ARCHIVE_FATAL);
 		}
 		ar->entry_bytes_remaining -= bsd_name_length;
 		/* Adjust file size reported to client. */
-		archive_entry_set_size(entry, ar->entry_bytes_remaining);
+		tk_archive_entry_set_size(entry, ar->entry_bytes_remaining);
 
 		if (*unconsumed) {
-			__archive_read_consume(a, *unconsumed);
+			__tk_archive_read_consume(a, *unconsumed);
 			*unconsumed = 0;
 		}
 
 		/* Read the long name into memory. */
-		if ((b = __archive_read_ahead(a, bsd_name_length, NULL)) == NULL) {
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+		if ((b = __tk_archive_read_ahead(a, bsd_name_length, NULL)) == NULL) {
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "Truncated input file");
 			return (ARCHIVE_FATAL);
 		}
 		/* Store it in the entry. */
 		p = (char *)malloc(bsd_name_length + 1);
 		if (p == NULL) {
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate fname buffer");
 			return (ARCHIVE_FATAL);
 		}
 		strncpy(p, b, bsd_name_length);
 		p[bsd_name_length] = '\0';
 
-		__archive_read_consume(a, bsd_name_length);
+		__tk_archive_read_consume(a, bsd_name_length);
 
-		archive_entry_copy_pathname(entry, p);
+		tk_archive_entry_copy_pathname(entry, p);
 		free(p);
 		return (ARCHIVE_OK);
 	}
@@ -379,11 +379,11 @@ _ar_read_header(struct archive_read *a, struct archive_entry *entry,
 	 * "/" is the SVR4/GNU archive symbol table.
 	 */
 	if (strcmp(filename, "/") == 0) {
-		archive_entry_copy_pathname(entry, "/");
+		tk_archive_entry_copy_pathname(entry, "/");
 		/* Parse the time, owner, mode, size fields. */
 		r = ar_parse_common_header(ar, entry, h);
 		/* Force the file type to a regular file. */
-		archive_entry_set_filetype(entry, AE_IFREG);
+		tk_archive_entry_set_filetype(entry, AE_IFREG);
 		return (r);
 	}
 
@@ -391,7 +391,7 @@ _ar_read_header(struct archive_read *a, struct archive_entry *entry,
 	 * "__.SYMDEF" is a BSD archive symbol table.
 	 */
 	if (strcmp(filename, "__.SYMDEF") == 0) {
-		archive_entry_copy_pathname(entry, filename);
+		tk_archive_entry_copy_pathname(entry, filename);
 		/* Parse the time, owner, mode, size fields. */
 		return (ar_parse_common_header(ar, entry, h));
 	}
@@ -401,13 +401,13 @@ _ar_read_header(struct archive_read *a, struct archive_entry *entry,
 	 * has already been trimmed as much as possible, based
 	 * on our current knowledge of the format.
 	 */
-	archive_entry_copy_pathname(entry, filename);
+	tk_archive_entry_copy_pathname(entry, filename);
 	return (ar_parse_common_header(ar, entry, h));
 }
 
 static int
-archive_read_format_ar_read_header(struct archive_read *a,
-    struct archive_entry *entry)
+tk_archive_read_format_ar_read_header(struct tk_archive_read *a,
+    struct tk_archive_entry *entry)
 {
 	struct ar *ar = (struct ar*)(a->format->data);
 	size_t unconsumed;
@@ -419,14 +419,14 @@ archive_read_format_ar_read_header(struct archive_read *a,
 		 * We are now at the beginning of the archive,
 		 * so we need first consume the ar global header.
 		 */
-		__archive_read_consume(a, 8);
+		__tk_archive_read_consume(a, 8);
 		ar->read_global_header = 1;
 		/* Set a default format code for now. */
-		a->archive.archive_format = ARCHIVE_FORMAT_AR;
+		a->archive.tk_archive_format = ARCHIVE_FORMAT_AR;
 	}
 
 	/* Read the header for the next file entry. */
-	if ((header_data = __archive_read_ahead(a, 60, NULL)) == NULL)
+	if ((header_data = __tk_archive_read_ahead(a, 60, NULL)) == NULL)
 		/* Broken header. */
 		return (ARCHIVE_EOF);
 	
@@ -435,38 +435,38 @@ archive_read_format_ar_read_header(struct archive_read *a,
 	ret = _ar_read_header(a, entry, ar, (const char *)header_data, &unconsumed);
 
 	if (unconsumed)
-		__archive_read_consume(a, unconsumed);
+		__tk_archive_read_consume(a, unconsumed);
 
 	return ret;
 }
 
 
 static int
-ar_parse_common_header(struct ar *ar, struct archive_entry *entry,
+ar_parse_common_header(struct ar *ar, struct tk_archive_entry *entry,
     const char *h)
 {
 	uint64_t n;
 
 	/* Copy remaining header */
-	archive_entry_set_mtime(entry,
+	tk_archive_entry_set_mtime(entry,
 	    (time_t)ar_atol10(h + AR_date_offset, AR_date_size), 0L);
-	archive_entry_set_uid(entry,
+	tk_archive_entry_set_uid(entry,
 	    (uid_t)ar_atol10(h + AR_uid_offset, AR_uid_size));
-	archive_entry_set_gid(entry,
+	tk_archive_entry_set_gid(entry,
 	    (gid_t)ar_atol10(h + AR_gid_offset, AR_gid_size));
-	archive_entry_set_mode(entry,
+	tk_archive_entry_set_mode(entry,
 	    (mode_t)ar_atol8(h + AR_mode_offset, AR_mode_size));
 	n = ar_atol10(h + AR_size_offset, AR_size_size);
 
 	ar->entry_offset = 0;
 	ar->entry_padding = n % 2;
-	archive_entry_set_size(entry, n);
+	tk_archive_entry_set_size(entry, n);
 	ar->entry_bytes_remaining = n;
 	return (ARCHIVE_OK);
 }
 
 static int
-archive_read_format_ar_read_data(struct archive_read *a,
+tk_archive_read_format_ar_read_data(struct tk_archive_read *a,
     const void **buff, size_t *size, int64_t *offset)
 {
 	ssize_t bytes_read;
@@ -475,14 +475,14 @@ archive_read_format_ar_read_data(struct archive_read *a,
 	ar = (struct ar *)(a->format->data);
 
 	if (ar->entry_bytes_unconsumed) {
-		__archive_read_consume(a, ar->entry_bytes_unconsumed);
+		__tk_archive_read_consume(a, ar->entry_bytes_unconsumed);
 		ar->entry_bytes_unconsumed = 0;
 	}
 
 	if (ar->entry_bytes_remaining > 0) {
-		*buff = __archive_read_ahead(a, 1, &bytes_read);
+		*buff = __tk_archive_read_ahead(a, 1, &bytes_read);
 		if (bytes_read == 0) {
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "Truncated ar archive");
 			return (ARCHIVE_FATAL);
 		}
@@ -497,13 +497,13 @@ archive_read_format_ar_read_data(struct archive_read *a,
 		ar->entry_bytes_remaining -= bytes_read;
 		return (ARCHIVE_OK);
 	} else {
-		int64_t skipped = __archive_read_consume(a, ar->entry_padding);
+		int64_t skipped = __tk_archive_read_consume(a, ar->entry_padding);
 		if (skipped >= 0) {
 			ar->entry_padding -= skipped;
 		}
 		if (ar->entry_padding) {
 			if (skipped >= 0) {
-				archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+				tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 					"Truncated ar archive- failed consuming padding");
 			}
 			return (ARCHIVE_FATAL);
@@ -516,14 +516,14 @@ archive_read_format_ar_read_data(struct archive_read *a,
 }
 
 static int
-archive_read_format_ar_skip(struct archive_read *a)
+tk_archive_read_format_ar_skip(struct tk_archive_read *a)
 {
 	int64_t bytes_skipped;
 	struct ar* ar;
 
 	ar = (struct ar *)(a->format->data);
 
-	bytes_skipped = __archive_read_consume(a,
+	bytes_skipped = __tk_archive_read_consume(a,
 	    ar->entry_bytes_remaining + ar->entry_padding
 	    + ar->entry_bytes_unconsumed);
 	if (bytes_skipped < 0)
@@ -537,7 +537,7 @@ archive_read_format_ar_skip(struct archive_read *a)
 }
 
 static int
-ar_parse_gnu_filename_table(struct archive_read *a)
+ar_parse_gnu_filename_table(struct tk_archive_read *a)
 {
 	struct ar *ar;
 	char *p;
@@ -567,7 +567,7 @@ ar_parse_gnu_filename_table(struct archive_read *a)
 	return (ARCHIVE_OK);
 
 bad_string_table:
-	archive_set_error(&a->archive, EINVAL,
+	tk_archive_set_error(&a->archive, EINVAL,
 	    "Invalid string table");
 	free(ar->strtab);
 	ar->strtab = NULL;

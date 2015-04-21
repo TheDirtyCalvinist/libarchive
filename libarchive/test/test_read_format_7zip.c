@@ -33,38 +33,38 @@ static void
 test_copy()
 {
 	const char *refname = "test_read_format_7zip_copy.7z";
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	struct archive *a;
 	char buff[128];
 
 	extract_reference_file(refname);
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_open_filename(a, refname, 10240));
+	    tk_archive_read_open_filename(a, refname, 10240));
 
 	/* Verify regular file1. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt((AE_IFREG | 0666), archive_entry_mode(ae));
-	assertEqualString("file1", archive_entry_pathname(ae));
-	assertEqualInt(86401, archive_entry_mtime(ae));
-	assertEqualInt(60, archive_entry_size(ae));
-	assertEqualInt(60, archive_read_data(a, buff, sizeof(buff)));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt((AE_IFREG | 0666), tk_archive_entry_mode(ae));
+	assertEqualString("file1", tk_archive_entry_pathname(ae));
+	assertEqualInt(86401, tk_archive_entry_mtime(ae));
+	assertEqualInt(60, tk_archive_entry_size(ae));
+	assertEqualInt(60, tk_archive_read_data(a, buff, sizeof(buff)));
 	assertEqualMem(buff, "    ", 4);
 
-	assertEqualInt(1, archive_file_count(a));
+	assertEqualInt(1, tk_archive_file_count(a));
 
 	/* End of archive. */
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
 
 	/* Verify archive format. */
-	assertEqualIntA(a, ARCHIVE_FILTER_NONE, archive_filter_code(a, 0));
-	assertEqualIntA(a, ARCHIVE_FORMAT_7ZIP, archive_format(a));
+	assertEqualIntA(a, ARCHIVE_FILTER_NONE, tk_archive_filter_code(a, 0));
+	assertEqualIntA(a, ARCHIVE_FORMAT_7ZIP, tk_archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 /*
@@ -74,28 +74,28 @@ static void
 test_empty_archive()
 {
 	const char *refname = "test_read_format_7zip_empty_archive.7z";
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	struct archive *a;
 
 	extract_reference_file(refname);
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_open_filename(a, refname, 10240));
+	    tk_archive_read_open_filename(a, refname, 10240));
 
 	/* End of archive. */
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
 
-	assertEqualInt(0, archive_file_count(a));
+	assertEqualInt(0, tk_archive_file_count(a));
 
 	/* Verify archive format. */
-	assertEqualIntA(a, ARCHIVE_FILTER_NONE, archive_filter_code(a, 0));
-	assertEqualIntA(a, ARCHIVE_FORMAT_7ZIP, archive_format(a));
+	assertEqualIntA(a, ARCHIVE_FILTER_NONE, tk_archive_filter_code(a, 0));
+	assertEqualIntA(a, ARCHIVE_FORMAT_7ZIP, tk_archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 /*
@@ -106,35 +106,35 @@ static void
 test_empty_file()
 {
 	const char *refname = "test_read_format_7zip_empty_file.7z";
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	struct archive *a;
 
 	extract_reference_file(refname);
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_open_filename(a, refname, 10240));
+	    tk_archive_read_open_filename(a, refname, 10240));
 
 	/* Verify regular empty. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt((AE_IFREG | 0644), archive_entry_mode(ae));
-	assertEqualString("empty", archive_entry_pathname(ae));
-	assertEqualInt(86401, archive_entry_mtime(ae));
-	assertEqualInt(0, archive_entry_size(ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt((AE_IFREG | 0644), tk_archive_entry_mode(ae));
+	assertEqualString("empty", tk_archive_entry_pathname(ae));
+	assertEqualInt(86401, tk_archive_entry_mtime(ae));
+	assertEqualInt(0, tk_archive_entry_size(ae));
 
-	assertEqualInt(1, archive_file_count(a));
+	assertEqualInt(1, tk_archive_file_count(a));
 
 	/* End of archive. */
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
 
 	/* Verify archive format. */
-	assertEqualIntA(a, ARCHIVE_FILTER_NONE, archive_filter_code(a, 0));
-	assertEqualIntA(a, ARCHIVE_FORMAT_7ZIP, archive_format(a));
+	assertEqualIntA(a, ARCHIVE_FILTER_NONE, tk_archive_filter_code(a, 0));
+	assertEqualIntA(a, ARCHIVE_FORMAT_7ZIP, tk_archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 /*
@@ -144,38 +144,38 @@ test_empty_file()
 static void
 test_plain_header(const char *refname)
 {
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	struct archive *a;
 	char buff[128];
 
 	extract_reference_file(refname);
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_open_filename(a, refname, 10240));
+	    tk_archive_read_open_filename(a, refname, 10240));
 
 	/* Verify regular file1. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt((AE_IFREG | 0644), archive_entry_mode(ae));
-	assertEqualString("file1", archive_entry_pathname(ae));
-	assertEqualInt(1322058763, archive_entry_mtime(ae));
-	assertEqualInt(2844, archive_entry_size(ae));
-	assertEqualInt(sizeof(buff), archive_read_data(a, buff, sizeof(buff)));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt((AE_IFREG | 0644), tk_archive_entry_mode(ae));
+	assertEqualString("file1", tk_archive_entry_pathname(ae));
+	assertEqualInt(1322058763, tk_archive_entry_mtime(ae));
+	assertEqualInt(2844, tk_archive_entry_size(ae));
+	assertEqualInt(sizeof(buff), tk_archive_read_data(a, buff, sizeof(buff)));
 	assertEqualMem(buff, "The libarchive distribution ", 28);
 
-	assertEqualInt(1, archive_file_count(a));
+	assertEqualInt(1, tk_archive_file_count(a));
 
 	/* End of archive. */
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
 
 	/* Verify archive format. */
-	assertEqualIntA(a, ARCHIVE_FILTER_NONE, archive_filter_code(a, 0));
-	assertEqualIntA(a, ARCHIVE_FORMAT_7ZIP, archive_format(a));
+	assertEqualIntA(a, ARCHIVE_FILTER_NONE, tk_archive_filter_code(a, 0));
+	assertEqualIntA(a, ARCHIVE_FORMAT_7ZIP, tk_archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 /*
@@ -185,72 +185,72 @@ test_plain_header(const char *refname)
 static void
 test_extract_all_files(const char *refname)
 {
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	struct archive *a;
 	char buff[128];
 
 	extract_reference_file(refname);
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_open_filename(a, refname, 10240));
+	    tk_archive_read_open_filename(a, refname, 10240));
 
 	/* Verify regular file1. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt((AE_IFREG | 0644), archive_entry_mode(ae));
-	assertEqualString("dir1/file1", archive_entry_pathname(ae));
-	assertEqualInt(86401, archive_entry_mtime(ae));
-	assertEqualInt(13, archive_entry_size(ae));
-	assertEqualInt(13, archive_read_data(a, buff, sizeof(buff)));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt((AE_IFREG | 0644), tk_archive_entry_mode(ae));
+	assertEqualString("dir1/file1", tk_archive_entry_pathname(ae));
+	assertEqualInt(86401, tk_archive_entry_mtime(ae));
+	assertEqualInt(13, tk_archive_entry_size(ae));
+	assertEqualInt(13, tk_archive_read_data(a, buff, sizeof(buff)));
 	assertEqualMem(buff, "aaaaaaaaaaaa\n", 13);
 
 	/* Verify regular file2. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt((AE_IFREG | 0644), archive_entry_mode(ae));
-	assertEqualString("file2", archive_entry_pathname(ae));
-	assertEqualInt(86401, archive_entry_mtime(ae));
-	assertEqualInt(26, archive_entry_size(ae));
-	assertEqualInt(26, archive_read_data(a, buff, sizeof(buff)));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt((AE_IFREG | 0644), tk_archive_entry_mode(ae));
+	assertEqualString("file2", tk_archive_entry_pathname(ae));
+	assertEqualInt(86401, tk_archive_entry_mtime(ae));
+	assertEqualInt(26, tk_archive_entry_size(ae));
+	assertEqualInt(26, tk_archive_read_data(a, buff, sizeof(buff)));
 	assertEqualMem(buff, "aaaaaaaaaaaa\nbbbbbbbbbbbb\n", 26);
 
 	/* Verify regular file3. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt((AE_IFREG | 0644), archive_entry_mode(ae));
-	assertEqualString("file3", archive_entry_pathname(ae));
-	assertEqualInt(86401, archive_entry_mtime(ae));
-	assertEqualInt(39, archive_entry_size(ae));
-	assertEqualInt(39, archive_read_data(a, buff, sizeof(buff)));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt((AE_IFREG | 0644), tk_archive_entry_mode(ae));
+	assertEqualString("file3", tk_archive_entry_pathname(ae));
+	assertEqualInt(86401, tk_archive_entry_mtime(ae));
+	assertEqualInt(39, tk_archive_entry_size(ae));
+	assertEqualInt(39, tk_archive_read_data(a, buff, sizeof(buff)));
 	assertEqualMem(buff, "aaaaaaaaaaaa\nbbbbbbbbbbbb\ncccccccccccc\n", 39);
 
 	/* Verify regular file4. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt((AE_IFREG | 0644), archive_entry_mode(ae));
-	assertEqualString("file4", archive_entry_pathname(ae));
-	assertEqualInt(86401, archive_entry_mtime(ae));
-	assertEqualInt(52, archive_entry_size(ae));
-	assertEqualInt(52, archive_read_data(a, buff, sizeof(buff)));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt((AE_IFREG | 0644), tk_archive_entry_mode(ae));
+	assertEqualString("file4", tk_archive_entry_pathname(ae));
+	assertEqualInt(86401, tk_archive_entry_mtime(ae));
+	assertEqualInt(52, tk_archive_entry_size(ae));
+	assertEqualInt(52, tk_archive_read_data(a, buff, sizeof(buff)));
 	assertEqualMem(buff,
 	    "aaaaaaaaaaaa\nbbbbbbbbbbbb\ncccccccccccc\ndddddddddddd\n", 52);
 
 	/* Verify directory dir1. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt((AE_IFDIR | 0755), archive_entry_mode(ae));
-	assertEqualString("dir1/", archive_entry_pathname(ae));
-	assertEqualInt(2764801, archive_entry_mtime(ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt((AE_IFDIR | 0755), tk_archive_entry_mode(ae));
+	assertEqualString("dir1/", tk_archive_entry_pathname(ae));
+	assertEqualInt(2764801, tk_archive_entry_mtime(ae));
 
-	assertEqualInt(5, archive_file_count(a));
+	assertEqualInt(5, tk_archive_file_count(a));
 
 	/* End of archive. */
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
 
 	/* Verify archive format. */
-	assertEqualIntA(a, ARCHIVE_FILTER_NONE, archive_filter_code(a, 0));
-	assertEqualIntA(a, ARCHIVE_FORMAT_7ZIP, archive_format(a));
+	assertEqualIntA(a, ARCHIVE_FILTER_NONE, tk_archive_filter_code(a, 0));
+	assertEqualIntA(a, ARCHIVE_FORMAT_7ZIP, tk_archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 /*
@@ -260,66 +260,66 @@ test_extract_all_files(const char *refname)
 static void
 test_extract_last_file(const char *refname)
 {
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	struct archive *a;
 	char buff[128];
 
 	extract_reference_file(refname);
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_open_filename(a, refname, 10240));
+	    tk_archive_read_open_filename(a, refname, 10240));
 
 	/* Verify regular file1. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt((AE_IFREG | 0644), archive_entry_mode(ae));
-	assertEqualString("dir1/file1", archive_entry_pathname(ae));
-	assertEqualInt(86401, archive_entry_mtime(ae));
-	assertEqualInt(13, archive_entry_size(ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt((AE_IFREG | 0644), tk_archive_entry_mode(ae));
+	assertEqualString("dir1/file1", tk_archive_entry_pathname(ae));
+	assertEqualInt(86401, tk_archive_entry_mtime(ae));
+	assertEqualInt(13, tk_archive_entry_size(ae));
 
 	/* Verify regular file2. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt((AE_IFREG | 0644), archive_entry_mode(ae));
-	assertEqualString("file2", archive_entry_pathname(ae));
-	assertEqualInt(86401, archive_entry_mtime(ae));
-	assertEqualInt(26, archive_entry_size(ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt((AE_IFREG | 0644), tk_archive_entry_mode(ae));
+	assertEqualString("file2", tk_archive_entry_pathname(ae));
+	assertEqualInt(86401, tk_archive_entry_mtime(ae));
+	assertEqualInt(26, tk_archive_entry_size(ae));
 
 	/* Verify regular file3. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt((AE_IFREG | 0644), archive_entry_mode(ae));
-	assertEqualString("file3", archive_entry_pathname(ae));
-	assertEqualInt(86401, archive_entry_mtime(ae));
-	assertEqualInt(39, archive_entry_size(ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt((AE_IFREG | 0644), tk_archive_entry_mode(ae));
+	assertEqualString("file3", tk_archive_entry_pathname(ae));
+	assertEqualInt(86401, tk_archive_entry_mtime(ae));
+	assertEqualInt(39, tk_archive_entry_size(ae));
 
 	/* Verify regular file4. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt((AE_IFREG | 0644), archive_entry_mode(ae));
-	assertEqualString("file4", archive_entry_pathname(ae));
-	assertEqualInt(86401, archive_entry_mtime(ae));
-	assertEqualInt(52, archive_entry_size(ae));
-	assertEqualInt(52, archive_read_data(a, buff, sizeof(buff)));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt((AE_IFREG | 0644), tk_archive_entry_mode(ae));
+	assertEqualString("file4", tk_archive_entry_pathname(ae));
+	assertEqualInt(86401, tk_archive_entry_mtime(ae));
+	assertEqualInt(52, tk_archive_entry_size(ae));
+	assertEqualInt(52, tk_archive_read_data(a, buff, sizeof(buff)));
 	assertEqualMem(buff,
 	    "aaaaaaaaaaaa\nbbbbbbbbbbbb\ncccccccccccc\ndddddddddddd\n", 52);
 
 	/* Verify directory dir1. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt((AE_IFDIR | 0755), archive_entry_mode(ae));
-	assertEqualString("dir1/", archive_entry_pathname(ae));
-	assertEqualInt(2764801, archive_entry_mtime(ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt((AE_IFDIR | 0755), tk_archive_entry_mode(ae));
+	assertEqualString("dir1/", tk_archive_entry_pathname(ae));
+	assertEqualInt(2764801, tk_archive_entry_mtime(ae));
 
-	assertEqualInt(5, archive_file_count(a));
+	assertEqualInt(5, tk_archive_file_count(a));
 
 	/* End of archive. */
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
 
 	/* Verify archive format. */
-	assertEqualIntA(a, ARCHIVE_FILTER_NONE, archive_filter_code(a, 0));
-	assertEqualIntA(a, ARCHIVE_FORMAT_7ZIP, archive_format(a));
+	assertEqualIntA(a, ARCHIVE_FILTER_NONE, tk_archive_filter_code(a, 0));
+	assertEqualIntA(a, ARCHIVE_FORMAT_7ZIP, tk_archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 /*
@@ -330,109 +330,109 @@ test_extract_last_file(const char *refname)
 static void
 test_extract_all_files2(const char *refname)
 {
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	struct archive *a;
 	char buff[128];
 
 	extract_reference_file(refname);
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_open_filename(a, refname, 10240));
+	    tk_archive_read_open_filename(a, refname, 10240));
 
 	/* Verify regular file1. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt((AE_IFREG | 0644), archive_entry_mode(ae));
-	assertEqualString("dir1/file1", archive_entry_pathname(ae));
-	assertEqualInt(86401, archive_entry_mtime(ae));
-	assertEqualInt(13, archive_entry_size(ae));
-	assertEqualInt(13, archive_read_data(a, buff, sizeof(buff)));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt((AE_IFREG | 0644), tk_archive_entry_mode(ae));
+	assertEqualString("dir1/file1", tk_archive_entry_pathname(ae));
+	assertEqualInt(86401, tk_archive_entry_mtime(ae));
+	assertEqualInt(13, tk_archive_entry_size(ae));
+	assertEqualInt(13, tk_archive_read_data(a, buff, sizeof(buff)));
 	assertEqualMem(buff, "aaaaaaaaaaaa\n", 13);
 
 	/* Verify regular file2. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt((AE_IFREG | 0644), archive_entry_mode(ae));
-	assertEqualString("file2", archive_entry_pathname(ae));
-	assertEqualInt(86401, archive_entry_mtime(ae));
-	assertEqualInt(26, archive_entry_size(ae));
-	assertEqualInt(26, archive_read_data(a, buff, sizeof(buff)));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt((AE_IFREG | 0644), tk_archive_entry_mode(ae));
+	assertEqualString("file2", tk_archive_entry_pathname(ae));
+	assertEqualInt(86401, tk_archive_entry_mtime(ae));
+	assertEqualInt(26, tk_archive_entry_size(ae));
+	assertEqualInt(26, tk_archive_read_data(a, buff, sizeof(buff)));
 	assertEqualMem(buff, "aaaaaaaaaaaa\nbbbbbbbbbbbb\n", 26);
 
 	/* Verify regular file3. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt((AE_IFREG | 0644), archive_entry_mode(ae));
-	assertEqualString("file3", archive_entry_pathname(ae));
-	assertEqualInt(86401, archive_entry_mtime(ae));
-	assertEqualInt(39, archive_entry_size(ae));
-	assertEqualInt(39, archive_read_data(a, buff, sizeof(buff)));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt((AE_IFREG | 0644), tk_archive_entry_mode(ae));
+	assertEqualString("file3", tk_archive_entry_pathname(ae));
+	assertEqualInt(86401, tk_archive_entry_mtime(ae));
+	assertEqualInt(39, tk_archive_entry_size(ae));
+	assertEqualInt(39, tk_archive_read_data(a, buff, sizeof(buff)));
 	assertEqualMem(buff, "aaaaaaaaaaaa\nbbbbbbbbbbbb\ncccccccccccc\n", 39);
 
 	/* Verify regular file4. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt((AE_IFREG | 0644), archive_entry_mode(ae));
-	assertEqualString("file4", archive_entry_pathname(ae));
-	assertEqualInt(86401, archive_entry_mtime(ae));
-	assertEqualInt(52, archive_entry_size(ae));
-	assertEqualInt(52, archive_read_data(a, buff, sizeof(buff)));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt((AE_IFREG | 0644), tk_archive_entry_mode(ae));
+	assertEqualString("file4", tk_archive_entry_pathname(ae));
+	assertEqualInt(86401, tk_archive_entry_mtime(ae));
+	assertEqualInt(52, tk_archive_entry_size(ae));
+	assertEqualInt(52, tk_archive_read_data(a, buff, sizeof(buff)));
 	assertEqualMem(buff,
 	    "aaaaaaaaaaaa\nbbbbbbbbbbbb\ncccccccccccc\ndddddddddddd\n", 52);
 
 	/* Verify regular zfile1. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt((AE_IFREG | 0644), archive_entry_mode(ae));
-	assertEqualString("dir1/zfile1", archive_entry_pathname(ae));
-	assertEqualInt(5184001, archive_entry_mtime(ae));
-	assertEqualInt(13, archive_entry_size(ae));
-	assertEqualInt(13, archive_read_data(a, buff, sizeof(buff)));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt((AE_IFREG | 0644), tk_archive_entry_mode(ae));
+	assertEqualString("dir1/zfile1", tk_archive_entry_pathname(ae));
+	assertEqualInt(5184001, tk_archive_entry_mtime(ae));
+	assertEqualInt(13, tk_archive_entry_size(ae));
+	assertEqualInt(13, tk_archive_read_data(a, buff, sizeof(buff)));
 	assertEqualMem(buff, "aaaaaaaaaaaa\n", 13);
 
 	/* Verify regular zfile2. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt((AE_IFREG | 0644), archive_entry_mode(ae));
-	assertEqualString("zfile2", archive_entry_pathname(ae));
-	assertEqualInt(5184001, archive_entry_mtime(ae));
-	assertEqualInt(26, archive_entry_size(ae));
-	assertEqualInt(26, archive_read_data(a, buff, sizeof(buff)));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt((AE_IFREG | 0644), tk_archive_entry_mode(ae));
+	assertEqualString("zfile2", tk_archive_entry_pathname(ae));
+	assertEqualInt(5184001, tk_archive_entry_mtime(ae));
+	assertEqualInt(26, tk_archive_entry_size(ae));
+	assertEqualInt(26, tk_archive_read_data(a, buff, sizeof(buff)));
 	assertEqualMem(buff, "aaaaaaaaaaaa\nbbbbbbbbbbbb\n", 26);
 
 	/* Verify regular zfile3. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt((AE_IFREG | 0644), archive_entry_mode(ae));
-	assertEqualString("zfile3", archive_entry_pathname(ae));
-	assertEqualInt(5184001, archive_entry_mtime(ae));
-	assertEqualInt(39, archive_entry_size(ae));
-	assertEqualInt(39, archive_read_data(a, buff, sizeof(buff)));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt((AE_IFREG | 0644), tk_archive_entry_mode(ae));
+	assertEqualString("zfile3", tk_archive_entry_pathname(ae));
+	assertEqualInt(5184001, tk_archive_entry_mtime(ae));
+	assertEqualInt(39, tk_archive_entry_size(ae));
+	assertEqualInt(39, tk_archive_read_data(a, buff, sizeof(buff)));
 	assertEqualMem(buff, "aaaaaaaaaaaa\nbbbbbbbbbbbb\ncccccccccccc\n", 39);
 
 	/* Verify regular zfile4. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt((AE_IFREG | 0644), archive_entry_mode(ae));
-	assertEqualString("zfile4", archive_entry_pathname(ae));
-	assertEqualInt(5184001, archive_entry_mtime(ae));
-	assertEqualInt(52, archive_entry_size(ae));
-	assertEqualInt(52, archive_read_data(a, buff, sizeof(buff)));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt((AE_IFREG | 0644), tk_archive_entry_mode(ae));
+	assertEqualString("zfile4", tk_archive_entry_pathname(ae));
+	assertEqualInt(5184001, tk_archive_entry_mtime(ae));
+	assertEqualInt(52, tk_archive_entry_size(ae));
+	assertEqualInt(52, tk_archive_read_data(a, buff, sizeof(buff)));
 	assertEqualMem(buff,
 	    "aaaaaaaaaaaa\nbbbbbbbbbbbb\ncccccccccccc\ndddddddddddd\n", 52);
 
 	/* Verify directory dir1. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt((AE_IFDIR | 0755), archive_entry_mode(ae));
-	assertEqualString("dir1/", archive_entry_pathname(ae));
-	assertEqualInt(2764801, archive_entry_mtime(ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt((AE_IFDIR | 0755), tk_archive_entry_mode(ae));
+	assertEqualString("dir1/", tk_archive_entry_pathname(ae));
+	assertEqualInt(2764801, tk_archive_entry_mtime(ae));
 
-	assertEqualInt(9, archive_file_count(a));
+	assertEqualInt(9, tk_archive_file_count(a));
 
 	/* End of archive. */
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
 
 	/* Verify archive format. */
-	assertEqualIntA(a, ARCHIVE_FILTER_NONE, archive_filter_code(a, 0));
-	assertEqualIntA(a, ARCHIVE_FORMAT_7ZIP, archive_format(a));
+	assertEqualIntA(a, ARCHIVE_FILTER_NONE, tk_archive_filter_code(a, 0));
+	assertEqualIntA(a, ARCHIVE_FORMAT_7ZIP, tk_archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 /*
@@ -441,33 +441,33 @@ test_extract_all_files2(const char *refname)
 static void
 test_delta_lzma(const char *refname)
 {
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	struct archive *a;
 	size_t remaining;
 	ssize_t bytes;
 	char buff[1024];
 
 	extract_reference_file(refname);
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_open_filename(a, refname, 10240));
+	    tk_archive_read_open_filename(a, refname, 10240));
 
 	/* Verify regular file1. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt((AE_IFREG | 0644), archive_entry_mode(ae));
-	assertEqualString("file1", archive_entry_pathname(ae));
-	assertEqualInt(172802, archive_entry_mtime(ae));
-	assertEqualInt(27627, archive_entry_size(ae));
-	remaining = (size_t)archive_entry_size(ae);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt((AE_IFREG | 0644), tk_archive_entry_mode(ae));
+	assertEqualString("file1", tk_archive_entry_pathname(ae));
+	assertEqualInt(172802, tk_archive_entry_mtime(ae));
+	assertEqualInt(27627, tk_archive_entry_size(ae));
+	remaining = (size_t)tk_archive_entry_size(ae);
 	while (remaining) {
 		if (remaining < sizeof(buff))
 			assertEqualInt(remaining,
-			    bytes = archive_read_data(a, buff, sizeof(buff)));
+			    bytes = tk_archive_read_data(a, buff, sizeof(buff)));
 		else
 			assertEqualInt(sizeof(buff),
-			    bytes = archive_read_data(a, buff, sizeof(buff)));
+			    bytes = tk_archive_read_data(a, buff, sizeof(buff)));
 		if (bytes > 0)
 			remaining -= bytes;
 		else
@@ -475,18 +475,18 @@ test_delta_lzma(const char *refname)
 	}
 	assertEqualInt(0, remaining);
 
-	assertEqualInt(1, archive_file_count(a));
+	assertEqualInt(1, tk_archive_file_count(a));
 
 	/* End of archive. */
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
 
 	/* Verify archive format. */
-	assertEqualIntA(a, ARCHIVE_FILTER_NONE, archive_filter_code(a, 0));
-	assertEqualIntA(a, ARCHIVE_FORMAT_7ZIP, archive_format(a));
+	assertEqualIntA(a, ARCHIVE_FILTER_NONE, tk_archive_filter_code(a, 0));
+	assertEqualIntA(a, ARCHIVE_FORMAT_7ZIP, tk_archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 /*
@@ -495,33 +495,33 @@ test_delta_lzma(const char *refname)
 static void
 test_bcj(const char *refname)
 {
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	struct archive *a;
 	size_t remaining;
 	ssize_t bytes;
 	char buff[1024];
 
 	extract_reference_file(refname);
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_open_filename(a, refname, 10240));
+	    tk_archive_read_open_filename(a, refname, 10240));
 
 	/* Verify regular x86exe. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt((AE_IFREG | 0444), archive_entry_mode(ae) & ~0111);
-	assertEqualString("x86exe", archive_entry_pathname(ae));
-	assertEqualInt(172802, archive_entry_mtime(ae));
-	assertEqualInt(27328, archive_entry_size(ae));
-	remaining = (size_t)archive_entry_size(ae);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt((AE_IFREG | 0444), tk_archive_entry_mode(ae) & ~0111);
+	assertEqualString("x86exe", tk_archive_entry_pathname(ae));
+	assertEqualInt(172802, tk_archive_entry_mtime(ae));
+	assertEqualInt(27328, tk_archive_entry_size(ae));
+	remaining = (size_t)tk_archive_entry_size(ae);
 	while (remaining) {
 		if (remaining < sizeof(buff))
 			assertEqualInt(remaining,
-			    bytes = archive_read_data(a, buff, sizeof(buff)));
+			    bytes = tk_archive_read_data(a, buff, sizeof(buff)));
 		else
 			assertEqualInt(sizeof(buff),
-			    bytes = archive_read_data(a, buff, sizeof(buff)));
+			    bytes = tk_archive_read_data(a, buff, sizeof(buff)));
 		if (bytes > 0)
 			remaining -= bytes;
 		else
@@ -529,18 +529,18 @@ test_bcj(const char *refname)
 	}
 	assertEqualInt(0, remaining);
 
-	assertEqualInt(1, archive_file_count(a));
+	assertEqualInt(1, tk_archive_file_count(a));
 
 	/* End of archive. */
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
 
 	/* Verify archive format. */
-	assertEqualIntA(a, ARCHIVE_FILTER_NONE, archive_filter_code(a, 0));
-	assertEqualIntA(a, ARCHIVE_FORMAT_7ZIP, archive_format(a));
+	assertEqualIntA(a, ARCHIVE_FILTER_NONE, tk_archive_filter_code(a, 0));
+	assertEqualIntA(a, ARCHIVE_FORMAT_7ZIP, tk_archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 /*
@@ -550,33 +550,33 @@ static void
 test_ppmd()
 {
 	const char *refname = "test_read_format_7zip_ppmd.7z";
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	struct archive *a;
 	size_t remaining;
 	ssize_t bytes;
 	char buff[1024];
 
 	extract_reference_file(refname);
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_open_filename(a, refname, 10240));
+	    tk_archive_read_open_filename(a, refname, 10240));
 
 	/* Verify regular file1. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt((AE_IFREG | 0666), archive_entry_mode(ae));
-	assertEqualString("ppmd_test.txt", archive_entry_pathname(ae));
-	assertEqualInt(1322464589, archive_entry_mtime(ae));
-	assertEqualInt(102400, archive_entry_size(ae));
-	remaining = (size_t)archive_entry_size(ae);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt((AE_IFREG | 0666), tk_archive_entry_mode(ae));
+	assertEqualString("ppmd_test.txt", tk_archive_entry_pathname(ae));
+	assertEqualInt(1322464589, tk_archive_entry_mtime(ae));
+	assertEqualInt(102400, tk_archive_entry_size(ae));
+	remaining = (size_t)tk_archive_entry_size(ae);
 	while (remaining) {
 		if (remaining < sizeof(buff))
 			assertEqualInt(remaining,
-			    bytes = archive_read_data(a, buff, sizeof(buff)));
+			    bytes = tk_archive_read_data(a, buff, sizeof(buff)));
 		else
 			assertEqualInt(sizeof(buff),
-			    bytes = archive_read_data(a, buff, sizeof(buff)));
+			    bytes = tk_archive_read_data(a, buff, sizeof(buff)));
 		if (bytes > 0)
 			remaining -= bytes;
 		else
@@ -584,63 +584,63 @@ test_ppmd()
 	}
 	assertEqualInt(0, remaining);
 
-	assertEqualInt(1, archive_file_count(a));
+	assertEqualInt(1, tk_archive_file_count(a));
 
 	/* End of archive. */
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
 
 	/* Verify archive format. */
-	assertEqualIntA(a, ARCHIVE_FILTER_NONE, archive_filter_code(a, 0));
-	assertEqualIntA(a, ARCHIVE_FORMAT_7ZIP, archive_format(a));
+	assertEqualIntA(a, ARCHIVE_FILTER_NONE, tk_archive_filter_code(a, 0));
+	assertEqualIntA(a, ARCHIVE_FORMAT_7ZIP, tk_archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 static void
 test_symname()
 {
 	const char *refname = "test_read_format_7zip_symbolic_name.7z";
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	struct archive *a;
 	char buff[128];
 
 	extract_reference_file(refname);
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_open_filename(a, refname, 10240));
+	    tk_archive_read_open_filename(a, refname, 10240));
 
 	/* Verify regular file1. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt((AE_IFREG | 0644), archive_entry_mode(ae));
-	assertEqualString("file1", archive_entry_pathname(ae));
-	assertEqualInt(86401, archive_entry_mtime(ae));
-	assertEqualInt(32, archive_entry_size(ae));
-	assertEqualInt(32, archive_read_data(a, buff, sizeof(buff)));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt((AE_IFREG | 0644), tk_archive_entry_mode(ae));
+	assertEqualString("file1", tk_archive_entry_pathname(ae));
+	assertEqualInt(86401, tk_archive_entry_mtime(ae));
+	assertEqualInt(32, tk_archive_entry_size(ae));
+	assertEqualInt(32, tk_archive_read_data(a, buff, sizeof(buff)));
 	assertEqualMem(buff, "hellohellohello\nhellohellohello\n", 32);
 
 	/* Verify symbolic-linke symlinkfile. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt((AE_IFLNK | 0755), archive_entry_mode(ae));
-	assertEqualString("symlinkfile", archive_entry_pathname(ae));
-	assertEqualString("file1", archive_entry_symlink(ae));
-	assertEqualInt(86401, archive_entry_mtime(ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt((AE_IFLNK | 0755), tk_archive_entry_mode(ae));
+	assertEqualString("symlinkfile", tk_archive_entry_pathname(ae));
+	assertEqualString("file1", tk_archive_entry_symlink(ae));
+	assertEqualInt(86401, tk_archive_entry_mtime(ae));
 
-	assertEqualInt(2, archive_file_count(a));
+	assertEqualInt(2, tk_archive_file_count(a));
 
 	/* End of archive. */
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
 
 	/* Verify archive format. */
-	assertEqualIntA(a, ARCHIVE_FILTER_NONE, archive_filter_code(a, 0));
-	assertEqualIntA(a, ARCHIVE_FORMAT_7ZIP, archive_format(a));
+	assertEqualIntA(a, ARCHIVE_FILTER_NONE, tk_archive_filter_code(a, 0));
+	assertEqualIntA(a, ARCHIVE_FORMAT_7ZIP, tk_archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 
@@ -648,10 +648,10 @@ DEFINE_TEST(test_read_format_7zip)
 {
 	struct archive *a;
 
-	assert((a = archive_read_new()) != NULL);
+	assert((a = tk_archive_read_new()) != NULL);
 
 	/* Extracting with liblzma */
-	if (ARCHIVE_OK != archive_read_support_filter_xz(a)) {
+	if (ARCHIVE_OK != tk_archive_read_support_filter_xz(a)) {
 		skipping("7zip:lzma decoding is not supported on this platform");
 	} else {
 		test_symname();
@@ -660,17 +660,17 @@ DEFINE_TEST(test_read_format_7zip)
 		test_extract_all_files2("test_read_format_7zip_lzma1_lzma2.7z");
 		test_bcj("test_read_format_7zip_bcj2_copy_lzma.7z");
 	}
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 DEFINE_TEST(test_read_format_7zip_bzip2)
 {
 	struct archive *a;
 
-	assert((a = archive_read_new()) != NULL);
+	assert((a = tk_archive_read_new()) != NULL);
 
 	/* Extracting with libbzip2 */
-	if (ARCHIVE_OK != archive_read_support_filter_bzip2(a)) {
+	if (ARCHIVE_OK != tk_archive_read_support_filter_bzip2(a)) {
 		skipping("7zip:bzip2 decoding is not supported on this platform");
 	} else {
 		test_plain_header("test_read_format_7zip_bzip2.7z");
@@ -678,7 +678,7 @@ DEFINE_TEST(test_read_format_7zip_bzip2)
 		test_bcj("test_read_format_7zip_bcj2_bzip2.7z");
 	}
 
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 DEFINE_TEST(test_read_format_7zip_copy)
@@ -693,10 +693,10 @@ DEFINE_TEST(test_read_format_7zip_deflate)
 {
 	struct archive *a;
 
-	assert((a = archive_read_new()) != NULL);
+	assert((a = tk_archive_read_new()) != NULL);
 
 	/* Extracting with libz */
-	if (ARCHIVE_OK != archive_read_support_filter_gzip(a)) {
+	if (ARCHIVE_OK != tk_archive_read_support_filter_gzip(a)) {
 		skipping(
 		    "7zip:deflate decoding is not supported on this platform");
 	} else {
@@ -705,7 +705,7 @@ DEFINE_TEST(test_read_format_7zip_deflate)
 		test_bcj("test_read_format_7zip_bcj2_deflate.7z");
 	}
 
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 DEFINE_TEST(test_read_format_7zip_empty)
@@ -718,10 +718,10 @@ DEFINE_TEST(test_read_format_7zip_lzma1)
 {
 	struct archive *a;
 
-	assert((a = archive_read_new()) != NULL);
+	assert((a = tk_archive_read_new()) != NULL);
 
 	/* Extracting with liblzma */
-	if (ARCHIVE_OK != archive_read_support_filter_xz(a)) {
+	if (ARCHIVE_OK != tk_archive_read_support_filter_xz(a)) {
 		skipping("7zip:lzma decoding is not supported on this platform");
 	} else {
 		test_plain_header("test_read_format_7zip_lzma1.7z");
@@ -732,17 +732,17 @@ DEFINE_TEST(test_read_format_7zip_lzma1)
 		test_bcj("test_read_format_7zip_bcj2_lzma1_2.7z");
 		test_delta_lzma("test_read_format_7zip_delta_lzma1.7z");
 	}
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 DEFINE_TEST(test_read_format_7zip_lzma2)
 {
 	struct archive *a;
 
-	assert((a = archive_read_new()) != NULL);
+	assert((a = tk_archive_read_new()) != NULL);
 
 	/* Extracting with liblzma */
-	if (ARCHIVE_OK != archive_read_support_filter_xz(a)) {
+	if (ARCHIVE_OK != tk_archive_read_support_filter_xz(a)) {
 		skipping("7zip:lzma decoding is not supported on this platform");
 	} else {
 		test_plain_header("test_read_format_7zip_lzma2.7z");
@@ -751,7 +751,7 @@ DEFINE_TEST(test_read_format_7zip_lzma2)
 		test_bcj("test_read_format_7zip_bcj2_lzma2_2.7z");
 		test_delta_lzma("test_read_format_7zip_delta_lzma2.7z");
 	}
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 DEFINE_TEST(test_read_format_7zip_ppmd)

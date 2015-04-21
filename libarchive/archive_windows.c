@@ -682,7 +682,7 @@ __la_write(int fd, const void *buf, size_t nbytes)
  * Replace the Windows path separator '\' with '/'.
  */
 static int
-replace_pathseparator(struct archive_wstring *ws, const wchar_t *wp)
+replace_pathseparator(struct tk_archive_wstring *ws, const wchar_t *wp)
 {
 	wchar_t *w;
 	size_t path_length;
@@ -692,9 +692,9 @@ replace_pathseparator(struct archive_wstring *ws, const wchar_t *wp)
 	if (wcschr(wp, L'\\') == NULL)
 		return(0);
 	path_length = wcslen(wp);
-	if (archive_wstring_ensure(ws, path_length) == NULL)
+	if (tk_archive_wstring_ensure(ws, path_length) == NULL)
 		return(-1);
-	archive_wstrncpy(ws, wp, path_length);
+	tk_archive_wstrncpy(ws, wp, path_length);
 	for (w = ws->s; *w; w++) {
 		if (*w == L'\\')
 			*w = L'/';
@@ -703,65 +703,65 @@ replace_pathseparator(struct archive_wstring *ws, const wchar_t *wp)
 }
 
 static int
-fix_pathseparator(struct archive_entry *entry)
+fix_pathseparator(struct tk_archive_entry *entry)
 {
-	struct archive_wstring ws;
+	struct tk_archive_wstring ws;
 	const wchar_t *wp;
 	int ret = ARCHIVE_OK;
 
-	archive_string_init(&ws);
-	wp = archive_entry_pathname_w(entry);
+	tk_archive_string_init(&ws);
+	wp = tk_archive_entry_pathname_w(entry);
 	switch (replace_pathseparator(&ws, wp)) {
 	case 0: /* Not replaced. */
 		break;
 	case 1: /* Replaced. */
-		archive_entry_copy_pathname_w(entry, ws.s);
+		tk_archive_entry_copy_pathname_w(entry, ws.s);
 		break;
 	default:
 		ret = ARCHIVE_FAILED;
 	}
-	wp = archive_entry_hardlink_w(entry);
+	wp = tk_archive_entry_hardlink_w(entry);
 	switch (replace_pathseparator(&ws, wp)) {
 	case 0: /* Not replaced. */
 		break;
 	case 1: /* Replaced. */
-		archive_entry_copy_hardlink_w(entry, ws.s);
+		tk_archive_entry_copy_hardlink_w(entry, ws.s);
 		break;
 	default:
 		ret = ARCHIVE_FAILED;
 	}
-	wp = archive_entry_symlink_w(entry);
+	wp = tk_archive_entry_symlink_w(entry);
 	switch (replace_pathseparator(&ws, wp)) {
 	case 0: /* Not replaced. */
 		break;
 	case 1: /* Replaced. */
-		archive_entry_copy_symlink_w(entry, ws.s);
+		tk_archive_entry_copy_symlink_w(entry, ws.s);
 		break;
 	default:
 		ret = ARCHIVE_FAILED;
 	}
-	archive_wstring_free(&ws);
+	tk_archive_wstring_free(&ws);
 	return(ret);
 }
 
-struct archive_entry *
-__la_win_entry_in_posix_pathseparator(struct archive_entry *entry)
+struct tk_archive_entry *
+__la_win_entry_in_posix_pathseparator(struct tk_archive_entry *entry)
 {
-	struct archive_entry *entry_main;
+	struct tk_archive_entry *entry_main;
 	const wchar_t *wp;
 	int has_backslash = 0;
 	int ret;
 
-	wp = archive_entry_pathname_w(entry);
+	wp = tk_archive_entry_pathname_w(entry);
 	if (wp != NULL && wcschr(wp, L'\\') != NULL)
 		has_backslash = 1;
 	if (!has_backslash) {
-		wp = archive_entry_hardlink_w(entry);
+		wp = tk_archive_entry_hardlink_w(entry);
 		if (wp != NULL && wcschr(wp, L'\\') != NULL)
 			has_backslash = 1;
 	}
 	if (!has_backslash) {
-		wp = archive_entry_symlink_w(entry);
+		wp = tk_archive_entry_symlink_w(entry);
 		if (wp != NULL && wcschr(wp, L'\\') != NULL)
 			has_backslash = 1;
 	}
@@ -772,13 +772,13 @@ __la_win_entry_in_posix_pathseparator(struct archive_entry *entry)
 		return (entry);
 
 	/* Copy entry so we can modify it as needed. */
-	entry_main = archive_entry_clone(entry);
+	entry_main = tk_archive_entry_clone(entry);
 	if (entry_main == NULL)
 		return (NULL);
 	/* Replace the Windows path-separator '\' with '/'. */
 	ret = fix_pathseparator(entry_main);
 	if (ret < ARCHIVE_WARN) {
-		archive_entry_free(entry_main);
+		tk_archive_entry_free(entry_main);
 		return (NULL);
 	}
 	return (entry_main);

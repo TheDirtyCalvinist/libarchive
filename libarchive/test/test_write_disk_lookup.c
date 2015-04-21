@@ -73,45 +73,45 @@ DEFINE_TEST(test_write_disk_lookup)
 	int gmagic = 0x13579, umagic = 0x1234;
 	int64_t id;
 
-	assert((a = archive_write_disk_new()) != NULL);
+	assert((a = tk_archive_write_disk_new()) != NULL);
 
 	/* Default uname/gname lookups always return ID. */
-	assertEqualInt(0, archive_write_disk_gid(a, "", 0));
-	assertEqualInt(12, archive_write_disk_gid(a, "root", 12));
-	assertEqualInt(12, archive_write_disk_gid(a, "wheel", 12));
-	assertEqualInt(0, archive_write_disk_uid(a, "", 0));
-	assertEqualInt(18, archive_write_disk_uid(a, "root", 18));
+	assertEqualInt(0, tk_archive_write_disk_gid(a, "", 0));
+	assertEqualInt(12, tk_archive_write_disk_gid(a, "root", 12));
+	assertEqualInt(12, tk_archive_write_disk_gid(a, "wheel", 12));
+	assertEqualInt(0, tk_archive_write_disk_uid(a, "", 0));
+	assertEqualInt(18, tk_archive_write_disk_uid(a, "root", 18));
 
 	/* Register some weird lookup functions. */
-	assertEqualInt(ARCHIVE_OK, archive_write_disk_set_group_lookup(a,
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_disk_set_group_lookup(a,
 		       &gmagic, &group_lookup, &group_cleanup));
 	/* Verify that our new function got called. */
-	assertEqualInt(73, archive_write_disk_gid(a, "FOOGROUP", 8));
-	assertEqualInt(1, archive_write_disk_gid(a, "NOTFOOGROUP", 8));
+	assertEqualInt(73, tk_archive_write_disk_gid(a, "FOOGROUP", 8));
+	assertEqualInt(1, tk_archive_write_disk_gid(a, "NOTFOOGROUP", 8));
 
 	/* De-register. */
 	assertEqualInt(ARCHIVE_OK,
-		       archive_write_disk_set_group_lookup(a, NULL, NULL, NULL));
+		       tk_archive_write_disk_set_group_lookup(a, NULL, NULL, NULL));
 	/* Ensure our cleanup function got called. */
 	assertEqualInt(gmagic, 0x2468);
 
 	/* Same thing with uname lookup.... */
-	assertEqualInt(ARCHIVE_OK, archive_write_disk_set_user_lookup(a,
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_disk_set_user_lookup(a,
 			   &umagic, &user_lookup, &user_cleanup));
-	assertEqualInt(2, archive_write_disk_uid(a, "FOO", 0));
-	assertEqualInt(74, archive_write_disk_uid(a, "NOTFOO", 1));
+	assertEqualInt(2, tk_archive_write_disk_uid(a, "FOO", 0));
+	assertEqualInt(74, tk_archive_write_disk_uid(a, "NOTFOO", 1));
 	assertEqualInt(ARCHIVE_OK,
-	    archive_write_disk_set_user_lookup(a, NULL, NULL, NULL));
+	    tk_archive_write_disk_set_user_lookup(a, NULL, NULL, NULL));
 	assertEqualInt(umagic, 0x2345);
 
 	/* Try the standard lookup functions. */
-	if (archive_write_disk_set_standard_lookup(a) != ARCHIVE_OK) {
+	if (tk_archive_write_disk_set_standard_lookup(a) != ARCHIVE_OK) {
 		skipping("standard uname/gname lookup");
 	} else {
 		/* Try a few common names for group #0. */
-		id = archive_write_disk_gid(a, "wheel", 8);
+		id = tk_archive_write_disk_gid(a, "wheel", 8);
 		if (id != 0)
-			id = archive_write_disk_gid(a, "root", 8);
+			id = tk_archive_write_disk_gid(a, "root", 8);
 		failure("Unable to verify lookup of group #0");
 #if defined(_WIN32) && !defined(__CYGWIN__)
 		/* Not yet implemented on Windows. */
@@ -121,7 +121,7 @@ DEFINE_TEST(test_write_disk_lookup)
 #endif
 
 		/* Try a few common names for user #0. */
-		id = archive_write_disk_uid(a, "root", 8);
+		id = tk_archive_write_disk_uid(a, "root", 8);
 		failure("Unable to verify lookup of user #0");
 #if defined(_WIN32) && !defined(__CYGWIN__)
 		/* Not yet implemented on Windows. */
@@ -133,22 +133,22 @@ DEFINE_TEST(test_write_disk_lookup)
 
 	/* Deregister again and verify the default lookups again. */
 	assertEqualInt(ARCHIVE_OK,
-	    archive_write_disk_set_group_lookup(a, NULL, NULL, NULL));
+	    tk_archive_write_disk_set_group_lookup(a, NULL, NULL, NULL));
 	assertEqualInt(ARCHIVE_OK,
-	    archive_write_disk_set_user_lookup(a, NULL, NULL, NULL));
-	assertEqualInt(0, archive_write_disk_gid(a, "", 0));
-	assertEqualInt(0, archive_write_disk_uid(a, "", 0));
+	    tk_archive_write_disk_set_user_lookup(a, NULL, NULL, NULL));
+	assertEqualInt(0, tk_archive_write_disk_gid(a, "", 0));
+	assertEqualInt(0, tk_archive_write_disk_uid(a, "", 0));
 
 	/* Re-register our custom handlers. */
 	gmagic = 0x13579;
 	umagic = 0x1234;
-	assertEqualInt(ARCHIVE_OK, archive_write_disk_set_group_lookup(a,
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_disk_set_group_lookup(a,
 			   &gmagic, &group_lookup, &group_cleanup));
-	assertEqualInt(ARCHIVE_OK, archive_write_disk_set_user_lookup(a,
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_disk_set_user_lookup(a,
 		      &umagic, &user_lookup, &user_cleanup));
 
 	/* Destroy the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 
 	/* Verify our cleanup functions got called. */
 	assertEqualInt(gmagic, 0x2468);

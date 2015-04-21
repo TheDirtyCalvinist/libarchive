@@ -41,7 +41,7 @@ DEFINE_TEST(test_read_format_zip_mac_metadata)
 	char *p;
 	size_t s;
 	struct archive *a;
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	const unsigned char appledouble[] = {
 		0x00, 0x05, 0x16, 0x07, 0x00, 0x02, 0x00, 0x00,
 		0x4d, 0x61, 0x63, 0x20, 0x4f, 0x53, 0x20, 0x58,
@@ -85,34 +85,34 @@ DEFINE_TEST(test_read_format_zip_mac_metadata)
 	p = slurpfile(&s, refname);
 
 	/* Mac metadata can only be extracted with the seeking reader. */
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_zip(a));
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_zip(a));
 	assertEqualIntA(a, ARCHIVE_OK, read_open_memory_seek(a, p, s, 1));
 
 	if (libz_enabled) {
 		assertEqualIntA(a, ARCHIVE_OK,
-		    archive_read_next_header(a, &ae));
+		    tk_archive_read_next_header(a, &ae));
 	} else {
 		assertEqualIntA(a, ARCHIVE_WARN,
-		    archive_read_next_header(a, &ae));
-		assertEqualString(archive_error_string(a),
+		    tk_archive_read_next_header(a, &ae));
+		assertEqualString(tk_archive_error_string(a),
 		    "Unsupported ZIP compression method (deflation)");
-		assert(archive_errno(a) != 0);
+		assert(tk_archive_errno(a) != 0);
 	}
-	assertEqualString("file3", archive_entry_pathname(ae));
-	assertEqualInt(AE_IFREG | 0644, archive_entry_mode(ae));
+	assertEqualString("file3", tk_archive_entry_pathname(ae));
+	assertEqualInt(AE_IFREG | 0644, tk_archive_entry_mode(ae));
 	failure("Mac metadata should be set");
 	if (libz_enabled) {
 		const void *metadata;
-		if (assert((metadata = archive_entry_mac_metadata(ae, &s))
+		if (assert((metadata = tk_archive_entry_mac_metadata(ae, &s))
 		    != NULL)) {
 			assertEqualMem(metadata, appledouble,
 			    sizeof(appledouble));
 		}
 	} else {
-		assert(archive_entry_mac_metadata(ae, &s) == NULL);
+		assert(tk_archive_entry_mac_metadata(ae, &s) == NULL);
 	}
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_free(a));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_free(a));
 }

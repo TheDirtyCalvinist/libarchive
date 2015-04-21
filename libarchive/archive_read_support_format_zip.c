@@ -50,14 +50,14 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_read_support_format_zip.c 201102
 #endif
 
 struct zip_entry {
-	struct archive_rb_node	node;
+	struct tk_archive_rb_node	node;
 	int64_t			local_header_offset;
 	int64_t			compressed_size;
 	int64_t			uncompressed_size;
 	int64_t			gid;
 	int64_t			uid;
-	struct archive_entry	*entry;
-	struct archive_string	rsrcname;
+	struct tk_archive_entry	*entry;
+	struct tk_archive_string	rsrcname;
 	time_t			mtime;
 	time_t			atime;
 	time_t			ctime;
@@ -81,8 +81,8 @@ struct zip {
 	size_t			entries_remaining;
 	struct zip_entry	*zip_entries;
 	struct zip_entry	*entry;
-	struct archive_rb_tree	tree;
-	struct archive_rb_tree	tree_rsrc;
+	struct tk_archive_rb_tree	tree;
+	struct tk_archive_rb_tree	tree_rsrc;
 
 	size_t			unconsumed;
 
@@ -110,10 +110,10 @@ struct zip {
 	char			stream_valid;
 #endif
 
-	struct archive_string	extra;
-	struct archive_string_conv *sconv;
-	struct archive_string_conv *sconv_default;
-	struct archive_string_conv *sconv_utf8;
+	struct tk_archive_string	extra;
+	struct tk_archive_string_conv *sconv;
+	struct tk_archive_string_conv *sconv_default;
+	struct tk_archive_string_conv *sconv_utf8;
 	int			init_default_conversion;
 	char	format_name[64];
 };
@@ -123,65 +123,65 @@ struct zip {
 #define ZIP_STRONG_ENCRYPTED	(1<<6)	
 #define ZIP_UTF8_NAME		(1<<11)	
 
-static int	archive_read_format_zip_streamable_bid(struct archive_read *,
+static int	tk_archive_read_format_zip_streamable_bid(struct tk_archive_read *,
 		    int);
-static int	archive_read_format_zip_seekable_bid(struct archive_read *,
+static int	tk_archive_read_format_zip_seekable_bid(struct tk_archive_read *,
 		    int);
-static int	archive_read_format_zip_options(struct archive_read *,
+static int	tk_archive_read_format_zip_options(struct tk_archive_read *,
 		    const char *, const char *);
-static int	archive_read_format_zip_cleanup(struct archive_read *);
-static int	archive_read_format_zip_read_data(struct archive_read *,
+static int	tk_archive_read_format_zip_cleanup(struct tk_archive_read *);
+static int	tk_archive_read_format_zip_read_data(struct tk_archive_read *,
 		    const void **, size_t *, int64_t *);
-static int	archive_read_format_zip_read_data_skip(struct archive_read *a);
-static int	archive_read_format_zip_seekable_read_header(
-		    struct archive_read *, struct archive_entry *);
-static int	archive_read_format_zip_streamable_read_header(
-		    struct archive_read *, struct archive_entry *);
-static ssize_t	zip_get_local_file_header_size(struct archive_read *, size_t);
+static int	tk_archive_read_format_zip_read_data_skip(struct tk_archive_read *a);
+static int	tk_archive_read_format_zip_seekable_read_header(
+		    struct tk_archive_read *, struct tk_archive_entry *);
+static int	tk_archive_read_format_zip_streamable_read_header(
+		    struct tk_archive_read *, struct tk_archive_entry *);
+static ssize_t	zip_get_local_file_header_size(struct tk_archive_read *, size_t);
 #ifdef HAVE_ZLIB_H
-static int	zip_deflate_init(struct archive_read *, struct zip *);
-static int	zip_read_data_deflate(struct archive_read *a, const void **buff,
+static int	zip_deflate_init(struct tk_archive_read *, struct zip *);
+static int	zip_read_data_deflate(struct tk_archive_read *a, const void **buff,
 		    size_t *size, int64_t *offset);
 #endif
-static int	zip_read_data_none(struct archive_read *a, const void **buff,
+static int	zip_read_data_none(struct tk_archive_read *a, const void **buff,
 		    size_t *size, int64_t *offset);
-static int	zip_read_local_file_header(struct archive_read *a,
-		    struct archive_entry *entry, struct zip *);
+static int	zip_read_local_file_header(struct tk_archive_read *a,
+		    struct tk_archive_entry *entry, struct zip *);
 static time_t	zip_time(const char *);
 static const char *compression_name(int compression);
 static void	process_extra(const char *, size_t, struct zip_entry *);
 
-int	archive_read_support_format_zip_streamable(struct archive *);
-int	archive_read_support_format_zip_seekable(struct archive *);
+int	tk_archive_read_support_format_zip_streamable(struct archive *);
+int	tk_archive_read_support_format_zip_seekable(struct archive *);
 
 int
-archive_read_support_format_zip_streamable(struct archive *_a)
+tk_archive_read_support_format_zip_streamable(struct archive *_a)
 {
-	struct archive_read *a = (struct archive_read *)_a;
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
 	struct zip *zip;
 	int r;
 
-	archive_check_magic(_a, ARCHIVE_READ_MAGIC,
-	    ARCHIVE_STATE_NEW, "archive_read_support_format_zip");
+	tk_archive_check_magic(_a, ARCHIVE_READ_MAGIC,
+	    ARCHIVE_STATE_NEW, "tk_archive_read_support_format_zip");
 
 	zip = (struct zip *)malloc(sizeof(*zip));
 	if (zip == NULL) {
-		archive_set_error(&a->archive, ENOMEM,
+		tk_archive_set_error(&a->archive, ENOMEM,
 		    "Can't allocate zip data");
 		return (ARCHIVE_FATAL);
 	}
 	memset(zip, 0, sizeof(*zip));
 
-	r = __archive_read_register_format(a,
+	r = __tk_archive_read_register_format(a,
 	    zip,
 	    "zip",
-	    archive_read_format_zip_streamable_bid,
-	    archive_read_format_zip_options,
-	    archive_read_format_zip_streamable_read_header,
-	    archive_read_format_zip_read_data,
-	    archive_read_format_zip_read_data_skip,
+	    tk_archive_read_format_zip_streamable_bid,
+	    tk_archive_read_format_zip_options,
+	    tk_archive_read_format_zip_streamable_read_header,
+	    tk_archive_read_format_zip_read_data,
+	    tk_archive_read_format_zip_read_data_skip,
 	    NULL,
-	    archive_read_format_zip_cleanup);
+	    tk_archive_read_format_zip_cleanup);
 
 	if (r != ARCHIVE_OK)
 		free(zip);
@@ -189,33 +189,33 @@ archive_read_support_format_zip_streamable(struct archive *_a)
 }
 
 int
-archive_read_support_format_zip_seekable(struct archive *_a)
+tk_archive_read_support_format_zip_seekable(struct archive *_a)
 {
-	struct archive_read *a = (struct archive_read *)_a;
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
 	struct zip *zip;
 	int r;
 
-	archive_check_magic(_a, ARCHIVE_READ_MAGIC,
-	    ARCHIVE_STATE_NEW, "archive_read_support_format_zip_seekable");
+	tk_archive_check_magic(_a, ARCHIVE_READ_MAGIC,
+	    ARCHIVE_STATE_NEW, "tk_archive_read_support_format_zip_seekable");
 
 	zip = (struct zip *)malloc(sizeof(*zip));
 	if (zip == NULL) {
-		archive_set_error(&a->archive, ENOMEM,
+		tk_archive_set_error(&a->archive, ENOMEM,
 		    "Can't allocate zip data");
 		return (ARCHIVE_FATAL);
 	}
 	memset(zip, 0, sizeof(*zip));
 
-	r = __archive_read_register_format(a,
+	r = __tk_archive_read_register_format(a,
 	    zip,
 	    "zip",
-	    archive_read_format_zip_seekable_bid,
-	    archive_read_format_zip_options,
-	    archive_read_format_zip_seekable_read_header,
-	    archive_read_format_zip_read_data,
-	    archive_read_format_zip_read_data_skip,
+	    tk_archive_read_format_zip_seekable_bid,
+	    tk_archive_read_format_zip_options,
+	    tk_archive_read_format_zip_seekable_read_header,
+	    tk_archive_read_format_zip_read_data,
+	    tk_archive_read_format_zip_read_data_skip,
 	    NULL,
-	    archive_read_format_zip_cleanup);
+	    tk_archive_read_format_zip_cleanup);
 
 	if (r != ARCHIVE_OK)
 		free(zip);
@@ -223,13 +223,13 @@ archive_read_support_format_zip_seekable(struct archive *_a)
 }
 
 int
-archive_read_support_format_zip(struct archive *a)
+tk_archive_read_support_format_zip(struct archive *a)
 {
 	int r;
-	r = archive_read_support_format_zip_streamable(a);
+	r = tk_archive_read_support_format_zip_streamable(a);
 	if (r != ARCHIVE_OK)
 		return r;
-	return (archive_read_support_format_zip_seekable(a));
+	return (tk_archive_read_support_format_zip_seekable(a));
 }
 
 /*
@@ -242,7 +242,7 @@ archive_read_support_format_zip(struct archive *a)
  * outbid.  But we can certainly do better...
  */
 static int
-archive_read_format_zip_seekable_bid(struct archive_read *a, int best_bid)
+tk_archive_read_format_zip_seekable_bid(struct tk_archive_read *a, int best_bid)
 {
 	struct zip *zip = (struct zip *)a->format->data;
 	int64_t filesize;
@@ -253,13 +253,13 @@ archive_read_format_zip_seekable_bid(struct archive_read *a, int best_bid)
 	if (best_bid > 32)
 		return (-1);
 
-	filesize = __archive_read_seek(a, -22, SEEK_END);
+	filesize = __tk_archive_read_seek(a, -22, SEEK_END);
 	/* If we can't seek, then we can't bid. */
 	if (filesize <= 0)
 		return 0;
 
 	/* TODO: More robust search for end of central directory record. */
-	if ((p = __archive_read_ahead(a, 22, NULL)) == NULL)
+	if ((p = __tk_archive_read_ahead(a, 22, NULL)) == NULL)
 		return 0;
 	/* First four bytes are signature for end of central directory
 	   record.  Four zero bytes ensure this isn't a multi-volume
@@ -276,14 +276,14 @@ archive_read_format_zip_seekable_bid(struct archive_read *a, int best_bid)
 		 */
 		if (filesize + 22 > 1024 * 16) {
 			tail = 1024 * 16;
-			filesize = __archive_read_seek(a, tail * -1, SEEK_END);
+			filesize = __tk_archive_read_seek(a, tail * -1, SEEK_END);
 		} else {
 			tail = filesize + 22;
-			filesize = __archive_read_seek(a, 0, SEEK_SET);
+			filesize = __tk_archive_read_seek(a, 0, SEEK_SET);
 		}
 		if (filesize < 0)
 			return 0;
-		if ((p = __archive_read_ahead(a, (size_t)tail, NULL)) == NULL)
+		if ((p = __tk_archive_read_ahead(a, (size_t)tail, NULL)) == NULL)
 			return 0;
 		for (found = 0, i = 0;!found && i < tail - 22;) {
 			switch (p[i]) {
@@ -292,7 +292,7 @@ archive_read_format_zip_seekable_bid(struct archive_read *a, int best_bid)
 				    "PK\005\006\000\000\000\000", 8) == 0) {
 					p += i;
 					filesize += tail -
-					    (22 + archive_le16dec(p+20));
+					    (22 + tk_archive_le16dec(p+20));
 					found = 1;
 				} else
 					i += 8;
@@ -310,13 +310,13 @@ archive_read_format_zip_seekable_bid(struct archive_read *a, int best_bid)
 	/* Since we've already done the hard work of finding the
 	   end of central directory record, let's save the important
 	   information. */
-	zip->central_directory_entries = archive_le16dec(p + 10);
-	zip->central_directory_size = archive_le32dec(p + 12);
-	zip->central_directory_offset = archive_le32dec(p + 16);
+	zip->central_directory_entries = tk_archive_le16dec(p + 10);
+	zip->central_directory_size = tk_archive_le32dec(p + 12);
+	zip->central_directory_offset = tk_archive_le32dec(p + 16);
 	zip->end_of_central_directory_offset = filesize;
 
 	/* Just one volume, so central dir must all be on this volume. */
-	if (zip->central_directory_entries != archive_le16dec(p + 8))
+	if (zip->central_directory_entries != tk_archive_le16dec(p + 8))
 		return 0;
 	/* Central directory can't extend beyond end of this file. */
 	if (zip->central_directory_offset +
@@ -330,7 +330,7 @@ archive_read_format_zip_seekable_bid(struct archive_read *a, int best_bid)
 }
 
 static int
-cmp_node(const struct archive_rb_node *n1, const struct archive_rb_node *n2)
+cmp_node(const struct tk_archive_rb_node *n1, const struct tk_archive_rb_node *n2)
 {
 	const struct zip_entry *e1 = (const struct zip_entry *)n1;
 	const struct zip_entry *e2 = (const struct zip_entry *)n2;
@@ -339,7 +339,7 @@ cmp_node(const struct archive_rb_node *n1, const struct archive_rb_node *n2)
 }
 
 static int
-cmp_key(const struct archive_rb_node *n, const void *key)
+cmp_key(const struct tk_archive_rb_node *n, const void *key)
 {
 	/* This function won't be called */
 	(void)n; /* UNUSED */
@@ -348,8 +348,8 @@ cmp_key(const struct archive_rb_node *n, const void *key)
 }
 
 static int
-rsrc_cmp_node(const struct archive_rb_node *n1,
-    const struct archive_rb_node *n2)
+rsrc_cmp_node(const struct tk_archive_rb_node *n1,
+    const struct tk_archive_rb_node *n2)
 {
 	const struct zip_entry *e1 = (const struct zip_entry *)n1;
 	const struct zip_entry *e2 = (const struct zip_entry *)n2;
@@ -358,7 +358,7 @@ rsrc_cmp_node(const struct archive_rb_node *n1,
 }
 
 static int
-rsrc_cmp_key(const struct archive_rb_node *n, const void *key)
+rsrc_cmp_key(const struct tk_archive_rb_node *n, const void *key)
 {
 	const struct zip_entry *e = (const struct zip_entry *)n;
 	return (strcmp((const char *)key, e->rsrcname.s));
@@ -382,12 +382,12 @@ rsrc_basename(const char *name, size_t name_length)
 static void
 expose_parent_dirs(struct zip *zip, const char *name, size_t name_length)
 {
-	struct archive_string str;
+	struct tk_archive_string str;
 	struct zip_entry *dir;
 	char *s;
 
-	archive_string_init(&str);
-	archive_strncpy(&str, name, name_length);
+	tk_archive_string_init(&str);
+	tk_archive_strncpy(&str, name, name_length);
 	for (;;) {
 		s = strrchr(str.s, '/');
 		if (s == NULL)
@@ -396,25 +396,25 @@ expose_parent_dirs(struct zip *zip, const char *name, size_t name_length)
 		/* Transfer the parent directory from zip->tree_rsrc RB
 		 * tree to zip->tree RB tree to expose. */
 		dir = (struct zip_entry *)
-		    __archive_rb_tree_find_node(&zip->tree_rsrc, str.s);
+		    __tk_archive_rb_tree_find_node(&zip->tree_rsrc, str.s);
 		if (dir == NULL)
 			break;
-		__archive_rb_tree_remove_node(&zip->tree_rsrc, &dir->node);
-		archive_string_free(&dir->rsrcname);
-		__archive_rb_tree_insert_node(&zip->tree, &dir->node);
+		__tk_archive_rb_tree_remove_node(&zip->tree_rsrc, &dir->node);
+		tk_archive_string_free(&dir->rsrcname);
+		__tk_archive_rb_tree_insert_node(&zip->tree, &dir->node);
 	}
-	archive_string_free(&str);
+	tk_archive_string_free(&str);
 }
 
 static int
-slurp_central_directory(struct archive_read *a, struct zip *zip)
+slurp_central_directory(struct tk_archive_read *a, struct zip *zip)
 {
 	unsigned i;
 	int64_t correction;
-	static const struct archive_rb_tree_ops rb_ops = {
+	static const struct tk_archive_rb_tree_ops rb_ops = {
 		&cmp_node, &cmp_key
 	};
-	static const struct archive_rb_tree_ops rb_rsrc_ops = {
+	static const struct tk_archive_rb_tree_ops rb_rsrc_ops = {
 		&rsrc_cmp_node, &rsrc_cmp_key
 	};
 
@@ -429,10 +429,10 @@ slurp_central_directory(struct archive_read *a, struct zip *zip)
 	 * we revise this offset for SFX. */
 	zip->central_directory_offset += correction;
 
-	__archive_read_seek(a, zip->central_directory_offset, SEEK_SET);
+	__tk_archive_read_seek(a, zip->central_directory_offset, SEEK_SET);
 	zip->offset = zip->central_directory_offset;
-	__archive_rb_tree_init(&zip->tree, &rb_ops);
-	__archive_rb_tree_init(&zip->tree_rsrc, &rb_rsrc_ops);
+	__tk_archive_rb_tree_init(&zip->tree, &rb_ops);
+	__tk_archive_rb_tree_init(&zip->tree_rsrc, &rb_rsrc_ops);
 
 	zip->zip_entries = calloc(zip->central_directory_entries,
 				sizeof(struct zip_entry));
@@ -442,10 +442,10 @@ slurp_central_directory(struct archive_read *a, struct zip *zip)
 		uint32_t external_attributes;
 		const char *name, *p, *r;
 
-		if ((p = __archive_read_ahead(a, 46, NULL)) == NULL)
+		if ((p = __tk_archive_read_ahead(a, 46, NULL)) == NULL)
 			return ARCHIVE_FATAL;
 		if (memcmp(p, "PK\001\002", 4) != 0) {
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    -1, "Invalid central directory signature");
 			return ARCHIVE_FATAL;
 		}
@@ -453,20 +453,20 @@ slurp_central_directory(struct archive_read *a, struct zip *zip)
 		/* version = p[4]; */
 		zip_entry->system = p[5];
 		/* version_required = archive_le16dec(p + 6); */
-		zip_entry->flags = archive_le16dec(p + 8);
-		zip_entry->compression = (char)archive_le16dec(p + 10);
+		zip_entry->flags = tk_archive_le16dec(p + 8);
+		zip_entry->compression = (char)tk_archive_le16dec(p + 10);
 		zip_entry->mtime = zip_time(p + 12);
-		zip_entry->crc32 = archive_le32dec(p + 16);
-		zip_entry->compressed_size = archive_le32dec(p + 20);
-		zip_entry->uncompressed_size = archive_le32dec(p + 24);
-		filename_length = archive_le16dec(p + 28);
-		extra_length = archive_le16dec(p + 30);
-		comment_length = archive_le16dec(p + 32);
+		zip_entry->crc32 = tk_archive_le32dec(p + 16);
+		zip_entry->compressed_size = tk_archive_le32dec(p + 20);
+		zip_entry->uncompressed_size = tk_archive_le32dec(p + 24);
+		filename_length = tk_archive_le16dec(p + 28);
+		extra_length = tk_archive_le16dec(p + 30);
+		comment_length = tk_archive_le16dec(p + 32);
 		/* disk_start = archive_le16dec(p + 34); */ /* Better be zero. */
 		/* internal_attributes = archive_le16dec(p + 36); */ /* text bit */
-		external_attributes = archive_le32dec(p + 38);
+		external_attributes = tk_archive_le32dec(p + 38);
 		zip_entry->local_header_offset =
-		    archive_le32dec(p + 42) + correction;
+		    tk_archive_le32dec(p + 42) + correction;
 
 		/* If we can't guess the mode, leave it zero here;
 		   when we read the local file header we might get
@@ -482,7 +482,7 @@ slurp_central_directory(struct archive_read *a, struct zip *zip)
 		 * it is.
 		 */
 		/* Make sure we have the file name. */
-		if ((p = __archive_read_ahead(a, 46 + filename_length, NULL))
+		if ((p = __tk_archive_read_ahead(a, 46 + filename_length, NULL))
 		    == NULL)
 			return ARCHIVE_FATAL;
 		name = p + 46;
@@ -494,29 +494,29 @@ slurp_central_directory(struct archive_read *a, struct zip *zip)
 			 * resource fork file to expose it. */
 			if (name[filename_length-1] != '/' &&
 			    (r - name < 3 || r[0] != '.' || r[1] != '_')) {
-				__archive_rb_tree_insert_node(&zip->tree,
+				__tk_archive_rb_tree_insert_node(&zip->tree,
 				    &zip_entry->node);
 				/* Expose its parent directories. */
 				expose_parent_dirs(zip, name, filename_length);
 			} else {
 				/* This file is a resource fork file or
 				 * a directory. */
-				archive_strncpy(&(zip_entry->rsrcname), name,
+				tk_archive_strncpy(&(zip_entry->rsrcname), name,
 				    filename_length);
-				__archive_rb_tree_insert_node(&zip->tree_rsrc,
+				__tk_archive_rb_tree_insert_node(&zip->tree_rsrc,
 				    &zip_entry->node);
 			}
 		} else {
 			/* Generate resource fork name to find its resource
 			 * file at zip->tree_rsrc. */
-			archive_strcpy(&(zip_entry->rsrcname), "__MACOSX/");
-			archive_strncat(&(zip_entry->rsrcname), name, r - name);
-			archive_strcat(&(zip_entry->rsrcname), "._");
-			archive_strncat(&(zip_entry->rsrcname),
+			tk_archive_strcpy(&(zip_entry->rsrcname), "__MACOSX/");
+			tk_archive_strncat(&(zip_entry->rsrcname), name, r - name);
+			tk_archive_strcat(&(zip_entry->rsrcname), "._");
+			tk_archive_strncat(&(zip_entry->rsrcname),
 			    name + (r - name), filename_length - (r - name));
 			/* Register an entry to RB tree to sort it by
 			 * file offset. */
-			__archive_rb_tree_insert_node(&zip->tree,
+			__tk_archive_rb_tree_insert_node(&zip->tree,
 			    &zip_entry->node);
 		}
 
@@ -528,7 +528,7 @@ slurp_central_directory(struct archive_read *a, struct zip *zip)
 		   space. */
 		/* We don't read the extra block here.  We assume it
 		   will be duplicated at the local file header. */
-		__archive_read_consume(a,
+		__tk_archive_read_consume(a,
 		    46 + filename_length + extra_length + comment_length);
 	}
 
@@ -536,19 +536,19 @@ slurp_central_directory(struct archive_read *a, struct zip *zip)
 }
 
 static int64_t
-zip_read_consume(struct archive_read *a, int64_t bytes)
+zip_read_consume(struct tk_archive_read *a, int64_t bytes)
 {
 	struct zip *zip = (struct zip *)a->format->data;
 	int64_t skip;
 
-	skip = __archive_read_consume(a, bytes);
+	skip = __tk_archive_read_consume(a, bytes);
 	if (skip > 0)
 		zip->offset += skip;
 	return (skip);
 }
 
 static int
-zip_read_mac_metadata(struct archive_read *a, struct archive_entry *entry,
+zip_read_mac_metadata(struct tk_archive_read *a, struct tk_archive_entry *entry,
     struct zip_entry *rsrc)
 {
 	struct zip *zip = (struct zip *)a->format->data;
@@ -566,7 +566,7 @@ zip_read_mac_metadata(struct archive_read *a, struct archive_entry *entry,
 		break;
 	default: /* Unsupported compression. */
 		/* Return a warning. */
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Unsupported ZIP compression method (%s)",
 		    compression_name(rsrc->compression));
 		/* We can't decompress this entry, but we will
@@ -575,7 +575,7 @@ zip_read_mac_metadata(struct archive_read *a, struct archive_entry *entry,
 	}
 
 	if (rsrc->uncompressed_size > (128 * 1024)) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Mac metadata is too large: %jd > 128K bytes",
 		    (intmax_t)rsrc->uncompressed_size);
 		return (ARCHIVE_WARN);
@@ -583,7 +583,7 @@ zip_read_mac_metadata(struct archive_read *a, struct archive_entry *entry,
 
 	metadata = malloc((size_t)rsrc->uncompressed_size);
 	if (metadata == NULL) {
-		archive_set_error(&a->archive, ENOMEM,
+		tk_archive_set_error(&a->archive, ENOMEM,
 		    "Can't allocate memory for Mac metadata");
 		return (ARCHIVE_FATAL);
 	}
@@ -591,7 +591,7 @@ zip_read_mac_metadata(struct archive_read *a, struct archive_entry *entry,
 	if (zip->offset < rsrc->local_header_offset)
 		zip_read_consume(a, rsrc->local_header_offset - zip->offset);
 	else if (zip->offset != rsrc->local_header_offset) {
-		__archive_read_seek(a, rsrc->local_header_offset, SEEK_SET);
+		__tk_archive_read_seek(a, rsrc->local_header_offset, SEEK_SET);
 		zip->offset = zip->entry->local_header_offset;
 	}
 
@@ -607,9 +607,9 @@ zip_read_mac_metadata(struct archive_read *a, struct archive_entry *entry,
 		ssize_t bytes_avail;
 		size_t bytes_used;
 
-		p = __archive_read_ahead(a, 1, &bytes_avail);
+		p = __tk_archive_read_ahead(a, 1, &bytes_avail);
 		if (p == NULL) {
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "Truncated ZIP file header");
 			ret = ARCHIVE_WARN;
@@ -650,12 +650,12 @@ zip_read_mac_metadata(struct archive_read *a, struct archive_entry *entry,
 				eof = 1;
 				break;
 			case Z_MEM_ERROR:
-				archive_set_error(&a->archive, ENOMEM,
+				tk_archive_set_error(&a->archive, ENOMEM,
 				    "Out of memory for ZIP decompression");
 				ret = ARCHIVE_FATAL;
 				goto exit_mac_metadata;
 			default:
-				archive_set_error(&a->archive,
+				tk_archive_set_error(&a->archive,
 				    ARCHIVE_ERRNO_MISC,
 				    "ZIP decompression failed (%d)", r);
 				ret = ARCHIVE_FATAL;
@@ -674,10 +674,10 @@ zip_read_mac_metadata(struct archive_read *a, struct archive_entry *entry,
 		zip_read_consume(a, bytes_used);
 		remaining_bytes -= bytes_used;
 	}
-	archive_entry_copy_mac_metadata(entry, metadata,
+	tk_archive_entry_copy_mac_metadata(entry, metadata,
 	    (size_t)rsrc->uncompressed_size - metadata_bytes);
 
-	__archive_read_seek(a, offset, SEEK_SET);
+	__tk_archive_read_seek(a, offset, SEEK_SET);
 	zip->offset = offset;
 exit_mac_metadata:
 	zip->decompress_init = 0;
@@ -686,16 +686,16 @@ exit_mac_metadata:
 }
 
 static int
-archive_read_format_zip_seekable_read_header(struct archive_read *a,
-	struct archive_entry *entry)
+tk_archive_read_format_zip_seekable_read_header(struct tk_archive_read *a,
+	struct tk_archive_entry *entry)
 {
 	struct zip *zip = (struct zip *)a->format->data;
 	struct zip_entry *rsrc;
 	int r, ret = ARCHIVE_OK;
 
-	a->archive.archive_format = ARCHIVE_FORMAT_ZIP;
-	if (a->archive.archive_format_name == NULL)
-		a->archive.archive_format_name = "ZIP";
+	a->archive.tk_archive_format = ARCHIVE_FORMAT_ZIP;
+	if (a->archive.tk_archive_format_name == NULL)
+		a->archive.tk_archive_format_name = "ZIP";
 
 	if (zip->zip_entries == NULL) {
 		r = slurp_central_directory(a, zip);
@@ -708,7 +708,7 @@ archive_read_format_zip_seekable_read_header(struct archive_read *a,
 		    (struct zip_entry *)ARCHIVE_RB_TREE_MIN(&zip->tree);
 	} else if (zip->entry != NULL) {
 		/* Get next entry in local header offset order. */
-		zip->entry = (struct zip_entry *)__archive_rb_tree_iterate(
+		zip->entry = (struct zip_entry *)__tk_archive_rb_tree_iterate(
 		    &zip->tree, &zip->entry->node, ARCHIVE_RB_DIR_RIGHT);
 	}
 
@@ -717,7 +717,7 @@ archive_read_format_zip_seekable_read_header(struct archive_read *a,
 	--zip->entries_remaining;
 
 	if (zip->entry->rsrcname.s)
-		rsrc = (struct zip_entry *)__archive_rb_tree_find_node(
+		rsrc = (struct zip_entry *)__tk_archive_rb_tree_find_node(
 		    &zip->tree_rsrc, zip->entry->rsrcname.s);
 	else
 		rsrc = NULL;
@@ -729,7 +729,7 @@ archive_read_format_zip_seekable_read_header(struct archive_read *a,
 		zip_read_consume(a,
 		    zip->entry->local_header_offset - zip->offset);
 	else if (zip->offset != zip->entry->local_header_offset) {
-		__archive_read_seek(a, zip->entry->local_header_offset,
+		__tk_archive_read_seek(a, zip->entry->local_header_offset,
 			SEEK_SET);
 		zip->offset = zip->entry->local_header_offset;
 	}
@@ -739,13 +739,13 @@ archive_read_format_zip_seekable_read_header(struct archive_read *a,
 		return r;
 	if ((zip->entry->mode & AE_IFMT) == AE_IFLNK) {
 		const void *p;
-		struct archive_string_conv *sconv;
-		size_t linkname_length = (size_t)archive_entry_size(entry);
+		struct tk_archive_string_conv *sconv;
+		size_t linkname_length = (size_t)tk_archive_entry_size(entry);
 
-		archive_entry_set_size(entry, 0);
-		p = __archive_read_ahead(a, linkname_length, NULL);
+		tk_archive_entry_set_size(entry, 0);
+		p = __tk_archive_read_ahead(a, linkname_length, NULL);
 		if (p == NULL) {
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "Truncated Zip file");
 			return ARCHIVE_FATAL;
 		}
@@ -755,14 +755,14 @@ archive_read_format_zip_seekable_read_header(struct archive_read *a,
 			sconv = zip->sconv_utf8;
 		if (sconv == NULL)
 			sconv = zip->sconv_default;
-		if (archive_entry_copy_symlink_l(entry, p, linkname_length,
+		if (tk_archive_entry_copy_symlink_l(entry, p, linkname_length,
 		    sconv) != 0) {
 			if (errno != ENOMEM && sconv == zip->sconv_utf8 &&
 			    (zip->entry->flags & ZIP_UTF8_NAME))
-			    archive_entry_copy_symlink_l(entry, p,
+			    tk_archive_entry_copy_symlink_l(entry, p,
 				linkname_length, NULL);
 			if (errno == ENOMEM) {
-				archive_set_error(&a->archive, ENOMEM,
+				tk_archive_set_error(&a->archive, ENOMEM,
 				    "Can't allocate memory for Symlink");
 				return (ARCHIVE_FATAL);
 			}
@@ -773,11 +773,11 @@ archive_read_format_zip_seekable_read_header(struct archive_read *a,
 			 */
 			if (sconv != zip->sconv_utf8 ||
 			    (zip->entry->flags & ZIP_UTF8_NAME) == 0) {
-				archive_set_error(&a->archive,
+				tk_archive_set_error(&a->archive,
 				    ARCHIVE_ERRNO_FILE_FORMAT,
 				    "Symlink cannot be converted "
 				    "from %s to current locale.",
-				    archive_string_conversion_charset_name(
+				    tk_archive_string_conversion_charset_name(
 					sconv));
 				ret = ARCHIVE_WARN;
 			}
@@ -792,13 +792,13 @@ archive_read_format_zip_seekable_read_header(struct archive_read *a,
 }
 
 static int
-archive_read_format_zip_streamable_bid(struct archive_read *a, int best_bid)
+tk_archive_read_format_zip_streamable_bid(struct tk_archive_read *a, int best_bid)
 {
 	const char *p;
 
 	(void)best_bid; /* UNUSED */
 
-	if ((p = __archive_read_ahead(a, 4, NULL)) == NULL)
+	if ((p = __tk_archive_read_ahead(a, 4, NULL)) == NULL)
 		return (-1);
 
 	/*
@@ -824,7 +824,7 @@ archive_read_format_zip_streamable_bid(struct archive_read *a, int best_bid)
 }
 
 static int
-archive_read_format_zip_options(struct archive_read *a,
+tk_archive_read_format_zip_options(struct tk_archive_read *a,
     const char *key, const char *val)
 {
 	struct zip *zip;
@@ -837,11 +837,11 @@ archive_read_format_zip_options(struct archive_read *a,
 		return (ARCHIVE_OK);
 	} else if (strcmp(key, "hdrcharset")  == 0) {
 		if (val == NULL || val[0] == 0)
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "zip: hdrcharset option needs a character-set name"
 			);
 		else {
-			zip->sconv = archive_string_conversion_from_charset(
+			zip->sconv = tk_archive_string_conversion_from_charset(
 			    &a->archive, val, 0);
 			if (zip->sconv != NULL) {
 				if (strcmp(val, "UTF-8") == 0)
@@ -860,14 +860,14 @@ archive_read_format_zip_options(struct archive_read *a,
 }
 
 static int
-archive_read_format_zip_streamable_read_header(struct archive_read *a,
-    struct archive_entry *entry)
+tk_archive_read_format_zip_streamable_read_header(struct tk_archive_read *a,
+    struct tk_archive_entry *entry)
 {
 	struct zip *zip;
 
-	a->archive.archive_format = ARCHIVE_FORMAT_ZIP;
-	if (a->archive.archive_format_name == NULL)
-		a->archive.archive_format_name = "ZIP";
+	a->archive.tk_archive_format = ARCHIVE_FORMAT_ZIP;
+	if (a->archive.tk_archive_format_name == NULL)
+		a->archive.tk_archive_format_name = "ZIP";
 
 	zip = (struct zip *)(a->format->data);
 
@@ -875,7 +875,7 @@ archive_read_format_zip_streamable_read_header(struct archive_read *a,
 	if (zip->zip_entries == NULL) {
 		zip->zip_entries = malloc(sizeof(struct zip_entry));
 		if (zip->zip_entries == NULL) {
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "Out  of memory");
 			return ARCHIVE_FATAL;
 		}
@@ -891,7 +891,7 @@ archive_read_format_zip_streamable_read_header(struct archive_read *a,
 		const char *p, *end;
 		ssize_t bytes;
 
-		p = __archive_read_ahead(a, 4, &bytes);
+		p = __tk_archive_read_ahead(a, 4, &bytes);
 		if (p == NULL)
 			return (ARCHIVE_FATAL);
 		end = p + bytes;
@@ -921,24 +921,24 @@ archive_read_format_zip_streamable_read_header(struct archive_read *a,
 }
 
 static ssize_t
-zip_get_local_file_header_size(struct archive_read *a, size_t extra)
+zip_get_local_file_header_size(struct tk_archive_read *a, size_t extra)
 {
 	const char *p;
 	ssize_t filename_length, extra_length;
 
-	if ((p = __archive_read_ahead(a, extra + 30, NULL)) == NULL) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+	if ((p = __tk_archive_read_ahead(a, extra + 30, NULL)) == NULL) {
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Truncated ZIP file header");
 		return (ARCHIVE_WARN);
 	}
 	p += extra;
 
 	if (memcmp(p, "PK\003\004", 4) != 0) {
-		archive_set_error(&a->archive, -1, "Damaged Zip archive");
+		tk_archive_set_error(&a->archive, -1, "Damaged Zip archive");
 		return ARCHIVE_WARN;
 	}
-	filename_length = archive_le16dec(p + 26);
-	extra_length = archive_le16dec(p + 28);
+	filename_length = tk_archive_le16dec(p + 26);
+	extra_length = tk_archive_le16dec(p + 28);
 
 	return (30 + filename_length + extra_length);
 }
@@ -947,7 +947,7 @@ zip_get_local_file_header_size(struct archive_read *a, size_t extra)
  * Assumes file pointer is at beginning of local file header.
  */
 static int
-zip_read_local_file_header(struct archive_read *a, struct archive_entry *entry,
+zip_read_local_file_header(struct tk_archive_read *a, struct tk_archive_entry *entry,
     struct zip *zip)
 {
 	const char *p;
@@ -955,7 +955,7 @@ zip_read_local_file_header(struct archive_read *a, struct archive_entry *entry,
 	const wchar_t *wp;
 	const char *cp;
 	size_t len, filename_length, extra_length;
-	struct archive_string_conv *sconv;
+	struct tk_archive_string_conv *sconv;
 	struct zip_entry *zip_entry = zip->entry;
 	uint32_t local_crc32;
 	int64_t compressed_size, uncompressed_size;
@@ -971,30 +971,30 @@ zip_read_local_file_header(struct archive_read *a, struct archive_entry *entry,
 	/* Setup default conversion. */
 	if (zip->sconv == NULL && !zip->init_default_conversion) {
 		zip->sconv_default =
-		    archive_string_default_conversion_for_read(&(a->archive));
+		    tk_archive_string_default_conversion_for_read(&(a->archive));
 		zip->init_default_conversion = 1;
 	}
 
-	if ((p = __archive_read_ahead(a, 30, NULL)) == NULL) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+	if ((p = __tk_archive_read_ahead(a, 30, NULL)) == NULL) {
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Truncated ZIP file header");
 		return (ARCHIVE_FATAL);
 	}
 
 	if (memcmp(p, "PK\003\004", 4) != 0) {
-		archive_set_error(&a->archive, -1, "Damaged Zip archive");
+		tk_archive_set_error(&a->archive, -1, "Damaged Zip archive");
 		return ARCHIVE_FATAL;
 	}
 	version = p[4];
 	zip_entry->system = p[5];
-	zip_entry->flags = archive_le16dec(p + 6);
-	zip_entry->compression = (char)archive_le16dec(p + 8);
+	zip_entry->flags = tk_archive_le16dec(p + 6);
+	zip_entry->compression = (char)tk_archive_le16dec(p + 8);
 	zip_entry->mtime = zip_time(p + 10);
-	local_crc32 = archive_le32dec(p + 14);
-	compressed_size = archive_le32dec(p + 18);
-	uncompressed_size = archive_le32dec(p + 22);
-	filename_length = archive_le16dec(p + 26);
-	extra_length = archive_le16dec(p + 28);
+	local_crc32 = tk_archive_le32dec(p + 14);
+	compressed_size = tk_archive_le32dec(p + 18);
+	uncompressed_size = tk_archive_le32dec(p + 22);
+	filename_length = tk_archive_le16dec(p + 26);
+	extra_length = tk_archive_le16dec(p + 28);
 
 	zip_read_consume(a, 30);
 
@@ -1008,21 +1008,21 @@ zip_read_local_file_header(struct archive_read *a, struct archive_entry *entry,
 		   writers always put zero in the local header; don't
 		   bother warning about that. */
 		if (local_crc32 != 0 && local_crc32 != zip_entry->crc32) {
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "Inconsistent CRC32 values");
 			ret = ARCHIVE_WARN;
 		}
 		if (compressed_size != 0
 		    && compressed_size != zip_entry->compressed_size) {
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "Inconsistent compressed size");
 			ret = ARCHIVE_WARN;
 		}
 		if (uncompressed_size != 0
 		    && uncompressed_size != zip_entry->uncompressed_size) {
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "Inconsistent uncompressed size");
 			ret = ARCHIVE_WARN;
@@ -1035,8 +1035,8 @@ zip_read_local_file_header(struct archive_read *a, struct archive_entry *entry,
 	}
 
 	/* Read the filename. */
-	if ((h = __archive_read_ahead(a, filename_length, NULL)) == NULL) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+	if ((h = __tk_archive_read_ahead(a, filename_length, NULL)) == NULL) {
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Truncated ZIP file header");
 		return (ARCHIVE_FATAL);
 	}
@@ -1044,7 +1044,7 @@ zip_read_local_file_header(struct archive_read *a, struct archive_entry *entry,
 		/* The filename is stored to be UTF-8. */
 		if (zip->sconv_utf8 == NULL) {
 			zip->sconv_utf8 =
-			    archive_string_conversion_from_charset(
+			    tk_archive_string_conversion_from_charset(
 				&a->archive, "UTF-8", 1);
 			if (zip->sconv_utf8 == NULL)
 				return (ARCHIVE_FATAL);
@@ -1055,18 +1055,18 @@ zip_read_local_file_header(struct archive_read *a, struct archive_entry *entry,
 	else
 		sconv = zip->sconv_default;
 
-	if (archive_entry_copy_pathname_l(entry,
+	if (tk_archive_entry_copy_pathname_l(entry,
 	    h, filename_length, sconv) != 0) {
 		if (errno == ENOMEM) {
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate memory for Pathname");
 			return (ARCHIVE_FATAL);
 		}
-		archive_set_error(&a->archive,
+		tk_archive_set_error(&a->archive,
 		    ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Pathname cannot be converted "
 		    "from %s to current locale.",
-		    archive_string_conversion_charset_name(sconv));
+		    tk_archive_string_conversion_charset_name(sconv));
 		ret = ARCHIVE_WARN;
 	}
 	zip_read_consume(a, filename_length);
@@ -1075,7 +1075,7 @@ zip_read_local_file_header(struct archive_read *a, struct archive_entry *entry,
 		/* Especially in streaming mode, we can end up
 		   here without having seen any mode information.
 		   Guess from the filename. */
-		wp = archive_entry_pathname_w(entry);
+		wp = tk_archive_entry_pathname_w(entry);
 		if (wp != NULL) {
 			len = wcslen(wp);
 			if (len > 0 && wp[len - 1] == L'/')
@@ -1083,7 +1083,7 @@ zip_read_local_file_header(struct archive_read *a, struct archive_entry *entry,
 			else
 				zip_entry->mode = AE_IFREG | 0666;
 		} else {
-			cp = archive_entry_pathname(entry);
+			cp = tk_archive_entry_pathname(entry);
 			len = (cp != NULL)?strlen(cp):0;
 			if (len > 0 && cp[len - 1] == '/')
 				zip_entry->mode = AE_IFDIR | 0777;
@@ -1093,8 +1093,8 @@ zip_read_local_file_header(struct archive_read *a, struct archive_entry *entry,
 	}
 
 	/* Read the extra data. */
-	if ((h = __archive_read_ahead(a, extra_length, NULL)) == NULL) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+	if ((h = __tk_archive_read_ahead(a, extra_length, NULL)) == NULL) {
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Truncated ZIP file header");
 		return (ARCHIVE_FATAL);
 	}
@@ -1102,15 +1102,15 @@ zip_read_local_file_header(struct archive_read *a, struct archive_entry *entry,
 	zip_read_consume(a, extra_length);
 
 	/* Populate some additional entry fields: */
-	archive_entry_set_mode(entry, zip_entry->mode);
-	archive_entry_set_uid(entry, zip_entry->uid);
-	archive_entry_set_gid(entry, zip_entry->gid);
-	archive_entry_set_mtime(entry, zip_entry->mtime, 0);
-	archive_entry_set_ctime(entry, zip_entry->ctime, 0);
-	archive_entry_set_atime(entry, zip_entry->atime, 0);
+	tk_archive_entry_set_mode(entry, zip_entry->mode);
+	tk_archive_entry_set_uid(entry, zip_entry->uid);
+	tk_archive_entry_set_gid(entry, zip_entry->gid);
+	tk_archive_entry_set_mtime(entry, zip_entry->mtime, 0);
+	tk_archive_entry_set_ctime(entry, zip_entry->ctime, 0);
+	tk_archive_entry_set_atime(entry, zip_entry->atime, 0);
 	/* Set the size only if it's meaningful. */
 	if (0 == (zip_entry->flags & ZIP_LENGTH_AT_END))
-		archive_entry_set_size(entry, zip_entry->uncompressed_size);
+		tk_archive_entry_set_size(entry, zip_entry->uncompressed_size);
 
 	zip->entry_bytes_remaining = zip_entry->compressed_size;
 
@@ -1123,7 +1123,7 @@ zip_read_local_file_header(struct archive_read *a, struct archive_entry *entry,
 	sprintf(zip->format_name, "ZIP %d.%d (%s)",
 	    version / 10, version % 10,
 	    compression_name(zip->entry->compression));
-	a->archive.archive_format_name = zip->format_name;
+	a->archive.tk_archive_format_name = zip->format_name;
 
 	return (ret);
 }
@@ -1172,7 +1172,7 @@ zip_time(const char *p)
 }
 
 static int
-archive_read_format_zip_read_data(struct archive_read *a,
+tk_archive_read_format_zip_read_data(struct tk_archive_read *a,
     const void **buff, size_t *size, int64_t *offset)
 {
 	int r;
@@ -1191,7 +1191,7 @@ archive_read_format_zip_read_data(struct archive_read *a,
 		return (ARCHIVE_EOF);
 
 	if (zip->entry->flags & (ZIP_ENCRYPTED | ZIP_STRONG_ENCRYPTED)) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Encrypted file is unsupported");
 		return (ARCHIVE_FAILED);
 	}
@@ -1210,7 +1210,7 @@ archive_read_format_zip_read_data(struct archive_read *a,
 #endif
 	default: /* Unsupported compression. */
 		/* Return a warning. */
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Unsupported ZIP compression method (%s)",
 		    compression_name(zip->entry->compression));
 		/* We can't decompress this entry, but we will
@@ -1229,7 +1229,7 @@ archive_read_format_zip_read_data(struct archive_read *a,
 		/* Check file size, CRC against these values. */
 		if (zip->entry->compressed_size !=
 		    zip->entry_compressed_bytes_read) {
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "ZIP compressed data is wrong size "
 			    "(read %jd, expected %jd)",
 			    (intmax_t)zip->entry_compressed_bytes_read,
@@ -1240,7 +1240,7 @@ archive_read_format_zip_read_data(struct archive_read *a,
 		 * size. */
 		if ((zip->entry->uncompressed_size & UINT32_MAX)
 		    != (zip->entry_uncompressed_bytes_read & UINT32_MAX)) {
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "ZIP uncompressed data is wrong size "
 			    "(read %jd, expected %jd)",
 			    (intmax_t)zip->entry_uncompressed_bytes_read,
@@ -1249,7 +1249,7 @@ archive_read_format_zip_read_data(struct archive_read *a,
 		}
 		/* Check computed CRC against header */
 		if (zip->entry->crc32 != zip->entry_crc32) {
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "ZIP bad CRC: 0x%lx should be 0x%lx",
 			    (unsigned long)zip->entry_crc32,
 			    (unsigned long)zip->entry->crc32);
@@ -1284,7 +1284,7 @@ archive_read_format_zip_read_data(struct archive_read *a,
  * zip->end_of_entry if it consumes all of the data.
  */
 static int
-zip_read_data_none(struct archive_read *a, const void **_buff,
+zip_read_data_none(struct tk_archive_read *a, const void **_buff,
     size_t *size, int64_t *offset)
 {
 	struct zip *zip;
@@ -1299,13 +1299,13 @@ zip_read_data_none(struct archive_read *a, const void **_buff,
 		const char *p;
 
 		/* Grab at least 16 bytes. */
-		buff = __archive_read_ahead(a, 16, &bytes_avail);
+		buff = __tk_archive_read_ahead(a, 16, &bytes_avail);
 		if (bytes_avail < 16) {
 			/* Zip archives have end-of-archive markers
 			   that are longer than this, so a failure to get at
 			   least 16 bytes really does indicate a truncated
 			   file. */
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "Truncated ZIP file data");
 			return (ARCHIVE_FATAL);
@@ -1314,14 +1314,14 @@ zip_read_data_none(struct archive_read *a, const void **_buff,
 		p = buff;
 		if (p[0] == 'P' && p[1] == 'K' 
 		    && p[2] == '\007' && p[3] == '\010'
-		    && archive_le32dec(p + 4) == zip->entry_crc32
-		    && archive_le32dec(p + 8) ==
+		    && tk_archive_le32dec(p + 4) == zip->entry_crc32
+		    && tk_archive_le32dec(p + 8) ==
 			    zip->entry_compressed_bytes_read
-		    && archive_le32dec(p + 12) ==
+		    && tk_archive_le32dec(p + 12) ==
 			    zip->entry_uncompressed_bytes_read) {
-			zip->entry->crc32 = archive_le32dec(p + 4);
-			zip->entry->compressed_size = archive_le32dec(p + 8);
-			zip->entry->uncompressed_size = archive_le32dec(p + 12);
+			zip->entry->crc32 = tk_archive_le32dec(p + 4);
+			zip->entry->compressed_size = tk_archive_le32dec(p + 8);
+			zip->entry->uncompressed_size = tk_archive_le32dec(p + 12);
 			zip->end_of_entry = 1;
 			zip->unconsumed = 16;
 			return (ARCHIVE_OK);
@@ -1349,9 +1349,9 @@ zip_read_data_none(struct archive_read *a, const void **_buff,
 			return (ARCHIVE_OK);
 		}
 		/* Grab a bunch of bytes. */
-		buff = __archive_read_ahead(a, 1, &bytes_avail);
+		buff = __tk_archive_read_ahead(a, 1, &bytes_avail);
 		if (bytes_avail <= 0) {
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "Truncated ZIP file data");
 			return (ARCHIVE_FATAL);
@@ -1370,7 +1370,7 @@ zip_read_data_none(struct archive_read *a, const void **_buff,
 
 #ifdef HAVE_ZLIB_H
 static int
-zip_deflate_init(struct archive_read *a, struct zip *zip)
+zip_deflate_init(struct tk_archive_read *a, struct zip *zip)
 {
 	int r;
 
@@ -1382,7 +1382,7 @@ zip_deflate_init(struct archive_read *a, struct zip *zip)
 			r = inflateInit2(&zip->stream,
 			    -15 /* Don't check for zlib header */);
 		if (r != Z_OK) {
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "Can't initialize ZIP decompression.");
 			return (ARCHIVE_FATAL);
 		}
@@ -1395,7 +1395,7 @@ zip_deflate_init(struct archive_read *a, struct zip *zip)
 }
 
 static int
-zip_read_data_deflate(struct archive_read *a, const void **buff,
+zip_read_data_deflate(struct tk_archive_read *a, const void **buff,
     size_t *size, int64_t *offset)
 {
 	struct zip *zip;
@@ -1413,7 +1413,7 @@ zip_read_data_deflate(struct archive_read *a, const void **buff,
 		zip->uncompressed_buffer
 		    = (unsigned char *)malloc(zip->uncompressed_buffer_size);
 		if (zip->uncompressed_buffer == NULL) {
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "No memory for ZIP decompression");
 			return (ARCHIVE_FATAL);
 		}
@@ -1429,13 +1429,13 @@ zip_read_data_deflate(struct archive_read *a, const void **buff,
 	 * available bytes; asking for more than that forces the
 	 * decompressor to combine reads by copying data.
 	 */
-	compressed_buff = __archive_read_ahead(a, 1, &bytes_avail);
+	compressed_buff = __tk_archive_read_ahead(a, 1, &bytes_avail);
 	if (0 == (zip->entry->flags & ZIP_LENGTH_AT_END)
 	    && bytes_avail > zip->entry_bytes_remaining) {
 		bytes_avail = (ssize_t)zip->entry_bytes_remaining;
 	}
 	if (bytes_avail <= 0) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Truncated ZIP file body");
 		return (ARCHIVE_FATAL);
 	}
@@ -1461,11 +1461,11 @@ zip_read_data_deflate(struct archive_read *a, const void **buff,
 		zip->end_of_entry = 1;
 		break;
 	case Z_MEM_ERROR:
-		archive_set_error(&a->archive, ENOMEM,
+		tk_archive_set_error(&a->archive, ENOMEM,
 		    "Out of memory for ZIP decompression");
 		return (ARCHIVE_FATAL);
 	default:
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 		    "ZIP decompression failed (%d)", r);
 		return (ARCHIVE_FATAL);
 	}
@@ -1483,8 +1483,8 @@ zip_read_data_deflate(struct archive_read *a, const void **buff,
 	if (zip->end_of_entry && (zip->entry->flags & ZIP_LENGTH_AT_END)) {
 		const char *p;
 
-		if (NULL == (p = __archive_read_ahead(a, 16, NULL))) {
-			archive_set_error(&a->archive,
+		if (NULL == (p = __tk_archive_read_ahead(a, 16, NULL))) {
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "Truncated ZIP end-of-file record");
 			return (ARCHIVE_FATAL);
@@ -1492,9 +1492,9 @@ zip_read_data_deflate(struct archive_read *a, const void **buff,
 		/* Consume the optional PK\007\010 marker. */
 		if (p[0] == 'P' && p[1] == 'K' &&
 		    p[2] == '\007' && p[3] == '\010') {
-			zip->entry->crc32 = archive_le32dec(p + 4);
-			zip->entry->compressed_size = archive_le32dec(p + 8);
-			zip->entry->uncompressed_size = archive_le32dec(p + 12);
+			zip->entry->crc32 = tk_archive_le32dec(p + 4);
+			zip->entry->compressed_size = tk_archive_le32dec(p + 8);
+			zip->entry->uncompressed_size = tk_archive_le32dec(p + 12);
 			zip->unconsumed = 16;
 		}
 	}
@@ -1504,7 +1504,7 @@ zip_read_data_deflate(struct archive_read *a, const void **buff,
 #endif
 
 static int
-archive_read_format_zip_read_data_skip(struct archive_read *a)
+tk_archive_read_format_zip_read_data_skip(struct tk_archive_read *a)
 {
 	struct zip *zip;
 
@@ -1549,9 +1549,9 @@ archive_read_format_zip_read_data_skip(struct archive_read *a)
 		for (;;) {
 			const char *p, *buff;
 			ssize_t bytes_avail;
-			buff = __archive_read_ahead(a, 16, &bytes_avail);
+			buff = __tk_archive_read_ahead(a, 16, &bytes_avail);
 			if (bytes_avail < 16) {
-				archive_set_error(&a->archive,
+				tk_archive_set_error(&a->archive,
 				    ARCHIVE_ERRNO_FILE_FORMAT,
 				    "Truncated ZIP file data");
 				return (ARCHIVE_FATAL);
@@ -1573,7 +1573,7 @@ archive_read_format_zip_read_data_skip(struct archive_read *a)
 }
 
 static int
-archive_read_format_zip_cleanup(struct archive_read *a)
+tk_archive_read_format_zip_cleanup(struct tk_archive_read *a)
 {
 	struct zip *zip;
 
@@ -1585,11 +1585,11 @@ archive_read_format_zip_cleanup(struct archive_read *a)
 	if (zip->zip_entries && zip->central_directory_entries) {
 		unsigned i;
 		for (i = 0; i < zip->central_directory_entries; i++)
-			archive_string_free(&(zip->zip_entries[i].rsrcname));
+			tk_archive_string_free(&(zip->zip_entries[i].rsrcname));
 	}
 	free(zip->zip_entries);
 	free(zip->uncompressed_buffer);
-	archive_string_free(&(zip->extra));
+	tk_archive_string_free(&(zip->extra));
 	free(zip);
 	(a->format->data) = NULL;
 	return (ARCHIVE_OK);
@@ -1607,8 +1607,8 @@ process_extra(const char *p, size_t extra_length, struct zip_entry* zip_entry)
 
 	while (offset < extra_length - 4)
 	{
-		unsigned short headerid = archive_le16dec(p + offset);
-		unsigned short datasize = archive_le16dec(p + offset + 2);
+		unsigned short headerid = tk_archive_le16dec(p + offset);
+		unsigned short datasize = tk_archive_le16dec(p + offset + 2);
 		offset += 4;
 		if (offset + datasize > extra_length)
 			break;
@@ -1621,10 +1621,10 @@ process_extra(const char *p, size_t extra_length, struct zip_entry* zip_entry)
 			/* Zip64 extended information extra field. */
 			if (datasize >= 8)
 				zip_entry->uncompressed_size =
-				    archive_le64dec(p + offset);
+				    tk_archive_le64dec(p + offset);
 			if (datasize >= 16)
 				zip_entry->compressed_size =
-				    archive_le64dec(p + offset + 8);
+				    tk_archive_le64dec(p + offset + 8);
 			break;
 		case 0x5455:
 		{
@@ -1638,11 +1638,11 @@ process_extra(const char *p, size_t extra_length, struct zip_entry* zip_entry)
 #ifdef DEBUG
 				fprintf(stderr, "mtime: %lld -> %d\n",
 				    (long long)zip_entry->mtime,
-				    archive_le32dec(p + offset));
+				    tk_archive_le32dec(p + offset));
 #endif
 				if (datasize < 4)
 					break;
-				zip_entry->mtime = archive_le32dec(p + offset);
+				zip_entry->mtime = tk_archive_le32dec(p + offset);
 				offset += 4;
 				datasize -= 4;
 			}
@@ -1650,7 +1650,7 @@ process_extra(const char *p, size_t extra_length, struct zip_entry* zip_entry)
 			{
 				if (datasize < 4)
 					break;
-				zip_entry->atime = archive_le32dec(p + offset);
+				zip_entry->atime = tk_archive_le32dec(p + offset);
 				offset += 4;
 				datasize -= 4;
 			}
@@ -1658,7 +1658,7 @@ process_extra(const char *p, size_t extra_length, struct zip_entry* zip_entry)
 			{
 				if (datasize < 4)
 					break;
-				zip_entry->ctime = archive_le32dec(p + offset);
+				zip_entry->ctime = tk_archive_le32dec(p + offset);
 				offset += 4;
 				datasize -= 4;
 			}
@@ -1668,15 +1668,15 @@ process_extra(const char *p, size_t extra_length, struct zip_entry* zip_entry)
 		{
 			/* Info-ZIP Unix Extra Field (old version) "UX". */
 			if (datasize >= 8) {
-				zip_entry->atime = archive_le32dec(p + offset);
+				zip_entry->atime = tk_archive_le32dec(p + offset);
 				zip_entry->mtime =
-				    archive_le32dec(p + offset + 4);
+				    tk_archive_le32dec(p + offset + 4);
 			}
 			if (datasize >= 12) {
 				zip_entry->uid =
-				    archive_le16dec(p + offset + 8);
+				    tk_archive_le16dec(p + offset + 8);
 				zip_entry->gid =
-				    archive_le16dec(p + offset + 10);
+				    tk_archive_le16dec(p + offset + 10);
 			}
 			break;
 		}
@@ -1684,14 +1684,14 @@ process_extra(const char *p, size_t extra_length, struct zip_entry* zip_entry)
 			/* Info-ZIP Unix Extra Field (type 2) "Ux". */
 #ifdef DEBUG
 			fprintf(stderr, "uid %d gid %d\n",
-			    archive_le16dec(p + offset),
-			    archive_le16dec(p + offset + 2));
+			    tk_archive_le16dec(p + offset),
+			    tk_archive_le16dec(p + offset + 2));
 #endif
 			if (datasize >= 2)
-				zip_entry->uid = archive_le16dec(p + offset);
+				zip_entry->uid = tk_archive_le16dec(p + offset);
 			if (datasize >= 4)
 				zip_entry->gid =
-				    archive_le16dec(p + offset + 2);
+				    tk_archive_le16dec(p + offset + 2);
 			break;
 		case 0x7875:
 		{
@@ -1704,11 +1704,11 @@ process_extra(const char *p, size_t extra_length, struct zip_entry* zip_entry)
 					uidsize = p[offset+1];
 					if (uidsize == 2)
 						zip_entry->uid =
-						    archive_le16dec(
+						    tk_archive_le16dec(
 						        p + offset + 2);
 					else if (uidsize == 4 && datasize >= 6)
 						zip_entry->uid =
-						    archive_le32dec(
+						    tk_archive_le32dec(
 						        p + offset + 2);
 				}
 				if (datasize >= (2 + uidsize + 3)) {
@@ -1716,12 +1716,12 @@ process_extra(const char *p, size_t extra_length, struct zip_entry* zip_entry)
 					gidsize = p[offset+2+uidsize];
 					if (gidsize == 2)
 						zip_entry->gid =
-						    archive_le16dec(
+						    tk_archive_le16dec(
 						        p+offset+2+uidsize+1);
 					else if (gidsize == 4 &&
 					    datasize >= (2 + uidsize + 5))
 						zip_entry->gid =
-						    archive_le32dec(
+						    tk_archive_le32dec(
 						        p+offset+2+uidsize+1);
 				}
 			}

@@ -44,41 +44,41 @@ struct raw_info {
 	int     end_of_file;
 };
 
-static int	archive_read_format_raw_bid(struct archive_read *, int);
-static int	archive_read_format_raw_cleanup(struct archive_read *);
-static int	archive_read_format_raw_read_data(struct archive_read *,
+static int	tk_archive_read_format_raw_bid(struct tk_archive_read *, int);
+static int	tk_archive_read_format_raw_cleanup(struct tk_archive_read *);
+static int	tk_archive_read_format_raw_read_data(struct tk_archive_read *,
 		    const void **, size_t *, int64_t *);
-static int	archive_read_format_raw_read_data_skip(struct archive_read *);
-static int	archive_read_format_raw_read_header(struct archive_read *,
-		    struct archive_entry *);
+static int	tk_archive_read_format_raw_read_data_skip(struct tk_archive_read *);
+static int	tk_archive_read_format_raw_read_header(struct tk_archive_read *,
+		    struct tk_archive_entry *);
 
 int
-archive_read_support_format_raw(struct archive *_a)
+tk_archive_read_support_format_raw(struct archive *_a)
 {
 	struct raw_info *info;
-	struct archive_read *a = (struct archive_read *)_a;
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
 	int r;
 
-	archive_check_magic(_a, ARCHIVE_READ_MAGIC,
-	    ARCHIVE_STATE_NEW, "archive_read_support_format_raw");
+	tk_archive_check_magic(_a, ARCHIVE_READ_MAGIC,
+	    ARCHIVE_STATE_NEW, "tk_archive_read_support_format_raw");
 
 	info = (struct raw_info *)calloc(1, sizeof(*info));
 	if (info == NULL) {
-		archive_set_error(&a->archive, ENOMEM,
+		tk_archive_set_error(&a->archive, ENOMEM,
 		    "Can't allocate raw_info data");
 		return (ARCHIVE_FATAL);
 	}
 
-	r = __archive_read_register_format(a,
+	r = __tk_archive_read_register_format(a,
 	    info,
 	    "raw",
-	    archive_read_format_raw_bid,
+	    tk_archive_read_format_raw_bid,
 	    NULL,
-	    archive_read_format_raw_read_header,
-	    archive_read_format_raw_read_data,
-	    archive_read_format_raw_read_data_skip,
+	    tk_archive_read_format_raw_read_header,
+	    tk_archive_read_format_raw_read_data,
+	    tk_archive_read_format_raw_read_data_skip,
 	    NULL,
-	    archive_read_format_raw_cleanup);
+	    tk_archive_read_format_raw_cleanup);
 	if (r != ARCHIVE_OK)
 		free(info);
 	return (r);
@@ -92,9 +92,9 @@ archive_read_support_format_raw(struct archive *_a)
  * include "raw" as part of support_format_all().
  */
 static int
-archive_read_format_raw_bid(struct archive_read *a, int best_bid)
+tk_archive_read_format_raw_bid(struct tk_archive_read *a, int best_bid)
 {
-	if (best_bid < 1 && __archive_read_ahead(a, 1, NULL) != NULL)
+	if (best_bid < 1 && __tk_archive_read_ahead(a, 1, NULL) != NULL)
 		return (1);
 	return (-1);
 }
@@ -103,8 +103,8 @@ archive_read_format_raw_bid(struct archive_read *a, int best_bid)
  * Mock up a fake header.
  */
 static int
-archive_read_format_raw_read_header(struct archive_read *a,
-    struct archive_entry *entry)
+tk_archive_read_format_raw_read_header(struct tk_archive_read *a,
+    struct tk_archive_entry *entry)
 {
 	struct raw_info *info;
 
@@ -112,17 +112,17 @@ archive_read_format_raw_read_header(struct archive_read *a,
 	if (info->end_of_file)
 		return (ARCHIVE_EOF);
 
-	a->archive.archive_format = ARCHIVE_FORMAT_RAW;
-	a->archive.archive_format_name = "raw";
-	archive_entry_set_pathname(entry, "data");
-	archive_entry_set_filetype(entry, AE_IFREG);
-	archive_entry_set_perm(entry, 0644);
+	a->archive.tk_archive_format = ARCHIVE_FORMAT_RAW;
+	a->archive.tk_archive_format_name = "raw";
+	tk_archive_entry_set_pathname(entry, "data");
+	tk_archive_entry_set_filetype(entry, AE_IFREG);
+	tk_archive_entry_set_perm(entry, 0644);
 	/* I'm deliberately leaving most fields unset here. */
 	return (ARCHIVE_OK);
 }
 
 static int
-archive_read_format_raw_read_data(struct archive_read *a,
+tk_archive_read_format_raw_read_data(struct tk_archive_read *a,
     const void **buff, size_t *size, int64_t *offset)
 {
 	struct raw_info *info;
@@ -132,7 +132,7 @@ archive_read_format_raw_read_data(struct archive_read *a,
 
 	/* Consume the bytes we read last time. */
 	if (info->unconsumed) {
-		__archive_read_consume(a, info->unconsumed);
+		__tk_archive_read_consume(a, info->unconsumed);
 		info->unconsumed = 0;
 	}
 
@@ -140,7 +140,7 @@ archive_read_format_raw_read_data(struct archive_read *a,
 		return (ARCHIVE_EOF);
 
 	/* Get whatever bytes are immediately available. */
-	*buff = __archive_read_ahead(a, 1, &avail);
+	*buff = __tk_archive_read_ahead(a, 1, &avail);
 	if (avail > 0) {
 		/* Return the bytes we just read */
 		*size = avail;
@@ -163,13 +163,13 @@ archive_read_format_raw_read_data(struct archive_read *a,
 }
 
 static int
-archive_read_format_raw_read_data_skip(struct archive_read *a)
+tk_archive_read_format_raw_read_data_skip(struct tk_archive_read *a)
 {
 	struct raw_info *info = (struct raw_info *)(a->format->data);
 
 	/* Consume the bytes we read last time. */
 	if (info->unconsumed) {
-		__archive_read_consume(a, info->unconsumed);
+		__tk_archive_read_consume(a, info->unconsumed);
 		info->unconsumed = 0;
 	}
 	info->end_of_file = 1;
@@ -177,7 +177,7 @@ archive_read_format_raw_read_data_skip(struct archive_read *a)
 }
 
 static int
-archive_read_format_raw_cleanup(struct archive_read *a)
+tk_archive_read_format_raw_cleanup(struct tk_archive_read *a)
 {
 	struct raw_info *info;
 

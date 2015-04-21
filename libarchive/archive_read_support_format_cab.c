@@ -244,7 +244,7 @@ struct cffile {
 	unsigned char		 attr;
 #define ATTR_RDONLY		0x01
 #define ATTR_NAME_IS_UTF	0x80
-	struct archive_string 	 pathname;
+	struct tk_archive_string 	 pathname;
 };
 
 struct cfheader {
@@ -285,7 +285,7 @@ struct cab {
 	/* Offset from beginning of a cabinet file. */
 	int64_t			 cab_offset;
 	struct cfheader		 cfheader;
-	struct archive_wstring	 ws;
+	struct tk_archive_wstring	 ws;
 
 	/* Flag to mark progress that an archive was read their first header.*/
 	char			 found_header;
@@ -299,9 +299,9 @@ struct cab {
 	size_t			 uncompressed_buffer_size;
 
 	int			 init_default_conversion;
-	struct archive_string_conv *sconv;
-	struct archive_string_conv *sconv_default;
-	struct archive_string_conv *sconv_utf8;
+	struct tk_archive_string_conv *sconv;
+	struct tk_archive_string_conv *sconv_default;
+	struct tk_archive_string_conv *sconv_utf8;
 	char			 format_name[64];
 
 #ifdef HAVE_ZLIB_H
@@ -311,34 +311,34 @@ struct cab {
 	struct lzx_stream	 xstrm;
 };
 
-static int	archive_read_format_cab_bid(struct archive_read *, int);
-static int	archive_read_format_cab_options(struct archive_read *,
+static int	tk_archive_read_format_cab_bid(struct tk_archive_read *, int);
+static int	tk_archive_read_format_cab_options(struct tk_archive_read *,
 		    const char *, const char *);
-static int	archive_read_format_cab_read_header(struct archive_read *,
-		    struct archive_entry *);
-static int	archive_read_format_cab_read_data(struct archive_read *,
+static int	tk_archive_read_format_cab_read_header(struct tk_archive_read *,
+		    struct tk_archive_entry *);
+static int	tk_archive_read_format_cab_read_data(struct tk_archive_read *,
 		    const void **, size_t *, int64_t *);
-static int	archive_read_format_cab_read_data_skip(struct archive_read *);
-static int	archive_read_format_cab_cleanup(struct archive_read *);
+static int	tk_archive_read_format_cab_read_data_skip(struct tk_archive_read *);
+static int	tk_archive_read_format_cab_cleanup(struct tk_archive_read *);
 
-static int	cab_skip_sfx(struct archive_read *);
+static int	cab_skip_sfx(struct tk_archive_read *);
 static time_t	cab_dos_time(const unsigned char *);
-static int	cab_read_data(struct archive_read *, const void **,
+static int	cab_read_data(struct tk_archive_read *, const void **,
 		    size_t *, int64_t *);
-static int	cab_read_header(struct archive_read *);
+static int	cab_read_header(struct tk_archive_read *);
 static uint32_t cab_checksum_cfdata_4(const void *, size_t bytes, uint32_t);
 static uint32_t cab_checksum_cfdata(const void *, size_t bytes, uint32_t);
-static void	cab_checksum_update(struct archive_read *, size_t);
-static int	cab_checksum_finish(struct archive_read *);
-static int	cab_next_cfdata(struct archive_read *);
-static const void *cab_read_ahead_cfdata(struct archive_read *, ssize_t *);
-static const void *cab_read_ahead_cfdata_none(struct archive_read *, ssize_t *);
-static const void *cab_read_ahead_cfdata_deflate(struct archive_read *,
+static void	cab_checksum_update(struct tk_archive_read *, size_t);
+static int	cab_checksum_finish(struct tk_archive_read *);
+static int	cab_next_cfdata(struct tk_archive_read *);
+static const void *cab_read_ahead_cfdata(struct tk_archive_read *, ssize_t *);
+static const void *cab_read_ahead_cfdata_none(struct tk_archive_read *, ssize_t *);
+static const void *cab_read_ahead_cfdata_deflate(struct tk_archive_read *,
 		    ssize_t *);
-static const void *cab_read_ahead_cfdata_lzx(struct archive_read *,
+static const void *cab_read_ahead_cfdata_lzx(struct tk_archive_read *,
 		    ssize_t *);
-static int64_t	cab_consume_cfdata(struct archive_read *, int64_t);
-static int64_t	cab_minimum_consume_cfdata(struct archive_read *, int64_t);
+static int64_t	cab_consume_cfdata(struct tk_archive_read *, int64_t);
+static int64_t	cab_minimum_consume_cfdata(struct tk_archive_read *, int64_t);
 static int	lzx_decode_init(struct lzx_stream *, int);
 static int	lzx_read_blocks(struct lzx_stream *, int);
 static int	lzx_decode_blocks(struct lzx_stream *, int);
@@ -356,34 +356,34 @@ static int	lzx_decode_huffman_tree(struct huffman *, unsigned, int);
 
 
 int
-archive_read_support_format_cab(struct archive *_a)
+tk_archive_read_support_format_cab(struct archive *_a)
 {
-	struct archive_read *a = (struct archive_read *)_a;
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
 	struct cab *cab;
 	int r;
 
-	archive_check_magic(_a, ARCHIVE_READ_MAGIC,
-	    ARCHIVE_STATE_NEW, "archive_read_support_format_cab");
+	tk_archive_check_magic(_a, ARCHIVE_READ_MAGIC,
+	    ARCHIVE_STATE_NEW, "tk_archive_read_support_format_cab");
 
 	cab = (struct cab *)calloc(1, sizeof(*cab));
 	if (cab == NULL) {
-		archive_set_error(&a->archive, ENOMEM,
+		tk_archive_set_error(&a->archive, ENOMEM,
 		    "Can't allocate CAB data");
 		return (ARCHIVE_FATAL);
 	}
-	archive_string_init(&cab->ws);
-	archive_wstring_ensure(&cab->ws, 256);
+	tk_archive_string_init(&cab->ws);
+	tk_archive_wstring_ensure(&cab->ws, 256);
 
-	r = __archive_read_register_format(a,
+	r = __tk_archive_read_register_format(a,
 	    cab,
 	    "cab",
-	    archive_read_format_cab_bid,
-	    archive_read_format_cab_options,
-	    archive_read_format_cab_read_header,
-	    archive_read_format_cab_read_data,
-	    archive_read_format_cab_read_data_skip,
+	    tk_archive_read_format_cab_bid,
+	    tk_archive_read_format_cab_options,
+	    tk_archive_read_format_cab_read_header,
+	    tk_archive_read_format_cab_read_data,
+	    tk_archive_read_format_cab_read_data_skip,
 	    NULL,
-	    archive_read_format_cab_cleanup);
+	    tk_archive_read_format_cab_cleanup);
 
 	if (r != ARCHIVE_OK)
 		free(cab);
@@ -414,7 +414,7 @@ find_cab_magic(const char *p)
 }
 
 static int
-archive_read_format_cab_bid(struct archive_read *a, int best_bid)
+tk_archive_read_format_cab_bid(struct tk_archive_read *a, int best_bid)
 {
 	const char *p;
 	ssize_t bytes_avail, offset, window;
@@ -424,7 +424,7 @@ archive_read_format_cab_bid(struct archive_read *a, int best_bid)
 	if (best_bid > 64)
 		return (-1);
 
-	if ((p = __archive_read_ahead(a, 8, NULL)) == NULL)
+	if ((p = __tk_archive_read_ahead(a, 8, NULL)) == NULL)
 		return (-1);
 
 	if (memcmp(p, "MSCF\0\0\0\0", 8) == 0)
@@ -439,7 +439,7 @@ archive_read_format_cab_bid(struct archive_read *a, int best_bid)
 		offset = 0;
 		window = 4096;
 		while (offset < (1024 * 128)) {
-			const char *h = __archive_read_ahead(a, offset + window,
+			const char *h = __tk_archive_read_ahead(a, offset + window,
 			    &bytes_avail);
 			if (h == NULL) {
 				/* Remaining bytes are less than window. */
@@ -462,7 +462,7 @@ archive_read_format_cab_bid(struct archive_read *a, int best_bid)
 }
 
 static int
-archive_read_format_cab_options(struct archive_read *a,
+tk_archive_read_format_cab_options(struct tk_archive_read *a,
     const char *key, const char *val)
 {
 	struct cab *cab;
@@ -471,10 +471,10 @@ archive_read_format_cab_options(struct archive_read *a,
 	cab = (struct cab *)(a->format->data);
 	if (strcmp(key, "hdrcharset")  == 0) {
 		if (val == NULL || val[0] == 0)
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "cab: hdrcharset option needs a character-set name");
 		else {
-			cab->sconv = archive_string_conversion_from_charset(
+			cab->sconv = tk_archive_string_conversion_from_charset(
 			    &a->archive, val, 0);
 			if (cab->sconv != NULL)
 				ret = ARCHIVE_OK;
@@ -491,7 +491,7 @@ archive_read_format_cab_options(struct archive_read *a,
 }
 
 static int
-cab_skip_sfx(struct archive_read *a)
+cab_skip_sfx(struct tk_archive_read *a)
 {
 	const char *p, *q;
 	size_t skip;
@@ -499,12 +499,12 @@ cab_skip_sfx(struct archive_read *a)
 
 	window = 4096;
 	for (;;) {
-		const char *h = __archive_read_ahead(a, window, &bytes);
+		const char *h = __tk_archive_read_ahead(a, window, &bytes);
 		if (h == NULL) {
 			/* Remaining size are less than window. */
 			window >>= 1;
 			if (window < 128) {
-				archive_set_error(&a->archive,
+				tk_archive_set_error(&a->archive,
 				    ARCHIVE_ERRNO_FILE_FORMAT,
 				    "Couldn't find out CAB header");
 				return (ARCHIVE_FATAL);
@@ -522,20 +522,20 @@ cab_skip_sfx(struct archive_read *a)
 			int next;
 			if ((next = find_cab_magic(p)) == 0) {
 				skip = p - h;
-				__archive_read_consume(a, skip);
+				__tk_archive_read_consume(a, skip);
 				return (ARCHIVE_OK);
 			}
 			p += next;
 		}
 		skip = p - h;
-		__archive_read_consume(a, skip);
+		__tk_archive_read_consume(a, skip);
 	}
 }
 
 static int
-truncated_error(struct archive_read *a)
+truncated_error(struct tk_archive_read *a)
 {
-	archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+	tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 	    "Truncated CAB header");
 	return (ARCHIVE_FATAL);
 }
@@ -556,12 +556,12 @@ cab_strnlen(const unsigned char *p, size_t maxlen)
 
 /* Read bytes as much as remaining. */
 static const void *
-cab_read_ahead_remaining(struct archive_read *a, size_t min, ssize_t *avail)
+cab_read_ahead_remaining(struct tk_archive_read *a, size_t min, ssize_t *avail)
 {
 	const void *p;
 
 	while (min > 0) {
-		p = __archive_read_ahead(a, min, avail);
+		p = __tk_archive_read_ahead(a, min, avail);
 		if (p != NULL)
 			return (p);
 		min--;
@@ -571,14 +571,14 @@ cab_read_ahead_remaining(struct archive_read *a, size_t min, ssize_t *avail)
 
 /* Convert a path separator '\' -> '/' */
 static int
-cab_convert_path_separator_1(struct archive_string *fn, unsigned char attr)
+cab_convert_path_separator_1(struct tk_archive_string *fn, unsigned char attr)
 {
 	size_t i;
 	int mb;
 
 	/* Easy check if we have '\' in multi-byte string. */
 	mb = 0;
-	for (i = 0; i < archive_strlen(fn); i++) {
+	for (i = 0; i < tk_archive_strlen(fn); i++) {
 		if (fn->s[i] == '\\') {
 			if (mb) {
 				/* This may be second byte of multi-byte
@@ -592,7 +592,7 @@ cab_convert_path_separator_1(struct archive_string *fn, unsigned char attr)
 		else
 			mb = 0;
 	}
-	if (i == archive_strlen(fn))
+	if (i == tk_archive_strlen(fn))
 		return (0);
 	return (-1);
 }
@@ -601,19 +601,19 @@ cab_convert_path_separator_1(struct archive_string *fn, unsigned char attr)
  * Replace a character '\' with '/' in wide character.
  */
 static void
-cab_convert_path_separator_2(struct cab *cab, struct archive_entry *entry)
+cab_convert_path_separator_2(struct cab *cab, struct tk_archive_entry *entry)
 {
 	const wchar_t *wp;
 	size_t i;
 
 	/* If a conversion to wide character failed, force the replacement. */
-	if ((wp = archive_entry_pathname_w(entry)) != NULL) {
-		archive_wstrcpy(&(cab->ws), wp);
-		for (i = 0; i < archive_strlen(&(cab->ws)); i++) {
+	if ((wp = tk_archive_entry_pathname_w(entry)) != NULL) {
+		tk_archive_wstrcpy(&(cab->ws), wp);
+		for (i = 0; i < tk_archive_strlen(&(cab->ws)); i++) {
 			if (cab->ws.s[i] == L'\\')
 				cab->ws.s[i] = L'/';
 		}
-		archive_entry_copy_pathname_w(entry, cab->ws.s);
+		tk_archive_entry_copy_pathname_w(entry, cab->ws.s);
 	}
 }
 
@@ -621,7 +621,7 @@ cab_convert_path_separator_2(struct cab *cab, struct archive_entry *entry)
  * Read CFHEADER, CFFOLDER and CFFILE.
  */
 static int
-cab_read_header(struct archive_read *a)
+cab_read_header(struct tk_archive_read *a)
 {
 	const unsigned char *p;
 	struct cab *cab;
@@ -633,11 +633,11 @@ cab_read_header(struct archive_read *a)
 	int cur_folder, prev_folder;
 	uint32_t offset32;
 	
-	a->archive.archive_format = ARCHIVE_FORMAT_CAB;
-	if (a->archive.archive_format_name == NULL)
-		a->archive.archive_format_name = "CAB";
+	a->archive.tk_archive_format = ARCHIVE_FORMAT_CAB;
+	if (a->archive.tk_archive_format_name == NULL)
+		a->archive.tk_archive_format_name = "CAB";
 
-	if ((p = __archive_read_ahead(a, 42, NULL)) == NULL)
+	if ((p = __tk_archive_read_ahead(a, 42, NULL)) == NULL)
 		return (truncated_error(a));
 
 	cab = (struct cab *)(a->format->data);
@@ -648,7 +648,7 @@ cab_read_header(struct archive_read *a)
 		if (err < ARCHIVE_WARN)
 			return (err);
 
-		if ((p = __archive_read_ahead(a, sizeof(*p), NULL)) == NULL)
+		if ((p = __tk_archive_read_ahead(a, sizeof(*p), NULL)) == NULL)
 			return (truncated_error(a));
 	}
 
@@ -659,27 +659,27 @@ cab_read_header(struct archive_read *a)
 	hd = &cab->cfheader;
 	if (p[CFHEADER_signature+0] != 'M' || p[CFHEADER_signature+1] != 'S' ||
 	    p[CFHEADER_signature+2] != 'C' || p[CFHEADER_signature+3] != 'F') {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Couldn't find out CAB header");
 		return (ARCHIVE_FATAL);
 	}
-	hd->total_bytes = archive_le32dec(p + CFHEADER_cbCabinet);
-	hd->files_offset = archive_le32dec(p + CFHEADER_coffFiles);
+	hd->total_bytes = tk_archive_le32dec(p + CFHEADER_cbCabinet);
+	hd->files_offset = tk_archive_le32dec(p + CFHEADER_coffFiles);
 	hd->minor = p[CFHEADER_versionMinor];
 	hd->major = p[CFHEADER_versionMajor];
-	hd->folder_count = archive_le16dec(p + CFHEADER_cFolders);
+	hd->folder_count = tk_archive_le16dec(p + CFHEADER_cFolders);
 	if (hd->folder_count == 0)
 		goto invalid;
-	hd->file_count = archive_le16dec(p + CFHEADER_cFiles);
+	hd->file_count = tk_archive_le16dec(p + CFHEADER_cFiles);
 	if (hd->file_count == 0)
 		goto invalid;
-	hd->flags = archive_le16dec(p + CFHEADER_flags);
-	hd->setid = archive_le16dec(p + CFHEADER_setID);
-	hd->cabinet = archive_le16dec(p + CFHEADER_iCabinet);
+	hd->flags = tk_archive_le16dec(p + CFHEADER_flags);
+	hd->setid = tk_archive_le16dec(p + CFHEADER_setID);
+	hd->cabinet = tk_archive_le16dec(p + CFHEADER_iCabinet);
 	used = CFHEADER_iCabinet + 2;
 	if (hd->flags & RESERVE_PRESENT) {
 		uint16_t cfheader;
-		cfheader = archive_le16dec(p + CFHEADER_cbCFHeader);
+		cfheader = tk_archive_le16dec(p + CFHEADER_cbCFHeader);
 		if (cfheader > 60000U)
 			goto invalid;
 		hd->cffolder = p[CFHEADER_cbCFFolder];
@@ -690,13 +690,13 @@ cab_read_header(struct archive_read *a)
 		hd->cffolder = 0;/* Avoid compiling warning. */
 	if (hd->flags & PREV_CABINET) {
 		/* How many bytes are used for szCabinetPrev. */
-		if ((p = __archive_read_ahead(a, used+256, NULL)) == NULL)
+		if ((p = __tk_archive_read_ahead(a, used+256, NULL)) == NULL)
 			return (truncated_error(a));
 		if ((len = cab_strnlen(p + used, 255)) <= 0)
 			goto invalid;
 		used += len + 1;
 		/* How many bytes are used for szDiskPrev. */
-		if ((p = __archive_read_ahead(a, used+256, NULL)) == NULL)
+		if ((p = __tk_archive_read_ahead(a, used+256, NULL)) == NULL)
 			return (truncated_error(a));
 		if ((len = cab_strnlen(p + used, 255)) <= 0)
 			goto invalid;
@@ -704,19 +704,19 @@ cab_read_header(struct archive_read *a)
 	}
 	if (hd->flags & NEXT_CABINET) {
 		/* How many bytes are used for szCabinetNext. */
-		if ((p = __archive_read_ahead(a, used+256, NULL)) == NULL)
+		if ((p = __tk_archive_read_ahead(a, used+256, NULL)) == NULL)
 			return (truncated_error(a));
 		if ((len = cab_strnlen(p + used, 255)) <= 0)
 			goto invalid;
 		used += len + 1;
 		/* How many bytes are used for szDiskNext. */
-		if ((p = __archive_read_ahead(a, used+256, NULL)) == NULL)
+		if ((p = __tk_archive_read_ahead(a, used+256, NULL)) == NULL)
 			return (truncated_error(a));
 		if ((len = cab_strnlen(p + used, 255)) <= 0)
 			goto invalid;
 		used += len + 1;
 	}
-	__archive_read_consume(a, used);
+	__tk_archive_read_consume(a, used);
 	cab->cab_offset += used;
 	used = 0;
 
@@ -732,18 +732,18 @@ cab_read_header(struct archive_read *a)
 	if (hd->flags & RESERVE_PRESENT)
 		bytes += hd->cffolder;
 	bytes *= hd->folder_count;
-	if ((p = __archive_read_ahead(a, bytes, NULL)) == NULL)
+	if ((p = __tk_archive_read_ahead(a, bytes, NULL)) == NULL)
 		return (truncated_error(a));
 	offset32 = 0;
 	for (i = 0; i < hd->folder_count; i++) {
 		struct cffolder *folder = &(hd->folder_array[i]);
 		folder->cfdata_offset_in_cab =
-		    archive_le32dec(p + CFFOLDER_coffCabStart);
-		folder->cfdata_count = archive_le16dec(p+CFFOLDER_cCFData);
+		    tk_archive_le32dec(p + CFFOLDER_coffCabStart);
+		folder->cfdata_count = tk_archive_le16dec(p+CFFOLDER_cCFData);
 		folder->comptype =
-		    archive_le16dec(p+CFFOLDER_typeCompress) & 0x0F;
+		    tk_archive_le16dec(p+CFFOLDER_typeCompress) & 0x0F;
 		folder->compdata =
-		    archive_le16dec(p+CFFOLDER_typeCompress) >> 8;
+		    tk_archive_le16dec(p+CFFOLDER_typeCompress) >> 8;
 		/* Get a compression name. */
 		if (folder->comptype <
 		    sizeof(compression_name) / sizeof(compression_name[0]))
@@ -767,7 +767,7 @@ cab_read_header(struct archive_read *a)
 		 * this folder. */
 		folder->decompress_init = 0;
 	}
-	__archive_read_consume(a, used);
+	__tk_archive_read_consume(a, used);
 	cab->cab_offset += used;
 
 	/*
@@ -776,13 +776,13 @@ cab_read_header(struct archive_read *a)
 	/* Seek read pointer to the offset of CFFILE if needed. */
 	skip = (int64_t)hd->files_offset - cab->cab_offset;
 	if (skip <  0) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 		    "Invalid offset of CFFILE %jd < %jd",
 		    (intmax_t)hd->files_offset, (intmax_t)cab->cab_offset);
 		return (ARCHIVE_FATAL);
 	}
 	if (skip) {
-		__archive_read_consume(a, skip);
+		__tk_archive_read_consume(a, skip);
 		cab->cab_offset += skip;
 	}
 	/* Allocate memory for CFDATA */
@@ -796,14 +796,14 @@ cab_read_header(struct archive_read *a)
 		struct cffile *file = &(hd->file_array[i]);
 		ssize_t avail;
 
-		if ((p = __archive_read_ahead(a, 16, NULL)) == NULL)
+		if ((p = __tk_archive_read_ahead(a, 16, NULL)) == NULL)
 			return (truncated_error(a));
-		file->uncompressed_size = archive_le32dec(p + CFFILE_cbFile);
-		file->offset = archive_le32dec(p + CFFILE_uoffFolderStart);
-		file->folder = archive_le16dec(p + CFFILE_iFolder);
+		file->uncompressed_size = tk_archive_le32dec(p + CFFILE_cbFile);
+		file->offset = tk_archive_le32dec(p + CFFILE_uoffFolderStart);
+		file->folder = tk_archive_le16dec(p + CFFILE_iFolder);
 		file->mtime = cab_dos_time(p + CFFILE_date_time);
-		file->attr = (uint8_t)archive_le16dec(p + CFFILE_attribs);
-		__archive_read_consume(a, 16);
+		file->attr = (uint8_t)tk_archive_le16dec(p + CFFILE_attribs);
+		__tk_archive_read_consume(a, 16);
 
 		cab->cab_offset += 16;
 		if ((p = cab_read_ahead_remaining(a, 256, &avail)) == NULL)
@@ -812,9 +812,9 @@ cab_read_header(struct archive_read *a)
 			goto invalid;
 
 		/* Copy a pathname.  */
-		archive_string_init(&(file->pathname));
-		archive_strncpy(&(file->pathname), p, len);
-		__archive_read_consume(a, len + 1);
+		tk_archive_string_init(&(file->pathname));
+		tk_archive_strncpy(&(file->pathname), p, len);
+		__tk_archive_read_consume(a, len + 1);
 		cab->cab_offset += len + 1;
 
 		/*
@@ -870,30 +870,30 @@ cab_read_header(struct archive_read *a)
 	}
 
 	if (hd->cabinet != 0 || hd->flags & (PREV_CABINET | NEXT_CABINET)) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Multivolume cabinet file is unsupported");
 		return (ARCHIVE_WARN);
 	}
 	return (ARCHIVE_OK);
 invalid:
-	archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+	tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 	    "Invalid CAB header");
 	return (ARCHIVE_FATAL);
 nomem:
-	archive_set_error(&a->archive, ENOMEM,
+	tk_archive_set_error(&a->archive, ENOMEM,
 	    "Can't allocate memory for CAB data");
 	return (ARCHIVE_FATAL);
 }
 
 static int
-archive_read_format_cab_read_header(struct archive_read *a,
-    struct archive_entry *entry)
+tk_archive_read_format_cab_read_header(struct tk_archive_read *a,
+    struct tk_archive_entry *entry)
 {
 	struct cab *cab;
 	struct cfheader *hd;
 	struct cffolder *prev_folder;
 	struct cffile *file;
-	struct archive_string_conv *sconv;
+	struct tk_archive_string_conv *sconv;
 	int err = ARCHIVE_OK, r;
 	
 	cab = (struct cab *)(a->format->data);
@@ -945,7 +945,7 @@ archive_read_format_cab_read_header(struct archive_read *a,
 	if (file->attr & ATTR_NAME_IS_UTF) {
 		if (cab->sconv_utf8 == NULL) {
 			cab->sconv_utf8 =
-			    archive_string_conversion_from_charset(
+			    tk_archive_string_conversion_from_charset(
 				&(a->archive), "UTF-8", 1);
 			if (cab->sconv_utf8 == NULL)
 				return (ARCHIVE_FATAL);
@@ -958,7 +958,7 @@ archive_read_format_cab_read_header(struct archive_read *a,
 		/* Choose the default conversion. */
 		if (!cab->init_default_conversion) {
 			cab->sconv_default =
-			    archive_string_default_conversion_for_read(
+			    tk_archive_string_default_conversion_for_read(
 			      &(a->archive));
 			cab->init_default_conversion = 1;
 		}
@@ -969,18 +969,18 @@ archive_read_format_cab_read_header(struct archive_read *a,
 	 * Set a default value and common data
 	 */
 	r = cab_convert_path_separator_1(&(file->pathname), file->attr);
-	if (archive_entry_copy_pathname_l(entry, file->pathname.s,
-	    archive_strlen(&(file->pathname)), sconv) != 0) {
+	if (tk_archive_entry_copy_pathname_l(entry, file->pathname.s,
+	    tk_archive_strlen(&(file->pathname)), sconv) != 0) {
 		if (errno == ENOMEM) {
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate memory for Pathname");
 			return (ARCHIVE_FATAL);
 		}
-		archive_set_error(&a->archive,
+		tk_archive_set_error(&a->archive,
 		    ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Pathname cannot be converted "
 		    "from %s to current locale.",
-		    archive_string_conversion_charset_name(sconv));
+		    tk_archive_string_conversion_charset_name(sconv));
 		err = ARCHIVE_WARN;
 	}
 	if (r < 0) {
@@ -988,12 +988,12 @@ archive_read_format_cab_read_header(struct archive_read *a,
 		cab_convert_path_separator_2(cab, entry);
 	}
 
-	archive_entry_set_size(entry, file->uncompressed_size);
+	tk_archive_entry_set_size(entry, file->uncompressed_size);
 	if (file->attr & ATTR_RDONLY)
-		archive_entry_set_mode(entry, AE_IFREG | 0555);
+		tk_archive_entry_set_mode(entry, AE_IFREG | 0555);
 	else
-		archive_entry_set_mode(entry, AE_IFREG | 0666);
-	archive_entry_set_mtime(entry, file->mtime, 0);
+		tk_archive_entry_set_mode(entry, AE_IFREG | 0666);
+	tk_archive_entry_set_mtime(entry, file->mtime, 0);
 
 	cab->entry_bytes_remaining = file->uncompressed_size;
 	cab->entry_offset = 0;
@@ -1004,13 +1004,13 @@ archive_read_format_cab_read_header(struct archive_read *a,
 	/* Set up a more descriptive format name. */
 	sprintf(cab->format_name, "CAB %d.%d (%s)",
 	    hd->major, hd->minor, cab->entry_cffolder->compname);
-	a->archive.archive_format_name = cab->format_name;
+	a->archive.tk_archive_format_name = cab->format_name;
 
 	return (err);
 }
 
 static int
-archive_read_format_cab_read_data(struct archive_read *a,
+tk_archive_read_format_cab_read_data(struct tk_archive_read *a,
     const void **buff, size_t *size, int64_t *offset)
 {
 	struct cab *cab = (struct cab *)(a->format->data);
@@ -1023,8 +1023,8 @@ archive_read_format_cab_read_data(struct archive_read *a,
 		*buff = NULL;
 		*size = 0;
 		*offset = 0;
-		archive_clear_error(&a->archive);
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+		tk_archive_clear_error(&a->archive);
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Cannot restore this file split in multivolume.");
 		return (ARCHIVE_FAILED);
 	default:
@@ -1075,7 +1075,7 @@ cab_checksum_cfdata_4(const void *p, size_t bytes, uint32_t seed)
 	sum = seed;
 	b = p;
 	for (;u32num > 0; --u32num) {
-		sum ^= archive_le32dec(b);
+		sum ^= tk_archive_le32dec(b);
 		b += 4;
 	}
 	return (sum);
@@ -1111,7 +1111,7 @@ cab_checksum_cfdata(const void *p, size_t bytes, uint32_t seed)
 }
 
 static void
-cab_checksum_update(struct archive_read *a, size_t bytes)
+cab_checksum_update(struct tk_archive_read *a, size_t bytes)
 {
 	struct cab *cab = (struct cab *)(a->format->data);
 	struct cfdata *cfdata = cab->entry_cfdata;
@@ -1151,7 +1151,7 @@ cab_checksum_update(struct archive_read *a, size_t bytes)
 }
 
 static int
-cab_checksum_finish(struct archive_read *a)
+cab_checksum_finish(struct tk_archive_read *a)
 {
 	struct cab *cab = (struct cab *)(a->format->data);
 	struct cfdata *cfdata = cab->entry_cfdata;
@@ -1177,7 +1177,7 @@ cab_checksum_finish(struct archive_read *a)
 	cfdata->sum_calculated = cab_checksum_cfdata(
 	    cfdata->memimage + CFDATA_cbData, l, cfdata->sum_calculated);
 	if (cfdata->sum_calculated != cfdata->sum) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Checksum error CFDATA[%d] %x:%x in %d bytes",
 		    cab->entry_cffolder->cfdata_index -1,
 		    cfdata->sum, cfdata->sum_calculated,
@@ -1191,7 +1191,7 @@ cab_checksum_finish(struct archive_read *a)
  * Read CFDATA if needed.
  */
 static int
-cab_next_cfdata(struct archive_read *a)
+cab_next_cfdata(struct tk_archive_read *a)
 {
 	struct cab *cab = (struct cab *)(a->format->data);
 	struct cfdata *cfdata = cab->entry_cfdata;
@@ -1222,7 +1222,7 @@ cab_next_cfdata(struct archive_read *a)
 				folder_index = cab->entry_cffile->folder;
 				break;
 			}
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "Invalid offset of CFDATA in folder(%d) %jd < %jd",
 			    folder_index,
 			    (intmax_t)cab->entry_cffolder->cfdata_offset_in_cab,
@@ -1230,7 +1230,7 @@ cab_next_cfdata(struct archive_read *a)
 			return (ARCHIVE_FATAL);
 		}
 		if (skip > 0) {
-			if (__archive_read_consume(a, skip) < 0)
+			if (__tk_archive_read_consume(a, skip) < 0)
 				return (ARCHIVE_FATAL);
 			cab->cab_offset =
 			    cab->entry_cffolder->cfdata_offset_in_cab;
@@ -1254,13 +1254,13 @@ cab_next_cfdata(struct archive_read *a)
 		l = 8;
 		if (cab->cfheader.flags & RESERVE_PRESENT)
 			l += cab->cfheader.cfdata;
-		if ((p = __archive_read_ahead(a, l, NULL)) == NULL)
+		if ((p = __tk_archive_read_ahead(a, l, NULL)) == NULL)
 			return (truncated_error(a));
-		cfdata->sum = archive_le32dec(p + CFDATA_csum);
-		cfdata->compressed_size = archive_le16dec(p + CFDATA_cbData);
+		cfdata->sum = tk_archive_le32dec(p + CFDATA_csum);
+		cfdata->compressed_size = tk_archive_le16dec(p + CFDATA_cbData);
 		cfdata->compressed_bytes_remaining = cfdata->compressed_size;
 		cfdata->uncompressed_size =
-		    archive_le16dec(p + CFDATA_cbUncomp);
+		    tk_archive_le16dec(p + CFDATA_cbUncomp);
 		cfdata->uncompressed_bytes_remaining =
 		    cfdata->uncompressed_size;
 		cfdata->uncompressed_avail = 0;
@@ -1305,7 +1305,7 @@ cab_next_cfdata(struct archive_read *a)
 			free(cfdata->memimage);
 			cfdata->memimage = malloc(l);
 			if (cfdata->memimage == NULL) {
-				archive_set_error(&a->archive, ENOMEM,
+				tk_archive_set_error(&a->archive, ENOMEM,
 				    "Can't allocate memory for CAB data");
 				return (ARCHIVE_FATAL);
 			}
@@ -1314,7 +1314,7 @@ cab_next_cfdata(struct archive_read *a)
 		memcpy(cfdata->memimage, p, l);
 
 		/* Consume bytes as much as we used. */
-		__archive_read_consume(a, l);
+		__tk_archive_read_consume(a, l);
 		cab->cab_offset += l;
 	} else if (cab->entry_cffolder->cfdata_count > 0) {
 		/* Run out of all CFDATA in a folder. */
@@ -1330,7 +1330,7 @@ cab_next_cfdata(struct archive_read *a)
 	}
 	return (ARCHIVE_OK);
 invalid:
-	archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+	tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 	    "Invalid CFDATA");
 	return (ARCHIVE_FATAL);
 }
@@ -1339,7 +1339,7 @@ invalid:
  * Read ahead CFDATA.
  */
 static const void *
-cab_read_ahead_cfdata(struct archive_read *a, ssize_t *avail)
+cab_read_ahead_cfdata(struct tk_archive_read *a, ssize_t *avail)
 {
 	struct cab *cab = (struct cab *)(a->format->data);
 	int err;
@@ -1358,7 +1358,7 @@ cab_read_ahead_cfdata(struct archive_read *a, ssize_t *avail)
 	case COMPTYPE_LZX:
 		return (cab_read_ahead_cfdata_lzx(a, avail));
 	default: /* Unsupported compression. */
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Unsupported CAB compression : %s",
 		    cab->entry_cffolder->compname);
 		*avail = ARCHIVE_FAILED;
@@ -1370,7 +1370,7 @@ cab_read_ahead_cfdata(struct archive_read *a, ssize_t *avail)
  * Read ahead CFDATA as uncompressed data.
  */
 static const void *
-cab_read_ahead_cfdata_none(struct archive_read *a, ssize_t *avail)
+cab_read_ahead_cfdata_none(struct tk_archive_read *a, ssize_t *avail)
 {
 	struct cab *cab = (struct cab *)(a->format->data);
 	struct cfdata *cfdata;
@@ -1384,7 +1384,7 @@ cab_read_ahead_cfdata_none(struct archive_read *a, ssize_t *avail)
 	 * available bytes; asking for more than that forces the
 	 * decompressor to combine reads by copying data.
 	 */
-	d = __archive_read_ahead(a, 1, avail);
+	d = __tk_archive_read_ahead(a, 1, avail);
 	if (*avail <= 0) {
 		*avail = truncated_error(a);
 		return (NULL);
@@ -1402,7 +1402,7 @@ cab_read_ahead_cfdata_none(struct archive_read *a, ssize_t *avail)
  */
 #ifdef HAVE_ZLIB_H
 static const void *
-cab_read_ahead_cfdata_deflate(struct archive_read *a, ssize_t *avail)
+cab_read_ahead_cfdata_deflate(struct tk_archive_read *a, ssize_t *avail)
 {
 	struct cab *cab = (struct cab *)(a->format->data);
 	struct cfdata *cfdata;
@@ -1418,7 +1418,7 @@ cab_read_ahead_cfdata_deflate(struct archive_read *a, ssize_t *avail)
 		cab->uncompressed_buffer
 		    = (unsigned char *)malloc(cab->uncompressed_buffer_size);
 		if (cab->uncompressed_buffer == NULL) {
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "No memory for CAB reader");
 			*avail = ARCHIVE_FATAL;
 			return (NULL);
@@ -1445,7 +1445,7 @@ cab_read_ahead_cfdata_deflate(struct archive_read *a, ssize_t *avail)
 			r = inflateInit2(&cab->stream,
 			    -15 /* Don't check for zlib header */);
 		if (r != Z_OK) {
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "Can't initialize deflate decompression.");
 			*avail = ARCHIVE_FATAL;
 			return (NULL);
@@ -1473,7 +1473,7 @@ cab_read_ahead_cfdata_deflate(struct archive_read *a, ssize_t *avail)
 		cab->stream.avail_out =
 		    cfdata->uncompressed_size - cab->stream.total_out;
 
-		d = __archive_read_ahead(a, 1, &bytes_avail);
+		d = __tk_archive_read_ahead(a, 1, &bytes_avail);
 		if (bytes_avail <= 0) {
 			*avail = truncated_error(a);
 			return (NULL);
@@ -1542,7 +1542,7 @@ cab_read_ahead_cfdata_deflate(struct archive_read *a, ssize_t *avail)
 	uavail = (uint16_t)cab->stream.total_out;
 
 	if (uavail < cfdata->uncompressed_size) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 		    "Invalid uncompressed size (%d < %d)",
 		    uavail, cfdata->uncompressed_size);
 		*avail = ARCHIVE_FATAL;
@@ -1559,7 +1559,7 @@ cab_read_ahead_cfdata_deflate(struct archive_read *a, ssize_t *avail)
 	if (cfdata->compressed_bytes_remaining > 0) {
 		ssize_t bytes_avail;
 
-		d = __archive_read_ahead(a, cfdata->compressed_bytes_remaining,
+		d = __tk_archive_read_ahead(a, cfdata->compressed_bytes_remaining,
 		    &bytes_avail);
 		if (bytes_avail <= 0) {
 			*avail = truncated_error(a);
@@ -1599,18 +1599,18 @@ cab_read_ahead_cfdata_deflate(struct archive_read *a, ssize_t *avail)
 zlibfailed:
 	switch (r) {
 	case Z_MEM_ERROR:
-		archive_set_error(&a->archive, ENOMEM,
+		tk_archive_set_error(&a->archive, ENOMEM,
 		    "Out of memory for deflate decompression");
 		break;
 	default:
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 		    "Deflate decompression failed (%d)", r);
 		break;
 	}
 	*avail = ARCHIVE_FATAL;
 	return (NULL);
 nomszip:
-	archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+	tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 	    "CFDATA incorrect(no MSZIP signature)");
 	*avail = ARCHIVE_FATAL;
 	return (NULL);
@@ -1619,10 +1619,10 @@ nomszip:
 #else /* HAVE_ZLIB_H */
 
 static const void *
-cab_read_ahead_cfdata_deflate(struct archive_read *a, ssize_t *avail)
+cab_read_ahead_cfdata_deflate(struct tk_archive_read *a, ssize_t *avail)
 {
 	*avail = ARCHIVE_FATAL;
-	archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+	tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 	    "libarchive compiled without deflate support (no libz)");
 	return (NULL);
 }
@@ -1630,7 +1630,7 @@ cab_read_ahead_cfdata_deflate(struct archive_read *a, ssize_t *avail)
 #endif /* HAVE_ZLIB_H */
 
 static const void *
-cab_read_ahead_cfdata_lzx(struct archive_read *a, ssize_t *avail)
+cab_read_ahead_cfdata_lzx(struct tk_archive_read *a, ssize_t *avail)
 {
 	struct cab *cab = (struct cab *)(a->format->data);
 	struct cfdata *cfdata;
@@ -1645,7 +1645,7 @@ cab_read_ahead_cfdata_lzx(struct archive_read *a, ssize_t *avail)
 		cab->uncompressed_buffer
 		    = (unsigned char *)malloc(cab->uncompressed_buffer_size);
 		if (cab->uncompressed_buffer == NULL) {
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "No memory for CAB reader");
 			*avail = ARCHIVE_FATAL;
 			return (NULL);
@@ -1663,7 +1663,7 @@ cab_read_ahead_cfdata_lzx(struct archive_read *a, ssize_t *avail)
 		r = lzx_decode_init(&cab->xstrm,
 		    cab->entry_cffolder->compdata);
 		if (r != ARCHIVE_OK) {
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "Can't initialize LZX decompression.");
 			*avail = ARCHIVE_FATAL;
 			return (NULL);
@@ -1683,9 +1683,9 @@ cab_read_ahead_cfdata_lzx(struct archive_read *a, ssize_t *avail)
 		cab->xstrm.avail_out =
 		    cfdata->uncompressed_size - cab->xstrm.total_out;
 
-		d = __archive_read_ahead(a, 1, &bytes_avail);
+		d = __tk_archive_read_ahead(a, 1, &bytes_avail);
 		if (bytes_avail <= 0) {
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "Truncated CAB file data");
 			*avail = ARCHIVE_FATAL;
@@ -1704,7 +1704,7 @@ cab_read_ahead_cfdata_lzx(struct archive_read *a, ssize_t *avail)
 		case ARCHIVE_EOF:
 			break;
 		default:
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "LZX decompression failed (%d)", r);
 			*avail = ARCHIVE_FATAL;
 			return (NULL);
@@ -1724,7 +1724,7 @@ cab_read_ahead_cfdata_lzx(struct archive_read *a, ssize_t *avail)
 	if (cfdata->compressed_bytes_remaining > 0) {
 		ssize_t bytes_avail;
 
-		d = __archive_read_ahead(a, cfdata->compressed_bytes_remaining,
+		d = __tk_archive_read_ahead(a, cfdata->compressed_bytes_remaining,
 		    &bytes_avail);
 		if (bytes_avail <= 0) {
 			*avail = truncated_error(a);
@@ -1762,7 +1762,7 @@ cab_read_ahead_cfdata_lzx(struct archive_read *a, ssize_t *avail)
  * the CFFILE is remaining bytes of previous Multivolume CAB file.
  */
 static int64_t
-cab_consume_cfdata(struct archive_read *a, int64_t consumed_bytes)
+cab_consume_cfdata(struct tk_archive_read *a, int64_t consumed_bytes)
 {
 	struct cab *cab = (struct cab *)(a->format->data);
 	struct cfdata *cfdata;
@@ -1778,7 +1778,7 @@ cab_consume_cfdata(struct archive_read *a, int64_t consumed_bytes)
 		ssize_t avail;
 
 		if (cfdata->compressed_size == 0) {
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "Invalid CFDATA");
 			return (ARCHIVE_FATAL);
@@ -1794,7 +1794,7 @@ cab_consume_cfdata(struct archive_read *a, int64_t consumed_bytes)
 			/* We have not read any data yet. */
 			if (cbytes == cfdata->uncompressed_bytes_remaining) {
 				/* Skip whole current CFDATA. */
-				__archive_read_consume(a,
+				__tk_archive_read_consume(a,
 				    cfdata->compressed_size);
 				cab->cab_offset += cfdata->compressed_size;
 				cfdata->compressed_bytes_remaining = 0;
@@ -1855,7 +1855,7 @@ cab_consume_cfdata(struct archive_read *a, int64_t consumed_bytes)
  * compute the sum of CFDATA.
  */
 static int64_t
-cab_minimum_consume_cfdata(struct archive_read *a, int64_t consumed_bytes)
+cab_minimum_consume_cfdata(struct tk_archive_read *a, int64_t consumed_bytes)
 {
 	struct cab *cab = (struct cab *)(a->format->data);
 	struct cfdata *cfdata;
@@ -1894,7 +1894,7 @@ cab_minimum_consume_cfdata(struct archive_read *a, int64_t consumed_bytes)
 		cab_checksum_update(a, (size_t)cbytes);
 
 		/* Consume as much as the compressor actually used. */
-		__archive_read_consume(a, cbytes);
+		__tk_archive_read_consume(a, cbytes);
 		cab->cab_offset += cbytes;
 		cfdata->compressed_bytes_remaining -= (uint16_t)cbytes;
 		if (cfdata->compressed_bytes_remaining == 0) {
@@ -1911,7 +1911,7 @@ cab_minimum_consume_cfdata(struct archive_read *a, int64_t consumed_bytes)
  * cab->end_of_entry if it consumes all of the data.
  */
 static int
-cab_read_data(struct archive_read *a, const void **buff,
+cab_read_data(struct tk_archive_read *a, const void **buff,
     size_t *size, int64_t *offset)
 {
 	struct cab *cab = (struct cab *)(a->format->data);
@@ -1933,7 +1933,7 @@ cab_read_data(struct archive_read *a, const void **buff,
 		if (bytes_avail == 0 &&
 		    cab->entry_cfdata->uncompressed_size == 0) {
 			/* All of CFDATA in a folder has been handled. */
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_FILE_FORMAT, "Invalid CFDATA");
 			return (ARCHIVE_FATAL);
 		} else
@@ -1958,7 +1958,7 @@ cab_read_data(struct archive_read *a, const void **buff,
 }
 
 static int
-archive_read_format_cab_read_data_skip(struct archive_read *a)
+tk_archive_read_format_cab_read_data_skip(struct tk_archive_read *a)
 {
 	struct cab *cab;
 	int64_t bytes_skipped;
@@ -2013,7 +2013,7 @@ archive_read_format_cab_read_data_skip(struct archive_read *a)
 }
 
 static int
-archive_read_format_cab_cleanup(struct archive_read *a)
+tk_archive_read_format_cab_cleanup(struct tk_archive_read *a)
 {
 	struct cab *cab = (struct cab *)(a->format->data);
 	struct cfheader *hd = &cab->cfheader;
@@ -2026,7 +2026,7 @@ archive_read_format_cab_cleanup(struct archive_read *a)
 	}
 	if (hd->file_array != NULL) {
 		for (i = 0; i < cab->cfheader.file_count; i++)
-			archive_string_free(&(hd->file_array[i].pathname));
+			tk_archive_string_free(&(hd->file_array[i].pathname));
 		free(hd->file_array);
 	}
 #ifdef HAVE_ZLIB_H
@@ -2034,7 +2034,7 @@ archive_read_format_cab_cleanup(struct archive_read *a)
 		inflateEnd(&cab->stream);
 #endif
 	lzx_decode_free(&cab->xstrm);
-	archive_wstring_free(&cab->ws);
+	tk_archive_wstring_free(&cab->ws);
 	free(cab->uncompressed_buffer);
 	free(cab);
 	(a->format->data) = NULL;
@@ -2048,8 +2048,8 @@ cab_dos_time(const unsigned char *p)
 	int msTime, msDate;
 	struct tm ts;
 
-	msDate = archive_le16dec(p);
-	msTime = archive_le16dec(p+2);
+	msDate = tk_archive_le16dec(p);
+	msTime = tk_archive_le16dec(p+2);
 
 	memset(&ts, 0, sizeof(ts));
 	ts.tm_year = ((msDate >> 9) & 0x7f) + 80;   /* Years since 1900. */
@@ -2202,13 +2202,13 @@ lzx_translation(struct lzx_stream *strm, void *p, size_t size, uint32_t offset)
 		int32_t cp, displacement, value;
 
 		cp = (int32_t)(offset + (uint32_t)i);
-		value = archive_le32dec(&b[1]);
+		value = tk_archive_le32dec(&b[1]);
 		if (value >= -cp && value < (int32_t)ds->translation_size) {
 			if (value >= 0)
 				displacement = value - cp;
 			else
 				displacement = value + ds->translation_size;
-			archive_le32enc(&b[1], (uint32_t)displacement);
+			tk_archive_le32enc(&b[1], (uint32_t)displacement);
 		}
 		b += 5;
 	}
@@ -2326,7 +2326,7 @@ lzx_br_fillup(struct lzx_stream *strm, struct lzx_br *br)
 		}
 		br->cache_buffer =
 		   (br->cache_buffer << 16) |
-		    archive_le16dec(strm->next_in);
+		    tk_archive_le16dec(strm->next_in);
 		strm->next_in += 2;
 		strm->avail_in -= 2;
 		br->cache_avail += 16;
@@ -2525,15 +2525,15 @@ lzx_read_blocks(struct lzx_stream *strm, int last)
 				if (lzx_br_has(br, 32)) {
 					u16 = lzx_br_bits(br, 16);
 					lzx_br_consume(br, 16);
-					archive_le16enc(ds->rbytes, u16);
+					tk_archive_le16enc(ds->rbytes, u16);
 					u16 = lzx_br_bits(br, 16);
 					lzx_br_consume(br, 16);
-					archive_le16enc(ds->rbytes+2, u16);
+					tk_archive_le16enc(ds->rbytes+2, u16);
 					ds->rbytes_avail = 4;
 				} else if (lzx_br_has(br, 16)) {
 					u16 = lzx_br_bits(br, 16);
 					lzx_br_consume(br, 16);
-					archive_le16enc(ds->rbytes, u16);
+					tk_archive_le16enc(ds->rbytes, u16);
 					ds->rbytes_avail = 2;
 				}
 				if (ds->rbytes_avail < 4 && ds->br.have_odd) {
@@ -2553,17 +2553,17 @@ lzx_read_blocks(struct lzx_stream *strm, int last)
 				}
 				ds->rbytes_avail = 0;
 				if (ds->state == ST_RD_R0) {
-					ds->r0 = archive_le32dec(ds->rbytes);
+					ds->r0 = tk_archive_le32dec(ds->rbytes);
 					if (ds->r0 < 0)
 						goto failed;
 					ds->state = ST_RD_R1;
 				} else if (ds->state == ST_RD_R1) {
-					ds->r1 = archive_le32dec(ds->rbytes);
+					ds->r1 = tk_archive_le32dec(ds->rbytes);
 					if (ds->r1 < 0)
 						goto failed;
 					ds->state = ST_RD_R2;
 				} else if (ds->state == ST_RD_R2) {
-					ds->r2 = archive_le32dec(ds->rbytes);
+					ds->r2 = tk_archive_le32dec(ds->rbytes);
 					if (ds->r2 < 0)
 						goto failed;
 					/* We've gotten all repeated offsets. */

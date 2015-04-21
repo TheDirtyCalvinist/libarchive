@@ -33,21 +33,21 @@ __FBSDID("$FreeBSD: head/lib/libarchive/test/test_write_format_zip_empty.c 20124
 DEFINE_TEST(test_write_format_zip_empty)
 {
 	struct archive *a;
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	char buff[256];
 	size_t used;
 
 	/* Zip format: Create a new archive in memory. */
-	assert((a = archive_write_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_set_format_zip(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_add_filter_none(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_set_bytes_per_block(a, 1));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_set_bytes_in_last_block(a, 1));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_open_memory(a, buff, sizeof(buff), &used));
+	assert((a = tk_archive_write_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_set_format_zip(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_add_filter_none(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_set_bytes_per_block(a, 1));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_set_bytes_in_last_block(a, 1));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_open_memory(a, buff, sizeof(buff), &used));
 
 	/* Close out the archive without writing anything. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 
 	/* Verify the correct format for an empy Zip archive. */
 	assertEqualInt(used, 22);
@@ -58,21 +58,21 @@ DEFINE_TEST(test_write_format_zip_empty)
 	/* Verify that we read this kind of empty archive correctly. */
 	/* Try with the standard memory reader, and with the test
 	   memory reader with and without seek support. */
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_zip(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_open_memory(a, buff, 22));
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
-	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_zip(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_open_memory(a, buff, 22));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_zip(a));
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_zip(a));
 	assertEqualIntA(a, ARCHIVE_OK, read_open_memory(a, buff, 22, 1));
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
-	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_zip(a));
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_zip(a));
 	assertEqualIntA(a, ARCHIVE_OK, read_open_memory_seek(a, buff, 22, 22));
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
-	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 }

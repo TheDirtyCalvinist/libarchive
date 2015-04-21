@@ -48,13 +48,13 @@ __FBSDID("$FreeBSD$");
 #define wmemcmp(a,b,i)  memcmp((a), (b), (i) * sizeof(wchar_t))
 #endif
 
-static int	acl_special(struct archive_acl *acl,
+static int	acl_special(struct tk_archive_acl *acl,
 		    int type, int permset, int tag);
-static struct archive_acl_entry *acl_new_entry(struct archive_acl *acl,
+static struct tk_archive_acl_entry *acl_new_entry(struct tk_archive_acl *acl,
 		    int type, int permset, int tag, int id);
-static int	archive_acl_add_entry_len_l(struct archive_acl *acl,
+static int	tk_archive_acl_add_entry_len_l(struct tk_archive_acl *acl,
 		    int type, int permset, int tag, int id, const char *name,
-		    size_t len, struct archive_string_conv *sc);
+		    size_t len, struct tk_archive_string_conv *sc);
 static int	isint_w(const wchar_t *start, const wchar_t *end, int *result);
 static int	ismode_w(const wchar_t *start, const wchar_t *end, int *result);
 static void	next_field_w(const wchar_t **wp, const wchar_t **start,
@@ -75,13 +75,13 @@ static void	append_entry(char **p, const char *prefix, int tag,
 static void	append_id(char **p, int id);
 
 void
-archive_acl_clear(struct archive_acl *acl)
+tk_archive_acl_clear(struct tk_archive_acl *acl)
 {
-	struct archive_acl_entry *ap;
+	struct tk_archive_acl_entry *ap;
 
 	while (acl->acl_head != NULL) {
 		ap = acl->acl_head->next;
-		archive_mstring_clean(&acl->acl_head->name);
+		tk_archive_mstring_clean(&acl->acl_head->name);
 		free(acl->acl_head);
 		acl->acl_head = ap;
 	}
@@ -98,11 +98,11 @@ archive_acl_clear(struct archive_acl *acl)
 }
 
 void
-archive_acl_copy(struct archive_acl *dest, struct archive_acl *src)
+tk_archive_acl_copy(struct tk_archive_acl *dest, struct tk_archive_acl *src)
 {
-	struct archive_acl_entry *ap, *ap2;
+	struct tk_archive_acl_entry *ap, *ap2;
 
-	archive_acl_clear(dest);
+	tk_archive_acl_clear(dest);
 
 	dest->mode = src->mode;
 	ap = src->acl_head;
@@ -110,16 +110,16 @@ archive_acl_copy(struct archive_acl *dest, struct archive_acl *src)
 		ap2 = acl_new_entry(dest,
 		    ap->type, ap->permset, ap->tag, ap->id);
 		if (ap2 != NULL)
-			archive_mstring_copy(&ap2->name, &ap->name);
+			tk_archive_mstring_copy(&ap2->name, &ap->name);
 		ap = ap->next;
 	}
 }
 
 int
-archive_acl_add_entry(struct archive_acl *acl,
+tk_archive_acl_add_entry(struct tk_archive_acl *acl,
     int type, int permset, int tag, int id, const char *name)
 {
-	struct archive_acl_entry *ap;
+	struct tk_archive_acl_entry *ap;
 
 	if (acl_special(acl, type, permset, tag) == 0)
 		return ARCHIVE_OK;
@@ -129,17 +129,17 @@ archive_acl_add_entry(struct archive_acl *acl,
 		return ARCHIVE_FAILED;
 	}
 	if (name != NULL  &&  *name != '\0')
-		archive_mstring_copy_mbs(&ap->name, name);
+		tk_archive_mstring_copy_mbs(&ap->name, name);
 	else
-		archive_mstring_clean(&ap->name);
+		tk_archive_mstring_clean(&ap->name);
 	return ARCHIVE_OK;
 }
 
 int
-archive_acl_add_entry_w_len(struct archive_acl *acl,
+tk_archive_acl_add_entry_w_len(struct tk_archive_acl *acl,
     int type, int permset, int tag, int id, const wchar_t *name, size_t len)
 {
-	struct archive_acl_entry *ap;
+	struct tk_archive_acl_entry *ap;
 
 	if (acl_special(acl, type, permset, tag) == 0)
 		return ARCHIVE_OK;
@@ -149,18 +149,18 @@ archive_acl_add_entry_w_len(struct archive_acl *acl,
 		return ARCHIVE_FAILED;
 	}
 	if (name != NULL  &&  *name != L'\0' && len > 0)
-		archive_mstring_copy_wcs_len(&ap->name, name, len);
+		tk_archive_mstring_copy_wcs_len(&ap->name, name, len);
 	else
-		archive_mstring_clean(&ap->name);
+		tk_archive_mstring_clean(&ap->name);
 	return ARCHIVE_OK;
 }
 
 static int
-archive_acl_add_entry_len_l(struct archive_acl *acl,
+tk_archive_acl_add_entry_len_l(struct tk_archive_acl *acl,
     int type, int permset, int tag, int id, const char *name, size_t len,
-    struct archive_string_conv *sc)
+    struct tk_archive_string_conv *sc)
 {
-	struct archive_acl_entry *ap;
+	struct tk_archive_acl_entry *ap;
 	int r;
 
 	if (acl_special(acl, type, permset, tag) == 0)
@@ -171,10 +171,10 @@ archive_acl_add_entry_len_l(struct archive_acl *acl,
 		return ARCHIVE_FAILED;
 	}
 	if (name != NULL  &&  *name != '\0' && len > 0) {
-		r = archive_mstring_copy_mbs_len_l(&ap->name, name, len, sc);
+		r = tk_archive_mstring_copy_mbs_len_l(&ap->name, name, len, sc);
 	} else {
 		r = 0;
-		archive_mstring_clean(&ap->name);
+		tk_archive_mstring_clean(&ap->name);
 	}
 	if (r == 0)
 		return (ARCHIVE_OK);
@@ -189,7 +189,7 @@ archive_acl_add_entry_len_l(struct archive_acl *acl,
  * store the permissions in the stat structure and return zero.
  */
 static int
-acl_special(struct archive_acl *acl, int type, int permset, int tag)
+acl_special(struct tk_archive_acl *acl, int type, int permset, int tag)
 {
 	if (type == ARCHIVE_ENTRY_ACL_TYPE_ACCESS
 	    && ((permset & ~007) == 0)) {
@@ -215,11 +215,11 @@ acl_special(struct archive_acl *acl, int type, int permset, int tag)
  * Allocate and populate a new ACL entry with everything but the
  * name.
  */
-static struct archive_acl_entry *
-acl_new_entry(struct archive_acl *acl,
+static struct tk_archive_acl_entry *
+acl_new_entry(struct tk_archive_acl *acl,
     int type, int permset, int tag, int id)
 {
-	struct archive_acl_entry *ap, *aq;
+	struct tk_archive_acl_entry *ap, *aq;
 
 	/* Type argument must be a valid NFS4 or POSIX.1e type.
 	 * The type must agree with anything already set and
@@ -292,7 +292,7 @@ acl_new_entry(struct archive_acl *acl,
 	}
 
 	/* Add a new entry to the end of the list. */
-	ap = (struct archive_acl_entry *)malloc(sizeof(*ap));
+	ap = (struct tk_archive_acl_entry *)malloc(sizeof(*ap));
 	if (ap == NULL)
 		return (NULL);
 	memset(ap, 0, sizeof(*ap));
@@ -312,10 +312,10 @@ acl_new_entry(struct archive_acl *acl,
  * Return a count of entries matching "want_type".
  */
 int
-archive_acl_count(struct archive_acl *acl, int want_type)
+tk_archive_acl_count(struct tk_archive_acl *acl, int want_type)
 {
 	int count;
-	struct archive_acl_entry *ap;
+	struct tk_archive_acl_entry *ap;
 
 	count = 0;
 	ap = acl->acl_head;
@@ -336,11 +336,11 @@ archive_acl_count(struct archive_acl *acl, int want_type)
  * non-extended ACL entries of that type.
  */
 int
-archive_acl_reset(struct archive_acl *acl, int want_type)
+tk_archive_acl_reset(struct tk_archive_acl *acl, int want_type)
 {
 	int count, cutoff;
 
-	count = archive_acl_count(acl, want_type);
+	count = tk_archive_acl_count(acl, want_type);
 
 	/*
 	 * If the only entries are the three standard ones,
@@ -366,7 +366,7 @@ archive_acl_reset(struct archive_acl *acl, int want_type)
  * standard permissions and include them in the returned list.
  */
 int
-archive_acl_next(struct archive *a, struct archive_acl *acl, int want_type, int *type,
+tk_archive_acl_next(struct archive *a, struct tk_archive_acl *acl, int want_type, int *type,
     int *permset, int *tag, int *id, const char **name)
 {
 	*name = NULL;
@@ -422,7 +422,7 @@ archive_acl_next(struct archive *a, struct archive_acl *acl, int want_type, int 
 	*permset = acl->acl_p->permset;
 	*tag = acl->acl_p->tag;
 	*id = acl->acl_p->id;
-	if (archive_mstring_get_mbs(a, &acl->acl_p->name, name) != 0) {
+	if (tk_archive_mstring_get_mbs(a, &acl->acl_p->name, name) != 0) {
 		if (errno == ENOMEM)
 			return (ARCHIVE_FATAL);
 		*name = NULL;
@@ -436,14 +436,14 @@ archive_acl_next(struct archive *a, struct archive_acl *acl, int want_type, int 
  * the style of the generated ACL.
  */
 const wchar_t *
-archive_acl_text_w(struct archive *a, struct archive_acl *acl, int flags)
+tk_archive_acl_text_w(struct archive *a, struct tk_archive_acl *acl, int flags)
 {
 	int count;
 	size_t length;
 	const wchar_t *wname;
 	const wchar_t *prefix;
 	wchar_t separator;
-	struct archive_acl_entry *ap;
+	struct tk_archive_acl_entry *ap;
 	int id, r;
 	wchar_t *wp;
 
@@ -464,7 +464,7 @@ archive_acl_text_w(struct archive *a, struct archive_acl *acl, int flags)
 				length += 8; /* "default:" */
 			length += 5; /* tag name */
 			length += 1; /* colon */
-			r = archive_mstring_get_wcs(a, &ap->name, &wname);
+			r = tk_archive_mstring_get_wcs(a, &ap->name, &wname);
 			if (r == 0 && wname != NULL)
 				length += wcslen(wname);
 			else if (r < 0 && errno == ENOMEM)
@@ -508,7 +508,7 @@ archive_acl_text_w(struct archive *a, struct archive_acl *acl, int flags)
 		ap = acl->acl_head;
 		while (ap != NULL) {
 			if ((ap->type & ARCHIVE_ENTRY_ACL_TYPE_ACCESS) != 0) {
-				r = archive_mstring_get_wcs(a, &ap->name, &wname);
+				r = tk_archive_mstring_get_wcs(a, &ap->name, &wname);
 				if (r == 0) {
 					*wp++ = separator;
 					if (flags & ARCHIVE_ENTRY_ACL_STYLE_EXTRA_ID)
@@ -535,7 +535,7 @@ archive_acl_text_w(struct archive *a, struct archive_acl *acl, int flags)
 		count = 0;
 		while (ap != NULL) {
 			if ((ap->type & ARCHIVE_ENTRY_ACL_TYPE_DEFAULT) != 0) {
-				r = archive_mstring_get_wcs(a, &ap->name, &wname);
+				r = tk_archive_mstring_get_wcs(a, &ap->name, &wname);
 				if (r == 0) {
 					if (count > 0)
 						*wp++ = separator;
@@ -623,16 +623,16 @@ append_entry_w(wchar_t **wp, const wchar_t *prefix, int tag,
 }
 
 int
-archive_acl_text_l(struct archive_acl *acl, int flags,
+tk_archive_acl_text_l(struct tk_archive_acl *acl, int flags,
     const char **acl_text, size_t *acl_text_len,
-    struct archive_string_conv *sc)
+    struct tk_archive_string_conv *sc)
 {
 	int count;
 	size_t length;
 	const char *name;
 	const char *prefix;
 	char separator;
-	struct archive_acl_entry *ap;
+	struct tk_archive_acl_entry *ap;
 	size_t len;
 	int id, r;
 	char *p;
@@ -657,7 +657,7 @@ archive_acl_text_l(struct archive_acl *acl, int flags,
 				length += 8; /* "default:" */
 			length += 5; /* tag name */
 			length += 1; /* colon */
-			r = archive_mstring_get_mbs_l(
+			r = tk_archive_mstring_get_mbs_l(
 			    &ap->name, &name, &len, sc);
 			if (r != 0)
 				return (-1);
@@ -702,7 +702,7 @@ archive_acl_text_l(struct archive_acl *acl, int flags,
 		for (ap = acl->acl_head; ap != NULL; ap = ap->next) {
 			if ((ap->type & ARCHIVE_ENTRY_ACL_TYPE_ACCESS) == 0)
 				continue;
-			r = archive_mstring_get_mbs_l(
+			r = tk_archive_mstring_get_mbs_l(
 			    &ap->name, &name, &len, sc);
 			if (r != 0)
 				return (-1);
@@ -727,7 +727,7 @@ archive_acl_text_l(struct archive_acl *acl, int flags,
 		for (ap = acl->acl_head; ap != NULL; ap = ap->next) {
 			if ((ap->type & ARCHIVE_ENTRY_ACL_TYPE_DEFAULT) == 0)
 				continue;
-			r = archive_mstring_get_mbs_l(
+			r = tk_archive_mstring_get_mbs_l(
 			    &ap->name, &name, &len, sc);
 			if (r != 0)
 				return (-1);
@@ -821,7 +821,7 @@ append_entry(char **p, const char *prefix, int tag,
  * explicitly marked as "default:".
  */
 int
-archive_acl_parse_w(struct archive_acl *acl,
+tk_archive_acl_parse_w(struct tk_archive_acl *acl,
     const wchar_t *text, int default_type)
 {
 	struct {
@@ -918,7 +918,7 @@ archive_acl_parse_w(struct archive_acl *acl,
 			return (ARCHIVE_WARN);
 
 		/* Add entry to the internal list. */
-		archive_acl_add_entry_w_len(acl, type, permset,
+		tk_archive_acl_add_entry_w_len(acl, type, permset,
 		    tag, id, name.start, name.end - name.start);
 	}
 	return (ARCHIVE_OK);
@@ -1051,8 +1051,8 @@ prefix_w(const wchar_t *start, const wchar_t *end, const wchar_t *test)
  * explicitly marked as "default:".
  */
 int
-archive_acl_parse_l(struct archive_acl *acl,
-    const char *text, int default_type, struct archive_string_conv *sc)
+tk_archive_acl_parse_l(struct tk_archive_acl *acl,
+    const char *text, int default_type, struct tk_archive_string_conv *sc)
 {
 	struct {
 		const char *start;
@@ -1148,7 +1148,7 @@ archive_acl_parse_l(struct archive_acl *acl,
 			return (ARCHIVE_WARN);
 
 		/* Add entry to the internal list. */
-		r = archive_acl_add_entry_len_l(acl, type, permset,
+		r = tk_archive_acl_add_entry_len_l(acl, type, permset,
 		    tag, id, name.start, name.end - name.start, sc);
 		if (r < ARCHIVE_WARN)
 			return (r);

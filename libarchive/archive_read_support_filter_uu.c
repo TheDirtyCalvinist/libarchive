@@ -59,33 +59,33 @@ struct uudecode {
 #define ST_IGNORE	4
 };
 
-static int	uudecode_bidder_bid(struct archive_read_filter_bidder *,
-		    struct archive_read_filter *filter);
-static int	uudecode_bidder_init(struct archive_read_filter *);
+static int	uudecode_bidder_bid(struct tk_archive_read_filter_bidder *,
+		    struct tk_archive_read_filter *filter);
+static int	uudecode_bidder_init(struct tk_archive_read_filter *);
 
-static ssize_t	uudecode_filter_read(struct archive_read_filter *,
+static ssize_t	uudecode_filter_read(struct tk_archive_read_filter *,
 		    const void **);
-static int	uudecode_filter_close(struct archive_read_filter *);
+static int	uudecode_filter_close(struct tk_archive_read_filter *);
 
 #if ARCHIVE_VERSION_NUMBER < 4000000
 /* Deprecated; remove in libarchive 4.0 */
 int
-archive_read_support_compression_uu(struct archive *a)
+tk_archive_read_support_compression_uu(struct archive *a)
 {
-	return archive_read_support_filter_uu(a);
+	return tk_archive_read_support_filter_uu(a);
 }
 #endif
 
 int
-archive_read_support_filter_uu(struct archive *_a)
+tk_archive_read_support_filter_uu(struct archive *_a)
 {
-	struct archive_read *a = (struct archive_read *)_a;
-	struct archive_read_filter_bidder *bidder;
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
+	struct tk_archive_read_filter_bidder *bidder;
 
-	archive_check_magic(_a, ARCHIVE_READ_MAGIC,
-	    ARCHIVE_STATE_NEW, "archive_read_support_filter_uu");
+	tk_archive_check_magic(_a, ARCHIVE_READ_MAGIC,
+	    ARCHIVE_STATE_NEW, "tk_archive_read_support_filter_uu");
 
-	if (__archive_read_get_bidder(a, &bidder) != ARCHIVE_OK)
+	if (__tk_archive_read_get_bidder(a, &bidder) != ARCHIVE_OK)
 		return (ARCHIVE_FATAL);
 
 	bidder->data = NULL;
@@ -208,7 +208,7 @@ get_line(const unsigned char *b, ssize_t avail, ssize_t *nlsize)
 }
 
 static ssize_t
-bid_get_line(struct archive_read_filter *filter,
+bid_get_line(struct tk_archive_read_filter *filter,
     const unsigned char **b, ssize_t *avail, ssize_t *ravail,
     ssize_t *nl, size_t* nbytes_read)
 {
@@ -236,12 +236,12 @@ bid_get_line(struct archive_read_filter *filter,
 		if (nbytes_req < (size_t)*ravail + 160)
 			nbytes_req <<= 1;
 
-		*b = __archive_read_filter_ahead(filter, nbytes_req, avail);
+		*b = __tk_archive_read_filter_ahead(filter, nbytes_req, avail);
 		if (*b == NULL) {
 			if (*ravail >= *avail)
 				return (0);
 			/* Reading bytes reaches the end of a stream. */
-			*b = __archive_read_filter_ahead(filter, *avail, avail);
+			*b = __tk_archive_read_filter_ahead(filter, *avail, avail);
 			quit = 1;
 		}
 		*nbytes_read = *avail;
@@ -259,8 +259,8 @@ bid_get_line(struct archive_read_filter *filter,
 #define UUDECODE(c) (((c) - 0x20) & 0x3f)
 
 static int
-uudecode_bidder_bid(struct archive_read_filter_bidder *self,
-    struct archive_read_filter *filter)
+uudecode_bidder_bid(struct tk_archive_read_filter_bidder *self,
+    struct tk_archive_read_filter *filter)
 {
 	const unsigned char *b;
 	ssize_t avail, ravail;
@@ -271,7 +271,7 @@ uudecode_bidder_bid(struct archive_read_filter_bidder *self,
 
 	(void)self; /* UNUSED */
 
-	b = __archive_read_filter_ahead(filter, 1, &avail);
+	b = __tk_archive_read_filter_ahead(filter, 1, &avail);
 	if (b == NULL)
 		return (0);
 
@@ -373,7 +373,7 @@ uudecode_bidder_bid(struct archive_read_filter_bidder *self,
 }
 
 static int
-uudecode_bidder_init(struct archive_read_filter *self)
+uudecode_bidder_init(struct tk_archive_read_filter *self)
 {
 	struct uudecode   *uudecode;
 	void *out_buff;
@@ -389,7 +389,7 @@ uudecode_bidder_init(struct archive_read_filter *self)
 	out_buff = malloc(OUT_BUFF_SIZE);
 	in_buff = malloc(IN_BUFF_SIZE);
 	if (uudecode == NULL || out_buff == NULL || in_buff == NULL) {
-		archive_set_error(&self->archive->archive, ENOMEM,
+		tk_archive_set_error(&self->archive->archive, ENOMEM,
 		    "Can't allocate data for uudecode");
 		free(uudecode);
 		free(out_buff);
@@ -408,7 +408,7 @@ uudecode_bidder_init(struct archive_read_filter *self)
 }
 
 static int
-ensure_in_buff_size(struct archive_read_filter *self,
+ensure_in_buff_size(struct tk_archive_read_filter *self,
     struct uudecode *uudecode, size_t size)
 {
 
@@ -431,7 +431,7 @@ ensure_in_buff_size(struct archive_read_filter *self,
 		ptr = malloc(newsize);
 		if (ptr == NULL) {
 			free(ptr);
-			archive_set_error(&self->archive->archive,
+			tk_archive_set_error(&self->archive->archive,
 			    ENOMEM,
     			    "Can't allocate data for uudecode");
 			return (ARCHIVE_FATAL);
@@ -448,7 +448,7 @@ ensure_in_buff_size(struct archive_read_filter *self,
 }
 
 static ssize_t
-uudecode_filter_read(struct archive_read_filter *self, const void **buff)
+uudecode_filter_read(struct tk_archive_read_filter *self, const void **buff)
 {
 	struct uudecode *uudecode;
 	const unsigned char *b, *d;
@@ -461,7 +461,7 @@ uudecode_filter_read(struct archive_read_filter *self, const void **buff)
 	uudecode = (struct uudecode *)self->data;
 
 read_more:
-	d = __archive_read_filter_ahead(self->upstream, 1, &avail_in);
+	d = __tk_archive_read_filter_ahead(self->upstream, 1, &avail_in);
 	if (d == NULL && avail_in < 0)
 		return (ARCHIVE_FATAL);
 	/* Quiet a code analyzer; make sure avail_in must be zero
@@ -503,7 +503,7 @@ read_more:
 				used = avail_in;
 				goto finish;
 			}
-			archive_set_error(&self->archive->archive,
+			tk_archive_set_error(&self->archive->archive,
 			    ARCHIVE_ERRNO_MISC,
 			    "Insufficient compressed data");
 			return (ARCHIVE_FATAL);
@@ -523,7 +523,7 @@ read_more:
 			if (total == 0) {
 				/* Do not return 0; it means end-of-file.
 				 * We should try to read bytes more. */
-				__archive_read_filter_consume(
+				__tk_archive_read_filter_consume(
 				    self->upstream, ravail);
 				goto read_more;
 			}
@@ -534,7 +534,7 @@ read_more:
 		case ST_FIND_HEAD:
 			/* Do not read more than UUENCODE_BID_MAX_READ bytes */
 			if (total + len >= UUENCODE_BID_MAX_READ) {
-				archive_set_error(&self->archive->archive,
+				tk_archive_set_error(&self->archive->archive,
 				    ARCHIVE_ERRNO_FILE_FORMAT,
 				    "Invalid format data");
 				return (ARCHIVE_FATAL);
@@ -560,7 +560,7 @@ read_more:
 				goto finish;
 			body = len - nl;
 			if (!uuchar[*b] || body <= 0) {
-				archive_set_error(&self->archive->archive,
+				tk_archive_set_error(&self->archive->archive,
 				    ARCHIVE_ERRNO_MISC,
 				    "Insufficient compressed data");
 				return (ARCHIVE_FATAL);
@@ -569,7 +569,7 @@ read_more:
 			l = UUDECODE(*b++);
 			body--;
 			if (l > body) {
-				archive_set_error(&self->archive->archive,
+				tk_archive_set_error(&self->archive->archive,
 				    ARCHIVE_ERRNO_MISC,
 				    "Insufficient compressed data");
 				return (ARCHIVE_FATAL);
@@ -605,7 +605,7 @@ read_more:
 				}
 			}
 			if (l) {
-				archive_set_error(&self->archive->archive,
+				tk_archive_set_error(&self->archive->archive,
 				    ARCHIVE_ERRNO_MISC,
 				    "Insufficient compressed data");
 				return (ARCHIVE_FATAL);
@@ -615,7 +615,7 @@ read_more:
 			if (len - nl == 3 && memcmp(b, "end ", 3) == 0)
 				uudecode->state = ST_FIND_HEAD;
 			else {
-				archive_set_error(&self->archive->archive,
+				tk_archive_set_error(&self->archive->archive,
 				    ARCHIVE_ERRNO_MISC,
 				    "Insufficient compressed data");
 				return (ARCHIVE_FATAL);
@@ -661,7 +661,7 @@ read_more:
 				}
 			}
 			if (l && *b != '=') {
-				archive_set_error(&self->archive->archive,
+				tk_archive_set_error(&self->archive->archive,
 				    ARCHIVE_ERRNO_MISC,
 				    "Insufficient compressed data");
 				return (ARCHIVE_FATAL);
@@ -672,7 +672,7 @@ read_more:
 finish:
 	if (ravail < avail_in)
 		used -= avail_in - ravail;
-	__archive_read_filter_consume(self->upstream, used);
+	__tk_archive_read_filter_consume(self->upstream, used);
 
 	*buff = uudecode->out_buff;
 	uudecode->total += total;
@@ -680,7 +680,7 @@ finish:
 }
 
 static int
-uudecode_filter_close(struct archive_read_filter *self)
+uudecode_filter_close(struct tk_archive_read_filter *self)
 {
 	struct uudecode *uudecode;
 

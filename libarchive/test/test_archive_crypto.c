@@ -30,60 +30,60 @@
 #define __LIBARCHIVE_BUILD 1
 #include "archive_crypto_private.h"
 
-DEFINE_TEST(test_archive_md5)
+DEFINE_TEST(test_tk_archive_md5)
 {
-	archive_md5_ctx ctx;
+	tk_archive_md5_ctx ctx;
 	unsigned char buf[] = "";
 	unsigned char md[16];
 	unsigned char actualmd[] = "\x93\xb8\x85\xad\xfe\x0d\xa0\x89"
                              "\xcd\xf6\x34\x90\x4f\xd5\x9f\x71";
 
-	if (ARCHIVE_OK != archive_md5_init(&ctx)) {
+	if (ARCHIVE_OK != tk_archive_md5_init(&ctx)) {
 		skipping("This platform does not support MD5");
 		return;
 	}
-	assertEqualInt(ARCHIVE_OK, archive_md5_update(&ctx, buf, sizeof(buf)));
-	assertEqualInt(ARCHIVE_OK, archive_md5_final(&ctx, md));
+	assertEqualInt(ARCHIVE_OK, tk_archive_md5_update(&ctx, buf, sizeof(buf)));
+	assertEqualInt(ARCHIVE_OK, tk_archive_md5_final(&ctx, md));
 	assertEqualMem(md, actualmd, sizeof(md));
 }
 
-DEFINE_TEST(test_archive_rmd160)
+DEFINE_TEST(test_tk_archive_rmd160)
 {
-	archive_rmd160_ctx ctx;
+	tk_archive_rmd160_ctx ctx;
 	unsigned char buf[] = "";
 	unsigned char md[20];
 	unsigned char actualmd[] = "\xc8\x1b\x94\x93\x34\x20\x22\x1a\x7a\xc0"
                              "\x04\xa9\x02\x42\xd8\xb1\xd3\xe5\x07\x0d";
 
-	if (ARCHIVE_OK != archive_rmd160_init(&ctx)) {
+	if (ARCHIVE_OK != tk_archive_rmd160_init(&ctx)) {
 		skipping("This platform does not support RMD160");
 		return;
 	}
-	assertEqualInt(ARCHIVE_OK, archive_rmd160_update(&ctx, buf, sizeof(buf)));
-	assertEqualInt(ARCHIVE_OK, archive_rmd160_final(&ctx, md));
+	assertEqualInt(ARCHIVE_OK, tk_archive_rmd160_update(&ctx, buf, sizeof(buf)));
+	assertEqualInt(ARCHIVE_OK, tk_archive_rmd160_final(&ctx, md));
 	assertEqualMem(md, actualmd, sizeof(md));
 }
 
-DEFINE_TEST(test_archive_sha1)
+DEFINE_TEST(test_tk_archive_sha1)
 {
-	archive_sha1_ctx ctx;
+	tk_archive_sha1_ctx ctx;
 	unsigned char buf[] = "";
 	unsigned char md[20];
 	unsigned char actualmd[] = "\x5b\xa9\x3c\x9d\xb0\xcf\xf9\x3f\x52\xb5"
                              "\x21\xd7\x42\x0e\x43\xf6\xed\xa2\x78\x4f";
 
-	if (ARCHIVE_OK != archive_sha1_init(&ctx)) {
+	if (ARCHIVE_OK != tk_archive_sha1_init(&ctx)) {
 		skipping("This platform does not support SHA1");
 		return;
 	}
-	assertEqualInt(ARCHIVE_OK, archive_sha1_update(&ctx, buf, sizeof(buf)));
-	assertEqualInt(ARCHIVE_OK, archive_sha1_final(&ctx, md));
+	assertEqualInt(ARCHIVE_OK, tk_archive_sha1_update(&ctx, buf, sizeof(buf)));
+	assertEqualInt(ARCHIVE_OK, tk_archive_sha1_final(&ctx, md));
 	assertEqualMem(md, actualmd, sizeof(md));
 }
 
-DEFINE_TEST(test_archive_sha256)
+DEFINE_TEST(test_tk_archive_sha256)
 {
-	archive_sha256_ctx ctx;
+	tk_archive_sha256_ctx ctx;
 	unsigned char buf[] = "";
 	unsigned char md[32];
 	unsigned char actualmd[] = "\x6e\x34\x0b\x9c\xff\xb3\x7a\x98"
@@ -91,18 +91,18 @@ DEFINE_TEST(test_archive_sha256)
                              "\x78\x90\x1d\x3f\xb3\x37\x38\x76"
                              "\x85\x11\xa3\x06\x17\xaf\xa0\x1d";
 
-	if (ARCHIVE_OK != archive_sha256_init(&ctx)) {
+	if (ARCHIVE_OK != tk_archive_sha256_init(&ctx)) {
 		skipping("This platform does not support SHA256");
 		return;
 	}
-	assertEqualInt(ARCHIVE_OK, archive_sha256_update(&ctx, buf, sizeof(buf)));
-	assertEqualInt(ARCHIVE_OK, archive_sha256_final(&ctx, md));
+	assertEqualInt(ARCHIVE_OK, tk_archive_sha256_update(&ctx, buf, sizeof(buf)));
+	assertEqualInt(ARCHIVE_OK, tk_archive_sha256_final(&ctx, md));
 	assertEqualMem(md, actualmd, sizeof(md));
 }
 
-DEFINE_TEST(test_archive_sha384)
+DEFINE_TEST(test_tk_archive_sha384)
 {
-	archive_sha384_ctx ctx;
+	tk_archive_sha384_ctx ctx;
 	unsigned char buf[] = "";
 	unsigned char md[48];
 	unsigned char actualmd[] = "\xbe\xc0\x21\xb4\xf3\x68\xe3\x06"
@@ -112,18 +112,18 @@ DEFINE_TEST(test_archive_sha384)
                              "\x59\x33\xec\x2b\x41\x34\x65\x96"
                              "\x68\x17\xa9\xc2\x08\xa1\x17\x17";
 
-	if (ARCHIVE_OK != archive_sha384_init(&ctx)) {
+	if (ARCHIVE_OK != tk_archive_sha384_init(&ctx)) {
 		skipping("This platform does not support SHA384");
 		return;
 	}
-	assertEqualInt(ARCHIVE_OK, archive_sha384_update(&ctx, buf, sizeof(buf)));
-	assertEqualInt(ARCHIVE_OK, archive_sha384_final(&ctx, md));
+	assertEqualInt(ARCHIVE_OK, tk_archive_sha384_update(&ctx, buf, sizeof(buf)));
+	assertEqualInt(ARCHIVE_OK, tk_archive_sha384_final(&ctx, md));
 	assertEqualMem(md, actualmd, sizeof(md));
 }
 
-DEFINE_TEST(test_archive_sha512)
+DEFINE_TEST(test_tk_archive_sha512)
 {
-	archive_sha512_ctx ctx;
+	tk_archive_sha512_ctx ctx;
 	unsigned char buf[] = "";
 	unsigned char md[64];
 	unsigned char actualmd[] = "\xb8\x24\x4d\x02\x89\x81\xd6\x93"
@@ -135,11 +135,11 @@ DEFINE_TEST(test_archive_sha512)
                              "\x4a\x84\x23\x34\x25\x57\xd4\xe5"
                              "\xc3\x84\x38\xf0\xe3\x69\x10\xee";
 
-	if (ARCHIVE_OK != archive_sha512_init(&ctx)) {
+	if (ARCHIVE_OK != tk_archive_sha512_init(&ctx)) {
 		skipping("This platform does not support SHA512");
 		return;
 	}
-	assertEqualInt(ARCHIVE_OK, archive_sha512_update(&ctx, buf, sizeof(buf)));
-	assertEqualInt(ARCHIVE_OK, archive_sha512_final(&ctx, md));
+	assertEqualInt(ARCHIVE_OK, tk_archive_sha512_update(&ctx, buf, sizeof(buf)));
+	assertEqualInt(ARCHIVE_OK, tk_archive_sha512_final(&ctx, md));
 	assertEqualMem(md, actualmd, sizeof(md));
 }

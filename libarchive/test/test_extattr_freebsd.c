@@ -46,7 +46,7 @@ DEFINE_TEST(test_extattr_freebsd)
 	size_t xsize;
 	struct stat st;
 	struct archive *a;
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	int n, fd;
 	int extattr_privilege_bug = 0;
 
@@ -91,40 +91,40 @@ DEFINE_TEST(test_extattr_freebsd)
 	close(fd);
 
 	/* Create a write-to-disk object. */
-	assert(NULL != (a = archive_write_disk_new()));
-	archive_write_disk_set_options(a,
+	assert(NULL != (a = tk_archive_write_disk_new()));
+	tk_archive_write_disk_set_options(a,
 	    ARCHIVE_EXTRACT_TIME | ARCHIVE_EXTRACT_PERM | ARCHIVE_EXTRACT_XATTR);
 
 	/* Populate an archive entry with an extended attribute. */
-	ae = archive_entry_new();
+	ae = tk_archive_entry_new();
 	assert(ae != NULL);
-	archive_entry_set_pathname(ae, "test0");
-	archive_entry_set_mtime(ae, 123456, 7890);
-	archive_entry_set_size(ae, 0);
-	archive_entry_set_mode(ae, 0755);
-	archive_entry_xattr_add_entry(ae, "user.foo", "12345", 5);
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_finish_entry(a));
-	archive_entry_free(ae);
+	tk_archive_entry_set_pathname(ae, "test0");
+	tk_archive_entry_set_mtime(ae, 123456, 7890);
+	tk_archive_entry_set_size(ae, 0);
+	tk_archive_entry_set_mode(ae, 0755);
+	tk_archive_entry_xattr_add_entry(ae, "user.foo", "12345", 5);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_header(a, ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_finish_entry(a));
+	tk_archive_entry_free(ae);
 
 	/* Another entry; similar but with mode = 0. */
-	ae = archive_entry_new();
+	ae = tk_archive_entry_new();
 	assert(ae != NULL);
-	archive_entry_set_pathname(ae, "test1");
-	archive_entry_set_mtime(ae, 12345678, 7890);
-	archive_entry_set_size(ae, 0);
-	archive_entry_set_mode(ae, 0);
-	archive_entry_xattr_add_entry(ae, "user.bar", "123456", 6);
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
-	archive_entry_free(ae);
+	tk_archive_entry_set_pathname(ae, "test1");
+	tk_archive_entry_set_mtime(ae, 12345678, 7890);
+	tk_archive_entry_set_size(ae, 0);
+	tk_archive_entry_set_mode(ae, 0);
+	tk_archive_entry_xattr_add_entry(ae, "user.bar", "123456", 6);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_header(a, ae));
+	tk_archive_entry_free(ae);
 
 	/* Close the archive. */
 	if (extattr_privilege_bug)
 		/* If the bug is here, write_close will return warning. */
-		assertEqualIntA(a, ARCHIVE_WARN, archive_write_close(a));
+		assertEqualIntA(a, ARCHIVE_WARN, tk_archive_write_close(a));
 	else
-		assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+		assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 
 	/* Verify the data on disk. */
 	assertEqualInt(0, stat("test0", &st));
@@ -155,19 +155,19 @@ DEFINE_TEST(test_extattr_freebsd)
 
 	/* Use libarchive APIs to read the file back into an entry and
 	 * verify that the extattr was read correctly. */
-	assert((a = archive_read_disk_new()) != NULL);
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_set_pathname(ae, "test0");
+	assert((a = tk_archive_read_disk_new()) != NULL);
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_pathname(ae, "test0");
 	assertEqualInt(ARCHIVE_OK,
-	    archive_read_disk_entry_from_file(a, ae, -1, NULL));
-	assertEqualInt(1, archive_entry_xattr_reset(ae));
+	    tk_archive_read_disk_entry_from_file(a, ae, -1, NULL));
+	assertEqualInt(1, tk_archive_entry_xattr_reset(ae));
 	assertEqualInt(ARCHIVE_OK,
-	    archive_entry_xattr_next(ae, &xname, &xval, &xsize));
+	    tk_archive_entry_xattr_next(ae, &xname, &xval, &xsize));
 	assertEqualString(xname, "user.foo");
 	assertEqualInt(xsize, 5);
 	assertEqualMem(xval, "12345", xsize);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
-	archive_entry_free(ae);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
+	tk_archive_entry_free(ae);
 #endif
 }

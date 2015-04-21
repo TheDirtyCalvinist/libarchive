@@ -36,23 +36,23 @@ static unsigned char archive[] = {
 
 DEFINE_TEST(test_read_format_tz)
 {
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	struct archive *a;
-	assert((a = archive_read_new()) != NULL);
+	assert((a = tk_archive_read_new()) != NULL);
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	    tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_open_memory(a, archive, sizeof(archive)));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt(1, archive_file_count(a));
-	failure("archive_filter_name(a, 0)=\"%s\"",
-	    archive_filter_name(a, 0));
-	assertEqualInt(archive_filter_code(a, 0), ARCHIVE_FILTER_COMPRESS);
-	failure("archive_format_name(a)=\"%s\"", archive_format_name(a));
-	assertEqualInt(archive_format(a), ARCHIVE_FORMAT_TAR_USTAR);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	    tk_archive_read_open_memory(a, archive, sizeof(archive)));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt(1, tk_archive_file_count(a));
+	failure("tk_archive_filter_name(a, 0)=\"%s\"",
+	    tk_archive_filter_name(a, 0));
+	assertEqualInt(tk_archive_filter_code(a, 0), ARCHIVE_FILTER_COMPRESS);
+	failure("tk_archive_format_name(a)=\"%s\"", tk_archive_format_name(a));
+	assertEqualInt(tk_archive_format(a), ARCHIVE_FORMAT_TAR_USTAR);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 

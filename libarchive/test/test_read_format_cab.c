@@ -183,7 +183,7 @@ enum comp_type {
 static void
 verify(const char *refname, enum comp_type comp)
 {
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	struct archive *a;
 	char buff[128];
 	char zero[128];
@@ -191,82 +191,82 @@ verify(const char *refname, enum comp_type comp)
 
 	memset(zero, 0, sizeof(zero));
 	extract_reference_file(refname);
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_open_filename(a, refname, 10240));
+	    tk_archive_read_open_filename(a, refname, 10240));
 
 	/* Verify regular empty. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt((AE_IFREG | 0666), archive_entry_mode(ae));
-	assertEqualString("empty", archive_entry_pathname(ae));
-	assertEqualInt(0, archive_entry_uid(ae));
-	assertEqualInt(0, archive_entry_gid(ae));
-	assertEqualInt(0, archive_entry_size(ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt((AE_IFREG | 0666), tk_archive_entry_mode(ae));
+	assertEqualString("empty", tk_archive_entry_pathname(ae));
+	assertEqualInt(0, tk_archive_entry_uid(ae));
+	assertEqualInt(0, tk_archive_entry_gid(ae));
+	assertEqualInt(0, tk_archive_entry_size(ae));
 
 	if (comp != STORE) {
 		/* Verify regular zero.
 		 * Maximum CFDATA size is 32768, so we need over 32768 bytes
 		 * file to check if we properly handle multiple CFDATA.
 		 */
-		assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-		assertEqualInt((AE_IFREG | 0666), archive_entry_mode(ae));
-		assertEqualString("zero", archive_entry_pathname(ae));
-		assertEqualInt(0, archive_entry_uid(ae));
-		assertEqualInt(0, archive_entry_gid(ae));
-		assertEqualInt(33000, archive_entry_size(ae));
+		assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+		assertEqualInt((AE_IFREG | 0666), tk_archive_entry_mode(ae));
+		assertEqualString("zero", tk_archive_entry_pathname(ae));
+		assertEqualInt(0, tk_archive_entry_uid(ae));
+		assertEqualInt(0, tk_archive_entry_gid(ae));
+		assertEqualInt(33000, tk_archive_entry_size(ae));
 		for (s = 0; s + sizeof(buff) < 33000; s+= sizeof(buff)) {
-			ssize_t rsize = archive_read_data(a, buff, sizeof(buff));
+			ssize_t rsize = tk_archive_read_data(a, buff, sizeof(buff));
 			if (comp == MSZIP && rsize == ARCHIVE_FATAL && !libz_enabled) {
 				skipping("Skipping CAB format(MSZIP) check: %s",
-				    archive_error_string(a));
+				    tk_archive_error_string(a));
 				goto finish;
 			}
 			assertEqualInt(sizeof(buff), rsize);
 			assertEqualMem(buff, zero, sizeof(buff));
 		}
-		assertEqualInt(33000 - s, archive_read_data(a, buff, 33000 - s));
+		assertEqualInt(33000 - s, tk_archive_read_data(a, buff, 33000 - s));
 		assertEqualMem(buff, zero, 33000 - s);
 	}
 
 	/* Verify regular file1. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt((AE_IFREG | 0666), archive_entry_mode(ae));
-	assertEqualString("dir1/file1", archive_entry_pathname(ae));
-	assertEqualInt(0, archive_entry_uid(ae));
-	assertEqualInt(0, archive_entry_gid(ae));
-	assertEqualInt(file1_size, archive_entry_size(ae));
-	assertEqualInt(file1_size, archive_read_data(a, buff, file1_size));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt((AE_IFREG | 0666), tk_archive_entry_mode(ae));
+	assertEqualString("dir1/file1", tk_archive_entry_pathname(ae));
+	assertEqualInt(0, tk_archive_entry_uid(ae));
+	assertEqualInt(0, tk_archive_entry_gid(ae));
+	assertEqualInt(file1_size, tk_archive_entry_size(ae));
+	assertEqualInt(file1_size, tk_archive_read_data(a, buff, file1_size));
 	assertEqualMem(buff, file1, file1_size);
 
 	/* Verify regular file2. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt((AE_IFREG | 0666), archive_entry_mode(ae));
-	assertEqualString("dir2/file2", archive_entry_pathname(ae));
-	assertEqualInt(0, archive_entry_uid(ae));
-	assertEqualInt(0, archive_entry_gid(ae));
-	assertEqualInt(file2_size, archive_entry_size(ae));
-	assertEqualInt(file2_size, archive_read_data(a, buff, file2_size));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt((AE_IFREG | 0666), tk_archive_entry_mode(ae));
+	assertEqualString("dir2/file2", tk_archive_entry_pathname(ae));
+	assertEqualInt(0, tk_archive_entry_uid(ae));
+	assertEqualInt(0, tk_archive_entry_gid(ae));
+	assertEqualInt(file2_size, tk_archive_entry_size(ae));
+	assertEqualInt(file2_size, tk_archive_read_data(a, buff, file2_size));
 	assertEqualMem(buff, file2, file2_size);
 
 	/* End of archive. */
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
 
 	if (comp != STORE) {
-		assertEqualInt(4, archive_file_count(a));
+		assertEqualInt(4, tk_archive_file_count(a));
 	} else {
-		assertEqualInt(3, archive_file_count(a));
+		assertEqualInt(3, tk_archive_file_count(a));
 	}
 
 	/* Verify archive format. */
-	assertEqualIntA(a, ARCHIVE_FILTER_NONE, archive_filter_code(a, 0));
-	assertEqualIntA(a, ARCHIVE_FORMAT_CAB, archive_format(a));
+	assertEqualIntA(a, ARCHIVE_FILTER_NONE, tk_archive_filter_code(a, 0));
+	assertEqualIntA(a, ARCHIVE_FORMAT_CAB, tk_archive_format(a));
 
 	/* Close the archive. */
 finish:
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 /*
@@ -275,7 +275,7 @@ finish:
 static void
 verify2(const char *refname, enum comp_type comp)
 {
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	struct archive *a;
 	char buff[128];
 	char zero[128];
@@ -287,46 +287,46 @@ verify2(const char *refname, enum comp_type comp)
 	}
 	memset(zero, 0, sizeof(zero));
 	extract_reference_file(refname);
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_open_filename(a, refname, 10240));
+	    tk_archive_read_open_filename(a, refname, 10240));
 
 	/* Verify regular empty. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
 	if (comp != STORE) {
-		assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
+		assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
 	}
 	/* Verify regular file1. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
 
 	/* Verify regular file2. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt((AE_IFREG | 0666), archive_entry_mode(ae));
-	assertEqualString("dir2/file2", archive_entry_pathname(ae));
-	assertEqualInt(0, archive_entry_uid(ae));
-	assertEqualInt(0, archive_entry_gid(ae));
-	assertEqualInt(file2_size, archive_entry_size(ae));
-	assertEqualInt(file2_size, archive_read_data(a, buff, file2_size));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt((AE_IFREG | 0666), tk_archive_entry_mode(ae));
+	assertEqualString("dir2/file2", tk_archive_entry_pathname(ae));
+	assertEqualInt(0, tk_archive_entry_uid(ae));
+	assertEqualInt(0, tk_archive_entry_gid(ae));
+	assertEqualInt(file2_size, tk_archive_entry_size(ae));
+	assertEqualInt(file2_size, tk_archive_read_data(a, buff, file2_size));
 	assertEqualMem(buff, file2, file2_size);
 
 	/* End of archive. */
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
 
 	if (comp != STORE) {
-		assertEqualInt(4, archive_file_count(a));
+		assertEqualInt(4, tk_archive_file_count(a));
 	} else {
-		assertEqualInt(3, archive_file_count(a));
+		assertEqualInt(3, tk_archive_file_count(a));
 	}
 
 	/* Verify archive format. */
-	assertEqualIntA(a, ARCHIVE_FILTER_NONE, archive_filter_code(a, 0));
-	assertEqualIntA(a, ARCHIVE_FORMAT_CAB, archive_format(a));
+	assertEqualIntA(a, ARCHIVE_FILTER_NONE, tk_archive_filter_code(a, 0));
+	assertEqualIntA(a, ARCHIVE_FORMAT_CAB, tk_archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 /*
@@ -335,45 +335,45 @@ verify2(const char *refname, enum comp_type comp)
 static void
 verify3(const char *refname, enum comp_type comp)
 {
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	struct archive *a;
 	char zero[128];
 
 	memset(zero, 0, sizeof(zero));
 	extract_reference_file(refname);
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_open_filename(a, refname, 10240));
+	    tk_archive_read_open_filename(a, refname, 10240));
 
 	/* Verify regular empty. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
 	if (comp != STORE) {
-		assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
+		assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
 	}
 	/* Verify regular file1. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
 
 	/* Verify regular file2. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
 
 	/* End of archive. */
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
 
 	if (comp != STORE) {
-		assertEqualInt(4, archive_file_count(a));
+		assertEqualInt(4, tk_archive_file_count(a));
 	} else {
-		assertEqualInt(3, archive_file_count(a));
+		assertEqualInt(3, tk_archive_file_count(a));
 	}
 
 	/* Verify archive format. */
-	assertEqualIntA(a, ARCHIVE_FILTER_NONE, archive_filter_code(a, 0));
-	assertEqualIntA(a, ARCHIVE_FORMAT_CAB, archive_format(a));
+	assertEqualIntA(a, ARCHIVE_FILTER_NONE, tk_archive_filter_code(a, 0));
+	assertEqualIntA(a, ARCHIVE_FORMAT_CAB, tk_archive_format(a));
 
 	/* Close the archive. */
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 DEFINE_TEST(test_read_format_cab)

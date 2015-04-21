@@ -70,7 +70,7 @@ struct mtree_chain {
  * The Data only for a directory file.
  */
 struct dir_info {
-	struct archive_rb_tree rbtree;
+	struct tk_archive_rb_tree rbtree;
 	struct mtree_chain children;
 	struct mtree_entry *chnext;
 	int virtual;
@@ -103,19 +103,19 @@ struct reg_info {
 };
 
 struct mtree_entry {
-	struct archive_rb_node rbnode;
+	struct tk_archive_rb_node rbnode;
 	struct mtree_entry *next;
 	struct mtree_entry *parent;
 	struct dir_info *dir_info;
 	struct reg_info *reg_info;
 
-	struct archive_string parentdir;
-	struct archive_string basename;
-	struct archive_string pathname;
-	struct archive_string symlink;
-	struct archive_string uname;
-	struct archive_string gname;
-	struct archive_string fflags_text;
+	struct tk_archive_string parentdir;
+	struct tk_archive_string basename;
+	struct tk_archive_string pathname;
+	struct tk_archive_string symlink;
+	struct tk_archive_string uname;
+	struct tk_archive_string gname;
+	struct tk_archive_string fflags_text;
 	unsigned int nlink;
 	mode_t filetype;
 	mode_t mode;
@@ -134,11 +134,11 @@ struct mtree_writer {
 	struct mtree_entry *mtree_entry;
 	struct mtree_entry *root;
 	struct mtree_entry *cur_dirent;
-	struct archive_string cur_dirstr;
+	struct tk_archive_string cur_dirstr;
 	struct mtree_chain file_list;
 
-	struct archive_string ebuf;
-	struct archive_string buf;
+	struct tk_archive_string ebuf;
+	struct tk_archive_string buf;
 	int first;
 	uint64_t entry_bytes_remaining;
 
@@ -164,22 +164,22 @@ struct mtree_writer {
 	uint32_t crc;
 	uint64_t crc_len;
 #ifdef ARCHIVE_HAS_MD5
-	archive_md5_ctx md5ctx;
+	tk_archive_md5_ctx md5ctx;
 #endif
 #ifdef ARCHIVE_HAS_RMD160
-	archive_rmd160_ctx rmd160ctx;
+	tk_archive_rmd160_ctx rmd160ctx;
 #endif
 #ifdef ARCHIVE_HAS_SHA1
-	archive_sha1_ctx sha1ctx;
+	tk_archive_sha1_ctx sha1ctx;
 #endif
 #ifdef ARCHIVE_HAS_SHA256
-	archive_sha256_ctx sha256ctx;
+	tk_archive_sha256_ctx sha256ctx;
 #endif
 #ifdef ARCHIVE_HAS_SHA384
-	archive_sha384_ctx sha384ctx;
+	tk_archive_sha384_ctx sha384ctx;
 #endif
 #ifdef ARCHIVE_HAS_SHA512
-	archive_sha512_ctx sha512ctx;
+	tk_archive_sha512_ctx sha512ctx;
 #endif
 	/* Keyword options */
 	int keys;
@@ -236,27 +236,27 @@ static void attr_counter_set_free(struct mtree_writer *);
 static int get_global_set_keys(struct mtree_writer *, struct mtree_entry *);
 static int mtree_entry_add_child_tail(struct mtree_entry *,
 	struct mtree_entry *);
-static int mtree_entry_create_virtual_dir(struct archive_write *, const char *,
+static int mtree_entry_create_virtual_dir(struct tk_archive_write *, const char *,
 	struct mtree_entry **);
-static int mtree_entry_cmp_node(const struct archive_rb_node *,
-	const struct archive_rb_node *);
-static int mtree_entry_cmp_key(const struct archive_rb_node *, const void *);
-static int mtree_entry_exchange_same_entry(struct archive_write *,
+static int mtree_entry_cmp_node(const struct tk_archive_rb_node *,
+	const struct tk_archive_rb_node *);
+static int mtree_entry_cmp_key(const struct tk_archive_rb_node *, const void *);
+static int mtree_entry_exchange_same_entry(struct tk_archive_write *,
     struct mtree_entry *, struct mtree_entry *);
 static void mtree_entry_free(struct mtree_entry *);
-static int mtree_entry_new(struct archive_write *, struct archive_entry *,
+static int mtree_entry_new(struct tk_archive_write *, struct tk_archive_entry *,
 	struct mtree_entry **);
 static void mtree_entry_register_free(struct mtree_writer *);
 static void mtree_entry_register_init(struct mtree_writer *);
-static int mtree_entry_setup_filenames(struct archive_write *,
-	struct mtree_entry *, struct archive_entry *);
-static int mtree_entry_tree_add(struct archive_write *, struct mtree_entry **);
+static int mtree_entry_setup_filenames(struct tk_archive_write *,
+	struct mtree_entry *, struct tk_archive_entry *);
+static int mtree_entry_tree_add(struct tk_archive_write *, struct mtree_entry **);
 static void sum_init(struct mtree_writer *);
 static void sum_update(struct mtree_writer *, const void *, size_t);
 static void sum_final(struct mtree_writer *, struct reg_info *);
-static void sum_write(struct archive_string *, struct reg_info *);
-static int write_mtree_entry(struct archive_write *, struct mtree_entry *);
-static int write_dot_dot_entry(struct archive_write *, struct mtree_entry *);
+static void sum_write(struct tk_archive_string *, struct reg_info *);
+static int write_mtree_entry(struct tk_archive_write *, struct mtree_entry *);
+static int write_dot_dot_entry(struct tk_archive_write *, struct mtree_entry *);
 
 #define	COMPUTE_CRC(var, ch)	(var) = (var) << 8 ^ crctab[(var) >> 24 ^ (ch)]
 static const uint32_t crctab[] = {
@@ -340,7 +340,7 @@ static const unsigned char safe_char[256] = {
 };
 
 static void
-mtree_quote(struct archive_string *s, const char *str)
+mtree_quote(struct tk_archive_string *s, const char *str)
 {
 	const char *start;
 	char buf[4];
@@ -350,18 +350,18 @@ mtree_quote(struct archive_string *s, const char *str)
 		if (safe_char[*(const unsigned char *)str])
 			continue;
 		if (start != str)
-			archive_strncat(s, start, str - start);
+			tk_archive_strncat(s, start, str - start);
 		c = (unsigned char)*str;
 		buf[0] = '\\';
 		buf[1] = (c / 64) + '0';
 		buf[2] = (c / 8 % 8) + '0';
 		buf[3] = (c % 8) + '0';
-		archive_strncat(s, buf, 4);
+		tk_archive_strncat(s, buf, 4);
 		start = str + 1;
 	}
 
 	if (start != str)
-		archive_strncat(s, start, str - start);
+		tk_archive_strncat(s, start, str - start);
 }
 
 /*
@@ -392,16 +392,16 @@ mtree_indent(struct mtree_writer *mtree)
 		if (fn) {
 			fn = 0;
 			for (i = 0; i < nd + pd; i++)
-				archive_strappend_char(&mtree->buf, ' ');
-			archive_strncat(&mtree->buf, s, r - s);
+				tk_archive_strappend_char(&mtree->buf, ' ');
+			tk_archive_strncat(&mtree->buf, s, r - s);
 			if (nd + (r -s) > INDENTNAMELEN) {
-				archive_strncat(&mtree->buf, " \\\n", 3);
+				tk_archive_strncat(&mtree->buf, " \\\n", 3);
 				for (i = 0; i < (INDENTNAMELEN + 1 + pd); i++)
-					archive_strappend_char(&mtree->buf, ' ');
+					tk_archive_strappend_char(&mtree->buf, ' ');
 			} else {
 				for (i = (int)(r -s + nd);
 				    i < (INDENTNAMELEN + 1); i++)
-					archive_strappend_char(&mtree->buf, ' ');
+					tk_archive_strappend_char(&mtree->buf, ' ');
 			}
 			s = ++r;
 			x = NULL;
@@ -412,30 +412,30 @@ mtree_indent(struct mtree_writer *mtree)
 		else {
 			if (x == NULL)
 				x = r;
-			archive_strncat(&mtree->buf, s, x - s);
-			archive_strncat(&mtree->buf, " \\\n", 3);
+			tk_archive_strncat(&mtree->buf, s, x - s);
+			tk_archive_strncat(&mtree->buf, " \\\n", 3);
 			for (i = 0; i < (INDENTNAMELEN + 1 + pd); i++)
-				archive_strappend_char(&mtree->buf, ' ');
+				tk_archive_strappend_char(&mtree->buf, ' ');
 			s = r = ++x;
 			x = NULL;
 		}
 	}
 	if (fn) {
 		for (i = 0; i < nd + pd; i++)
-			archive_strappend_char(&mtree->buf, ' ');
-		archive_strcat(&mtree->buf, s);
+			tk_archive_strappend_char(&mtree->buf, ' ');
+		tk_archive_strcat(&mtree->buf, s);
 		s += strlen(s);
 	}
 	if (x != NULL && pd + strlen(s) > MAXLINELEN - 3 - INDENTNAMELEN) {
 		/* Last keyword is longer. */
-		archive_strncat(&mtree->buf, s, x - s);
-		archive_strncat(&mtree->buf, " \\\n", 3);
+		tk_archive_strncat(&mtree->buf, s, x - s);
+		tk_archive_strncat(&mtree->buf, " \\\n", 3);
 		for (i = 0; i < (INDENTNAMELEN + 1 + pd); i++)
-			archive_strappend_char(&mtree->buf, ' ');
+			tk_archive_strappend_char(&mtree->buf, ' ');
 		s = ++x;
 	}
-	archive_strcat(&mtree->buf, s);
-	archive_string_empty(&mtree->ebuf);
+	tk_archive_strcat(&mtree->buf, s);
+	tk_archive_string_empty(&mtree->ebuf);
 }
 
 /*
@@ -446,13 +446,13 @@ mtree_indent(struct mtree_writer *mtree)
 static void
 write_global(struct mtree_writer *mtree)
 {
-	struct archive_string setstr;
-	struct archive_string unsetstr;
+	struct tk_archive_string setstr;
+	struct tk_archive_string unsetstr;
 	struct att_counter_set *acs;
 	int keys, oldkeys, effkeys;
 
-	archive_string_init(&setstr);
-	archive_string_init(&unsetstr);
+	tk_archive_string_init(&setstr);
+	tk_archive_string_init(&unsetstr);
 	keys = mtree->keys & SET_KEYS;
 	oldkeys = mtree->set.keys;
 	effkeys = keys;
@@ -505,52 +505,52 @@ write_global(struct mtree_writer *mtree)
 	}
 	if ((keys & effkeys & F_TYPE) != 0) {
 		if (mtree->dironly) {
-			archive_strcat(&setstr, " type=dir");
+			tk_archive_strcat(&setstr, " type=dir");
 			mtree->set.type = AE_IFDIR;
 		} else {
-			archive_strcat(&setstr, " type=file");
+			tk_archive_strcat(&setstr, " type=file");
 			mtree->set.type = AE_IFREG;
 		}
 	}
 	if ((keys & effkeys & F_UNAME) != 0) {
-		if (archive_strlen(&(acs->uid_list->m_entry->uname)) > 0) {
-			archive_strcat(&setstr, " uname=");
+		if (tk_archive_strlen(&(acs->uid_list->m_entry->uname)) > 0) {
+			tk_archive_strcat(&setstr, " uname=");
 			mtree_quote(&setstr, acs->uid_list->m_entry->uname.s);
 		} else {
 			keys &= ~F_UNAME;
 			if ((oldkeys & F_UNAME) != 0)
-				archive_strcat(&unsetstr, " uname");
+				tk_archive_strcat(&unsetstr, " uname");
 		}
 	}
 	if ((keys & effkeys & F_UID) != 0) {
 		mtree->set.uid = acs->uid_list->m_entry->uid;
-		archive_string_sprintf(&setstr, " uid=%jd",
+		tk_archive_string_sprintf(&setstr, " uid=%jd",
 		    (intmax_t)mtree->set.uid);
 	}
 	if ((keys & effkeys & F_GNAME) != 0) {
-		if (archive_strlen(&(acs->gid_list->m_entry->gname)) > 0) {
-			archive_strcat(&setstr, " gname=");
+		if (tk_archive_strlen(&(acs->gid_list->m_entry->gname)) > 0) {
+			tk_archive_strcat(&setstr, " gname=");
 			mtree_quote(&setstr, acs->gid_list->m_entry->gname.s);
 		} else {
 			keys &= ~F_GNAME;
 			if ((oldkeys & F_GNAME) != 0)
-				archive_strcat(&unsetstr, " gname");
+				tk_archive_strcat(&unsetstr, " gname");
 		}
 	}
 	if ((keys & effkeys & F_GID) != 0) {
 		mtree->set.gid = acs->gid_list->m_entry->gid;
-		archive_string_sprintf(&setstr, " gid=%jd",
+		tk_archive_string_sprintf(&setstr, " gid=%jd",
 		    (intmax_t)mtree->set.gid);
 	}
 	if ((keys & effkeys & F_MODE) != 0) {
 		mtree->set.mode = acs->mode_list->m_entry->mode;
-		archive_string_sprintf(&setstr, " mode=%o",
+		tk_archive_string_sprintf(&setstr, " mode=%o",
 		    (unsigned int)mtree->set.mode);
 	}
 	if ((keys & effkeys & F_FLAGS) != 0) {
-		if (archive_strlen(
+		if (tk_archive_strlen(
 		    &(acs->flags_list->m_entry->fflags_text)) > 0) {
-			archive_strcat(&setstr, " flags=");
+			tk_archive_strcat(&setstr, " flags=");
 			mtree_quote(&setstr,
 			    acs->flags_list->m_entry->fflags_text.s);
 			mtree->set.fflags_set =
@@ -560,15 +560,15 @@ write_global(struct mtree_writer *mtree)
 		} else {
 			keys &= ~F_FLAGS;
 			if ((oldkeys & F_FLAGS) != 0)
-				archive_strcat(&unsetstr, " flags");
+				tk_archive_strcat(&unsetstr, " flags");
 		}
 	}
 	if (unsetstr.length > 0)
-		archive_string_sprintf(&mtree->buf, "/unset%s\n", unsetstr.s);
-	archive_string_free(&unsetstr);
+		tk_archive_string_sprintf(&mtree->buf, "/unset%s\n", unsetstr.s);
+	tk_archive_string_free(&unsetstr);
 	if (setstr.length > 0)
-		archive_string_sprintf(&mtree->buf, "/set%s\n", setstr.s);
-	archive_string_free(&setstr);
+		tk_archive_string_sprintf(&mtree->buf, "/set%s\n", setstr.s);
+	tk_archive_string_free(&setstr);
 	mtree->set.keys = keys;
 	mtree->set.processing = 1;
 }
@@ -782,19 +782,19 @@ get_global_set_keys(struct mtree_writer *mtree, struct mtree_entry *me)
 }
 
 static int
-mtree_entry_new(struct archive_write *a, struct archive_entry *entry,
+mtree_entry_new(struct tk_archive_write *a, struct tk_archive_entry *entry,
     struct mtree_entry **m_entry)
 {
 	struct mtree_entry *me;
 	const char *s;
 	int r;
-	static const struct archive_rb_tree_ops rb_ops = {
+	static const struct tk_archive_rb_tree_ops rb_ops = {
 		mtree_entry_cmp_node, mtree_entry_cmp_key
 	};
 
 	me = calloc(1, sizeof(*me));
 	if (me == NULL) {
-		archive_set_error(&a->archive, ENOMEM,
+		tk_archive_set_error(&a->archive, ENOMEM,
 		    "Can't allocate memory for a mtree entry");
 		*m_entry = NULL;
 		return (ARCHIVE_FATAL);
@@ -807,35 +807,35 @@ mtree_entry_new(struct archive_write *a, struct archive_entry *entry,
 		return (r);
 	}
 
-	if ((s = archive_entry_symlink(entry)) != NULL)
-		archive_strcpy(&me->symlink, s);
-	me->nlink = archive_entry_nlink(entry);
-	me->filetype = archive_entry_filetype(entry);
-	me->mode = archive_entry_mode(entry) & 07777;
-	me->uid = archive_entry_uid(entry);
-	me->gid = archive_entry_gid(entry);
-	if ((s = archive_entry_uname(entry)) != NULL)
-		archive_strcpy(&me->uname, s);
-	if ((s = archive_entry_gname(entry)) != NULL)
-		archive_strcpy(&me->gname, s);
-	if ((s = archive_entry_fflags_text(entry)) != NULL)
-		archive_strcpy(&me->fflags_text, s);
-	archive_entry_fflags(entry, &me->fflags_set, &me->fflags_clear);
-	me->mtime = archive_entry_mtime(entry);
-	me->mtime_nsec = archive_entry_mtime_nsec(entry);
-	me->rdevmajor =	archive_entry_rdevmajor(entry);
-	me->rdevminor = archive_entry_rdevminor(entry);
-	me->size = archive_entry_size(entry);
+	if ((s = tk_archive_entry_symlink(entry)) != NULL)
+		tk_archive_strcpy(&me->symlink, s);
+	me->nlink = tk_archive_entry_nlink(entry);
+	me->filetype = tk_archive_entry_filetype(entry);
+	me->mode = tk_archive_entry_mode(entry) & 07777;
+	me->uid = tk_archive_entry_uid(entry);
+	me->gid = tk_archive_entry_gid(entry);
+	if ((s = tk_archive_entry_uname(entry)) != NULL)
+		tk_archive_strcpy(&me->uname, s);
+	if ((s = tk_archive_entry_gname(entry)) != NULL)
+		tk_archive_strcpy(&me->gname, s);
+	if ((s = tk_archive_entry_fflags_text(entry)) != NULL)
+		tk_archive_strcpy(&me->fflags_text, s);
+	tk_archive_entry_fflags(entry, &me->fflags_set, &me->fflags_clear);
+	me->mtime = tk_archive_entry_mtime(entry);
+	me->mtime_nsec = tk_archive_entry_mtime_nsec(entry);
+	me->rdevmajor =	tk_archive_entry_rdevmajor(entry);
+	me->rdevminor = tk_archive_entry_rdevminor(entry);
+	me->size = tk_archive_entry_size(entry);
 	if (me->filetype == AE_IFDIR) {
 		me->dir_info = calloc(1, sizeof(*me->dir_info));
 		if (me->dir_info == NULL) {
 			mtree_entry_free(me);
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate memory for a mtree entry");
 			*m_entry = NULL;
 			return (ARCHIVE_FATAL);
 		}
-		__archive_rb_tree_init(&me->dir_info->rbtree, &rb_ops);
+		__tk_archive_rb_tree_init(&me->dir_info->rbtree, &rb_ops);
 		me->dir_info->children.first = NULL;
 		me->dir_info->children.last = &(me->dir_info->children.first);
 		me->dir_info->chnext = NULL;
@@ -843,7 +843,7 @@ mtree_entry_new(struct archive_write *a, struct archive_entry *entry,
 		me->reg_info = calloc(1, sizeof(*me->reg_info));
 		if (me->reg_info == NULL) {
 			mtree_entry_free(me);
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate memory for a mtree entry");
 			*m_entry = NULL;
 			return (ARCHIVE_FATAL);
@@ -858,21 +858,21 @@ mtree_entry_new(struct archive_write *a, struct archive_entry *entry,
 static void
 mtree_entry_free(struct mtree_entry *me)
 {
-	archive_string_free(&me->parentdir);
-	archive_string_free(&me->basename);
-	archive_string_free(&me->pathname);
-	archive_string_free(&me->symlink);
-	archive_string_free(&me->uname);
-	archive_string_free(&me->gname);
-	archive_string_free(&me->fflags_text);
+	tk_archive_string_free(&me->parentdir);
+	tk_archive_string_free(&me->basename);
+	tk_archive_string_free(&me->pathname);
+	tk_archive_string_free(&me->symlink);
+	tk_archive_string_free(&me->uname);
+	tk_archive_string_free(&me->gname);
+	tk_archive_string_free(&me->fflags_text);
 	free(me->dir_info);
 	free(me->reg_info);
 	free(me);
 }
 
 static int
-archive_write_mtree_header(struct archive_write *a,
-    struct archive_entry *entry)
+tk_archive_write_mtree_header(struct tk_archive_write *a,
+    struct tk_archive_entry *entry)
 {
 	struct mtree_writer *mtree= a->format_data;
 	struct mtree_entry *mtree_entry;
@@ -880,15 +880,15 @@ archive_write_mtree_header(struct archive_write *a,
 
 	if (mtree->first) {
 		mtree->first = 0;
-		archive_strcat(&mtree->buf, "#mtree\n");
+		tk_archive_strcat(&mtree->buf, "#mtree\n");
 		if ((mtree->keys & SET_KEYS) == 0)
 			mtree->output_global_set = 0;/* Disalbed. */
 	}
 
-	mtree->entry_bytes_remaining = archive_entry_size(entry);
+	mtree->entry_bytes_remaining = tk_archive_entry_size(entry);
 
 	/* While directory only mode, we do not handle non directory files. */
-	if (mtree->dironly && archive_entry_filetype(entry) != AE_IFDIR)
+	if (mtree->dironly && tk_archive_entry_filetype(entry) != AE_IFDIR)
 		return (ARCHIVE_OK);
 
 	r2 = mtree_entry_new(a, entry, &mtree_entry);
@@ -911,10 +911,10 @@ archive_write_mtree_header(struct archive_write *a,
 }
 
 static int
-write_mtree_entry(struct archive_write *a, struct mtree_entry *me)
+write_mtree_entry(struct tk_archive_write *a, struct mtree_entry *me)
 {
 	struct mtree_writer *mtree = a->format_data;
-	struct archive_string *str;
+	struct tk_archive_string *str;
 	int keys, ret;
 
 	if (me->dir_info) {
@@ -925,20 +925,20 @@ write_mtree_entry(struct archive_write *a, struct mtree_entry *me)
 			 * while generating classic format.
 			 */
 			if (!mtree->dironly)
-				archive_strappend_char(&mtree->buf, '\n');
+				tk_archive_strappend_char(&mtree->buf, '\n');
 			if (me->parentdir.s)
-				archive_string_sprintf(&mtree->buf,
+				tk_archive_string_sprintf(&mtree->buf,
 				    "# %s/%s\n",
 				    me->parentdir.s, me->basename.s);
 			else
-				archive_string_sprintf(&mtree->buf,
+				tk_archive_string_sprintf(&mtree->buf,
 				    "# %s\n",
 				    me->basename.s);
 		}
 		if (mtree->output_global_set)
 			write_global(mtree);
 	}
-	archive_string_empty(&mtree->ebuf);
+	tk_archive_string_empty(&mtree->ebuf);
 	str = (mtree->indent || mtree->classic)? &mtree->ebuf : &mtree->buf;
 
 	if (!mtree->classic && me->parentdir.s) {
@@ -947,60 +947,60 @@ write_mtree_entry(struct archive_write *a, struct mtree_entry *me)
 		 * a full pathname.
 		 */
 		mtree_quote(str, me->parentdir.s);
-		archive_strappend_char(str, '/');
+		tk_archive_strappend_char(str, '/');
 	}
 	mtree_quote(str, me->basename.s);
 
 	keys = get_global_set_keys(mtree, me);
 	if ((keys & F_NLINK) != 0 &&
 	    me->nlink != 1 && me->filetype != AE_IFDIR)
-		archive_string_sprintf(str, " nlink=%u", me->nlink);
+		tk_archive_string_sprintf(str, " nlink=%u", me->nlink);
 
-	if ((keys & F_GNAME) != 0 && archive_strlen(&me->gname) > 0) {
-		archive_strcat(str, " gname=");
+	if ((keys & F_GNAME) != 0 && tk_archive_strlen(&me->gname) > 0) {
+		tk_archive_strcat(str, " gname=");
 		mtree_quote(str, me->gname.s);
 	}
-	if ((keys & F_UNAME) != 0 && archive_strlen(&me->uname) > 0) {
-		archive_strcat(str, " uname=");
+	if ((keys & F_UNAME) != 0 && tk_archive_strlen(&me->uname) > 0) {
+		tk_archive_strcat(str, " uname=");
 		mtree_quote(str, me->uname.s);
 	}
 	if ((keys & F_FLAGS) != 0) {
-		if (archive_strlen(&me->fflags_text) > 0) {
-			archive_strcat(str, " flags=");
+		if (tk_archive_strlen(&me->fflags_text) > 0) {
+			tk_archive_strcat(str, " flags=");
 			mtree_quote(str, me->fflags_text.s);
 		} else if (mtree->set.processing &&
 		    (mtree->set.keys & F_FLAGS) != 0)
 			/* Overwrite the global parameter. */
-			archive_strcat(str, " flags=none");
+			tk_archive_strcat(str, " flags=none");
 	}
 	if ((keys & F_TIME) != 0)
-		archive_string_sprintf(str, " time=%jd.%jd",
+		tk_archive_string_sprintf(str, " time=%jd.%jd",
 		    (intmax_t)me->mtime, (intmax_t)me->mtime_nsec);
 	if ((keys & F_MODE) != 0)
-		archive_string_sprintf(str, " mode=%o", (unsigned int)me->mode);
+		tk_archive_string_sprintf(str, " mode=%o", (unsigned int)me->mode);
 	if ((keys & F_GID) != 0)
-		archive_string_sprintf(str, " gid=%jd", (intmax_t)me->gid);
+		tk_archive_string_sprintf(str, " gid=%jd", (intmax_t)me->gid);
 	if ((keys & F_UID) != 0)
-		archive_string_sprintf(str, " uid=%jd", (intmax_t)me->uid);
+		tk_archive_string_sprintf(str, " uid=%jd", (intmax_t)me->uid);
 
 	switch (me->filetype) {
 	case AE_IFLNK:
 		if ((keys & F_TYPE) != 0)
-			archive_strcat(str, " type=link");
+			tk_archive_strcat(str, " type=link");
 		if ((keys & F_SLINK) != 0) {
-			archive_strcat(str, " link=");
+			tk_archive_strcat(str, " link=");
 			mtree_quote(str, me->symlink.s);
 		}
 		break;
 	case AE_IFSOCK:
 		if ((keys & F_TYPE) != 0)
-			archive_strcat(str, " type=socket");
+			tk_archive_strcat(str, " type=socket");
 		break;
 	case AE_IFCHR:
 		if ((keys & F_TYPE) != 0)
-			archive_strcat(str, " type=char");
+			tk_archive_strcat(str, " type=char");
 		if ((keys & F_DEV) != 0) {
-			archive_string_sprintf(str,
+			tk_archive_string_sprintf(str,
 			    " device=native,%ju,%ju",
 			    (uintmax_t)me->rdevmajor,
 			    (uintmax_t)me->rdevminor);
@@ -1008,9 +1008,9 @@ write_mtree_entry(struct archive_write *a, struct mtree_entry *me)
 		break;
 	case AE_IFBLK:
 		if ((keys & F_TYPE) != 0)
-			archive_strcat(str, " type=block");
+			tk_archive_strcat(str, " type=block");
 		if ((keys & F_DEV) != 0) {
-			archive_string_sprintf(str,
+			tk_archive_string_sprintf(str,
 			    " device=native,%ju,%ju",
 			    (uintmax_t)me->rdevmajor,
 			    (uintmax_t)me->rdevminor);
@@ -1018,18 +1018,18 @@ write_mtree_entry(struct archive_write *a, struct mtree_entry *me)
 		break;
 	case AE_IFDIR:
 		if ((keys & F_TYPE) != 0)
-			archive_strcat(str, " type=dir");
+			tk_archive_strcat(str, " type=dir");
 		break;
 	case AE_IFIFO:
 		if ((keys & F_TYPE) != 0)
-			archive_strcat(str, " type=fifo");
+			tk_archive_strcat(str, " type=fifo");
 		break;
 	case AE_IFREG:
 	default:	/* Handle unknown file types as regular files. */
 		if ((keys & F_TYPE) != 0)
-			archive_strcat(str, " type=file");
+			tk_archive_strcat(str, " type=file");
 		if ((keys & F_SIZE) != 0)
-			archive_string_sprintf(str, " size=%jd",
+			tk_archive_string_sprintf(str, " size=%jd",
 			    (intmax_t)me->size);
 		break;
 	}
@@ -1038,21 +1038,21 @@ write_mtree_entry(struct archive_write *a, struct mtree_entry *me)
 	if (me->reg_info)
 		sum_write(str, me->reg_info);
 
-	archive_strappend_char(str, '\n');
+	tk_archive_strappend_char(str, '\n');
 	if (mtree->indent || mtree->classic)
 		mtree_indent(mtree);
 
 	if (mtree->buf.length > 32768) {
-		ret = __archive_write_output(
+		ret = __tk_archive_write_output(
 			a, mtree->buf.s, mtree->buf.length);
-		archive_string_empty(&mtree->buf);
+		tk_archive_string_empty(&mtree->buf);
 	} else
 		ret = ARCHIVE_OK;
 	return (ret);
 }
 
 static int
-write_dot_dot_entry(struct archive_write *a, struct mtree_entry *n)
+write_dot_dot_entry(struct tk_archive_write *a, struct mtree_entry *n)
 {
 	struct mtree_writer *mtree = a->format_data;
 	int ret;
@@ -1061,23 +1061,23 @@ write_dot_dot_entry(struct archive_write *a, struct mtree_entry *n)
 		if (mtree->indent) {
 			int i, pd = mtree->depth * 4;
 			for (i = 0; i < pd; i++)
-				archive_strappend_char(&mtree->buf, ' ');
+				tk_archive_strappend_char(&mtree->buf, ' ');
 		}
-		archive_string_sprintf(&mtree->buf, "# %s/%s\n",
+		tk_archive_string_sprintf(&mtree->buf, "# %s/%s\n",
 			n->parentdir.s, n->basename.s);
 	}
 
 	if (mtree->indent) {
-		archive_string_empty(&mtree->ebuf);
-		archive_strncat(&mtree->ebuf, "..\n\n", (mtree->dironly)?3:4);
+		tk_archive_string_empty(&mtree->ebuf);
+		tk_archive_strncat(&mtree->ebuf, "..\n\n", (mtree->dironly)?3:4);
 		mtree_indent(mtree);
 	} else
-		archive_strncat(&mtree->buf, "..\n\n", (mtree->dironly)?3:4);
+		tk_archive_strncat(&mtree->buf, "..\n\n", (mtree->dironly)?3:4);
 
 	if (mtree->buf.length > 32768) {
-		ret = __archive_write_output(
+		ret = __tk_archive_write_output(
 			a, mtree->buf.s, mtree->buf.length);
-		archive_string_empty(&mtree->buf);
+		tk_archive_string_empty(&mtree->buf);
 	} else
 		ret = ARCHIVE_OK;
 	return (ret);
@@ -1087,11 +1087,11 @@ write_dot_dot_entry(struct archive_write *a, struct mtree_entry *n)
  * Write mtree entries saved at attr_counter_set_collect() function.
  */
 static int
-write_mtree_entry_tree(struct archive_write *a)
+write_mtree_entry_tree(struct tk_archive_write *a)
 {
 	struct mtree_writer *mtree = a->format_data;
 	struct mtree_entry *np = mtree->root;
-	struct archive_rb_node *n;
+	struct tk_archive_rb_node *n;
 	int ret;
 
 	do {
@@ -1104,7 +1104,7 @@ write_mtree_entry_tree(struct archive_write *a)
 			ARCHIVE_RB_TREE_FOREACH(n, &(np->dir_info->rbtree)) {
 				struct mtree_entry *e = (struct mtree_entry *)n;
 				if (attr_counter_set_collect(mtree, e) < 0) {
-					archive_set_error(&a->archive, ENOMEM,
+					tk_archive_set_error(&a->archive, ENOMEM,
 					    "Can't allocate memory");
 					return (ARCHIVE_FATAL);
 				}
@@ -1188,7 +1188,7 @@ write_mtree_entry_tree(struct archive_write *a)
 }
 
 static int
-archive_write_mtree_finish_entry(struct archive_write *a)
+tk_archive_write_mtree_finish_entry(struct tk_archive_write *a)
 {
 	struct mtree_writer *mtree = a->format_data;
 	struct mtree_entry *me;
@@ -1204,7 +1204,7 @@ archive_write_mtree_finish_entry(struct archive_write *a)
 }
 
 static int
-archive_write_mtree_close(struct archive_write *a)
+tk_archive_write_mtree_close(struct tk_archive_write *a)
 {
 	struct mtree_writer *mtree= a->format_data;
 	int ret;
@@ -1215,13 +1215,13 @@ archive_write_mtree_close(struct archive_write *a)
 			return (ARCHIVE_FATAL);
 	}
 
-	archive_write_set_bytes_in_last_block(&a->archive, 1);
+	tk_archive_write_set_bytes_in_last_block(&a->archive, 1);
 
-	return __archive_write_output(a, mtree->buf.s, mtree->buf.length);
+	return __tk_archive_write_output(a, mtree->buf.s, mtree->buf.length);
 }
 
 static ssize_t
-archive_write_mtree_data(struct archive_write *a, const void *buff, size_t n)
+tk_archive_write_mtree_data(struct tk_archive_write *a, const void *buff, size_t n)
 {
 	struct mtree_writer *mtree= a->format_data;
 
@@ -1240,7 +1240,7 @@ archive_write_mtree_data(struct archive_write *a, const void *buff, size_t n)
 }
 
 static int
-archive_write_mtree_free(struct archive_write *a)
+tk_archive_write_mtree_free(struct tk_archive_write *a)
 {
 	struct mtree_writer *mtree= a->format_data;
 
@@ -1249,9 +1249,9 @@ archive_write_mtree_free(struct archive_write *a)
 
 	/* Make sure we dot not leave any entries. */
 	mtree_entry_register_free(mtree);
-	archive_string_free(&mtree->cur_dirstr);
-	archive_string_free(&mtree->ebuf);
-	archive_string_free(&mtree->buf);
+	tk_archive_string_free(&mtree->cur_dirstr);
+	tk_archive_string_free(&mtree->ebuf);
+	tk_archive_string_free(&mtree->buf);
 	attr_counter_set_free(mtree);
 	free(mtree);
 	a->format_data = NULL;
@@ -1259,7 +1259,7 @@ archive_write_mtree_free(struct archive_write *a)
 }
 
 static int
-archive_write_mtree_options(struct archive_write *a, const char *key,
+tk_archive_write_mtree_options(struct tk_archive_write *a, const char *key,
     const char *value)
 {
 	struct mtree_writer *mtree= a->format_data;
@@ -1367,18 +1367,18 @@ archive_write_mtree_options(struct archive_write *a, const char *key,
 }
 
 static int
-archive_write_set_format_mtree_default(struct archive *_a, const char *fn)
+tk_archive_write_set_format_mtree_default(struct archive *_a, const char *fn)
 {
-	struct archive_write *a = (struct archive_write *)_a;
+	struct tk_archive_write *a = (struct tk_archive_write *)_a;
 	struct mtree_writer *mtree;
 
-	archive_check_magic(_a, ARCHIVE_WRITE_MAGIC, ARCHIVE_STATE_NEW, fn);
+	tk_archive_check_magic(_a, ARCHIVE_WRITE_MAGIC, ARCHIVE_STATE_NEW, fn);
 
 	if (a->format_free != NULL)
 		(a->format_free)(a);
 
 	if ((mtree = calloc(1, sizeof(*mtree))) == NULL) {
-		archive_set_error(&a->archive, ENOMEM,
+		tk_archive_set_error(&a->archive, ENOMEM,
 		    "Can't allocate mtree data");
 		return (ARCHIVE_FATAL);
 	}
@@ -1389,39 +1389,39 @@ archive_write_set_format_mtree_default(struct archive *_a, const char *fn)
 	mtree->keys = DEFAULT_KEYS;
 	mtree->dironly = 0;
 	mtree->indent = 0;
-	archive_string_init(&mtree->ebuf);
-	archive_string_init(&mtree->buf);
+	tk_archive_string_init(&mtree->ebuf);
+	tk_archive_string_init(&mtree->buf);
 	mtree_entry_register_init(mtree);
 	a->format_data = mtree;
-	a->format_free = archive_write_mtree_free;
+	a->format_free = tk_archive_write_mtree_free;
 	a->format_name = "mtree";
-	a->format_options = archive_write_mtree_options;
-	a->format_write_header = archive_write_mtree_header;
-	a->format_close = archive_write_mtree_close;
-	a->format_write_data = archive_write_mtree_data;
-	a->format_finish_entry = archive_write_mtree_finish_entry;
-	a->archive.archive_format = ARCHIVE_FORMAT_MTREE;
-	a->archive.archive_format_name = "mtree";
+	a->format_options = tk_archive_write_mtree_options;
+	a->format_write_header = tk_archive_write_mtree_header;
+	a->format_close = tk_archive_write_mtree_close;
+	a->format_write_data = tk_archive_write_mtree_data;
+	a->format_finish_entry = tk_archive_write_mtree_finish_entry;
+	a->archive.tk_archive_format = ARCHIVE_FORMAT_MTREE;
+	a->archive.tk_archive_format_name = "mtree";
 
 	return (ARCHIVE_OK);
 }
 
 int
-archive_write_set_format_mtree(struct archive *_a)
+tk_archive_write_set_format_mtree(struct archive *_a)
 {
-	return archive_write_set_format_mtree_default(_a,
-		"archive_write_set_format_mtree");
+	return tk_archive_write_set_format_mtree_default(_a,
+		"tk_archive_write_set_format_mtree");
 }
 
 int
-archive_write_set_format_mtree_classic(struct archive *_a)
+tk_archive_write_set_format_mtree_classic(struct archive *_a)
 {
 	int r;
 
-	r = archive_write_set_format_mtree_default(_a,
-		"archive_write_set_format_mtree_classic");
+	r = tk_archive_write_set_format_mtree_default(_a,
+		"tk_archive_write_set_format_mtree_classic");
 	if (r == ARCHIVE_OK) {
-		struct archive_write *a = (struct archive_write *)_a;
+		struct tk_archive_write *a = (struct tk_archive_write *)_a;
 		struct mtree_writer *mtree;
 
 		mtree = (struct mtree_writer *)a->format_data;
@@ -1448,7 +1448,7 @@ sum_init(struct mtree_writer *mtree)
 	}
 #ifdef ARCHIVE_HAS_MD5
 	if (mtree->keys & F_MD5) {
-		if (archive_md5_init(&mtree->md5ctx) == ARCHIVE_OK)
+		if (tk_archive_md5_init(&mtree->md5ctx) == ARCHIVE_OK)
 			mtree->compute_sum |= F_MD5;
 		else
 			mtree->keys &= ~F_MD5;/* Not supported. */
@@ -1456,7 +1456,7 @@ sum_init(struct mtree_writer *mtree)
 #endif
 #ifdef ARCHIVE_HAS_RMD160
 	if (mtree->keys & F_RMD160) {
-		if (archive_rmd160_init(&mtree->rmd160ctx) == ARCHIVE_OK)
+		if (tk_archive_rmd160_init(&mtree->rmd160ctx) == ARCHIVE_OK)
 			mtree->compute_sum |= F_RMD160;
 		else
 			mtree->keys &= ~F_RMD160;/* Not supported. */
@@ -1464,7 +1464,7 @@ sum_init(struct mtree_writer *mtree)
 #endif
 #ifdef ARCHIVE_HAS_SHA1
 	if (mtree->keys & F_SHA1) {
-		if (archive_sha1_init(&mtree->sha1ctx) == ARCHIVE_OK)
+		if (tk_archive_sha1_init(&mtree->sha1ctx) == ARCHIVE_OK)
 			mtree->compute_sum |= F_SHA1;
 		else
 			mtree->keys &= ~F_SHA1;/* Not supported. */
@@ -1472,7 +1472,7 @@ sum_init(struct mtree_writer *mtree)
 #endif
 #ifdef ARCHIVE_HAS_SHA256
 	if (mtree->keys & F_SHA256) {
-		if (archive_sha256_init(&mtree->sha256ctx) == ARCHIVE_OK)
+		if (tk_archive_sha256_init(&mtree->sha256ctx) == ARCHIVE_OK)
 			mtree->compute_sum |= F_SHA256;
 		else
 			mtree->keys &= ~F_SHA256;/* Not supported. */
@@ -1480,7 +1480,7 @@ sum_init(struct mtree_writer *mtree)
 #endif
 #ifdef ARCHIVE_HAS_SHA384
 	if (mtree->keys & F_SHA384) {
-		if (archive_sha384_init(&mtree->sha384ctx) == ARCHIVE_OK)
+		if (tk_archive_sha384_init(&mtree->sha384ctx) == ARCHIVE_OK)
 			mtree->compute_sum |= F_SHA384;
 		else
 			mtree->keys &= ~F_SHA384;/* Not supported. */
@@ -1488,7 +1488,7 @@ sum_init(struct mtree_writer *mtree)
 #endif
 #ifdef ARCHIVE_HAS_SHA512
 	if (mtree->keys & F_SHA512) {
-		if (archive_sha512_init(&mtree->sha512ctx) == ARCHIVE_OK)
+		if (tk_archive_sha512_init(&mtree->sha512ctx) == ARCHIVE_OK)
 			mtree->compute_sum |= F_SHA512;
 		else
 			mtree->keys &= ~F_SHA512;/* Not supported. */
@@ -1512,27 +1512,27 @@ sum_update(struct mtree_writer *mtree, const void *buff, size_t n)
 	}
 #ifdef ARCHIVE_HAS_MD5
 	if (mtree->compute_sum & F_MD5)
-		archive_md5_update(&mtree->md5ctx, buff, n);
+		tk_archive_md5_update(&mtree->md5ctx, buff, n);
 #endif
 #ifdef ARCHIVE_HAS_RMD160
 	if (mtree->compute_sum & F_RMD160)
-		archive_rmd160_update(&mtree->rmd160ctx, buff, n);
+		tk_archive_rmd160_update(&mtree->rmd160ctx, buff, n);
 #endif
 #ifdef ARCHIVE_HAS_SHA1
 	if (mtree->compute_sum & F_SHA1)
-		archive_sha1_update(&mtree->sha1ctx, buff, n);
+		tk_archive_sha1_update(&mtree->sha1ctx, buff, n);
 #endif
 #ifdef ARCHIVE_HAS_SHA256
 	if (mtree->compute_sum & F_SHA256)
-		archive_sha256_update(&mtree->sha256ctx, buff, n);
+		tk_archive_sha256_update(&mtree->sha256ctx, buff, n);
 #endif
 #ifdef ARCHIVE_HAS_SHA384
 	if (mtree->compute_sum & F_SHA384)
-		archive_sha384_update(&mtree->sha384ctx, buff, n);
+		tk_archive_sha384_update(&mtree->sha384ctx, buff, n);
 #endif
 #ifdef ARCHIVE_HAS_SHA512
 	if (mtree->compute_sum & F_SHA512)
-		archive_sha512_update(&mtree->sha512ctx, buff, n);
+		tk_archive_sha512_update(&mtree->sha512ctx, buff, n);
 #endif
 }
 
@@ -1549,27 +1549,27 @@ sum_final(struct mtree_writer *mtree, struct reg_info *reg)
 	}
 #ifdef ARCHIVE_HAS_MD5
 	if (mtree->compute_sum & F_MD5)
-		archive_md5_final(&mtree->md5ctx, reg->buf_md5);
+		tk_archive_md5_final(&mtree->md5ctx, reg->buf_md5);
 #endif
 #ifdef ARCHIVE_HAS_RMD160
 	if (mtree->compute_sum & F_RMD160)
-		archive_rmd160_final(&mtree->rmd160ctx, reg->buf_rmd160);
+		tk_archive_rmd160_final(&mtree->rmd160ctx, reg->buf_rmd160);
 #endif
 #ifdef ARCHIVE_HAS_SHA1
 	if (mtree->compute_sum & F_SHA1)
-		archive_sha1_final(&mtree->sha1ctx, reg->buf_sha1);
+		tk_archive_sha1_final(&mtree->sha1ctx, reg->buf_sha1);
 #endif
 #ifdef ARCHIVE_HAS_SHA256
 	if (mtree->compute_sum & F_SHA256)
-		archive_sha256_final(&mtree->sha256ctx, reg->buf_sha256);
+		tk_archive_sha256_final(&mtree->sha256ctx, reg->buf_sha256);
 #endif
 #ifdef ARCHIVE_HAS_SHA384
 	if (mtree->compute_sum & F_SHA384)
-		archive_sha384_final(&mtree->sha384ctx, reg->buf_sha384);
+		tk_archive_sha384_final(&mtree->sha384ctx, reg->buf_sha384);
 #endif
 #ifdef ARCHIVE_HAS_SHA512
 	if (mtree->compute_sum & F_SHA512)
-		archive_sha512_final(&mtree->sha512ctx, reg->buf_sha512);
+		tk_archive_sha512_final(&mtree->sha512ctx, reg->buf_sha512);
 #endif
 	/* Save what types of sum are computed. */
 	reg->compute_sum = mtree->compute_sum;
@@ -1579,67 +1579,67 @@ sum_final(struct mtree_writer *mtree, struct reg_info *reg)
     defined(ARCHIVE_HAS_SHA1) || defined(ARCHIVE_HAS_SHA256) || \
     defined(ARCHIVE_HAS_SHA384) || defined(ARCHIVE_HAS_SHA512)
 static void
-strappend_bin(struct archive_string *s, const unsigned char *bin, int n)
+strappend_bin(struct tk_archive_string *s, const unsigned char *bin, int n)
 {
 	static const char hex[] = "0123456789abcdef";
 	int i;
 
 	for (i = 0; i < n; i++) {
-		archive_strappend_char(s, hex[bin[i] >> 4]);
-		archive_strappend_char(s, hex[bin[i] & 0x0f]);
+		tk_archive_strappend_char(s, hex[bin[i] >> 4]);
+		tk_archive_strappend_char(s, hex[bin[i] & 0x0f]);
 	}
 }
 #endif
 
 static void
-sum_write(struct archive_string *str, struct reg_info *reg)
+sum_write(struct tk_archive_string *str, struct reg_info *reg)
 {
 
 	if (reg->compute_sum & F_CKSUM) {
-		archive_string_sprintf(str, " cksum=%ju",
+		tk_archive_string_sprintf(str, " cksum=%ju",
 		    (uintmax_t)reg->crc);
 	}
 #ifdef ARCHIVE_HAS_MD5
 	if (reg->compute_sum & F_MD5) {
-		archive_strcat(str, " md5digest=");
+		tk_archive_strcat(str, " md5digest=");
 		strappend_bin(str, reg->buf_md5, sizeof(reg->buf_md5));
 	}
 #endif
 #ifdef ARCHIVE_HAS_RMD160
 	if (reg->compute_sum & F_RMD160) {
-		archive_strcat(str, " rmd160digest=");
+		tk_archive_strcat(str, " rmd160digest=");
 		strappend_bin(str, reg->buf_rmd160, sizeof(reg->buf_rmd160));
 	}
 #endif
 #ifdef ARCHIVE_HAS_SHA1
 	if (reg->compute_sum & F_SHA1) {
-		archive_strcat(str, " sha1digest=");
+		tk_archive_strcat(str, " sha1digest=");
 		strappend_bin(str, reg->buf_sha1, sizeof(reg->buf_sha1));
 	}
 #endif
 #ifdef ARCHIVE_HAS_SHA256
 	if (reg->compute_sum & F_SHA256) {
-		archive_strcat(str, " sha256digest=");
+		tk_archive_strcat(str, " sha256digest=");
 		strappend_bin(str, reg->buf_sha256, sizeof(reg->buf_sha256));
 	}
 #endif
 #ifdef ARCHIVE_HAS_SHA384
 	if (reg->compute_sum & F_SHA384) {
-		archive_strcat(str, " sha384digest=");
+		tk_archive_strcat(str, " sha384digest=");
 		strappend_bin(str, reg->buf_sha384, sizeof(reg->buf_sha384));
 	}
 #endif
 #ifdef ARCHIVE_HAS_SHA512
 	if (reg->compute_sum & F_SHA512) {
-		archive_strcat(str, " sha512digest=");
+		tk_archive_strcat(str, " sha512digest=");
 		strappend_bin(str, reg->buf_sha512, sizeof(reg->buf_sha512));
 	}
 #endif
 }
 
 static int
-mtree_entry_cmp_node(const struct archive_rb_node *n1,
-    const struct archive_rb_node *n2)
+mtree_entry_cmp_node(const struct tk_archive_rb_node *n1,
+    const struct tk_archive_rb_node *n2)
 {
 	const struct mtree_entry *e1 = (const struct mtree_entry *)n1;
 	const struct mtree_entry *e2 = (const struct mtree_entry *)n2;
@@ -1648,7 +1648,7 @@ mtree_entry_cmp_node(const struct archive_rb_node *n1,
 }
 
 static int
-mtree_entry_cmp_key(const struct archive_rb_node *n, const void *key)
+mtree_entry_cmp_key(const struct tk_archive_rb_node *n, const void *key)
 {
 	const struct mtree_entry *e = (const struct mtree_entry *)n;
 
@@ -1696,34 +1696,34 @@ cleanup_backslash_2(wchar_t *p)
  * Generate a parent directory name and a base name from a pathname.
  */
 static int
-mtree_entry_setup_filenames(struct archive_write *a, struct mtree_entry *file,
-    struct archive_entry *entry)
+mtree_entry_setup_filenames(struct tk_archive_write *a, struct mtree_entry *file,
+    struct tk_archive_entry *entry)
 {
 	const char *pathname;
 	char *p, *dirname, *slash;
 	size_t len;
 	int ret = ARCHIVE_OK;
 
-	archive_strcpy(&file->pathname, archive_entry_pathname(entry));
+	tk_archive_strcpy(&file->pathname, tk_archive_entry_pathname(entry));
 #if defined(_WIN32) || defined(__CYGWIN__)
 	/*
 	 * Convert a path-separator from '\' to  '/'
 	 */
 	if (cleanup_backslash_1(file->pathname.s) != 0) {
-		const wchar_t *wp = archive_entry_pathname_w(entry);
-		struct archive_wstring ws;
+		const wchar_t *wp = tk_archive_entry_pathname_w(entry);
+		struct tk_archive_wstring ws;
 
 		if (wp != NULL) {
 			int r;
-			archive_string_init(&ws);
-			archive_wstrcpy(&ws, wp);
+			tk_archive_string_init(&ws);
+			tk_archive_wstrcpy(&ws, wp);
 			cleanup_backslash_2(ws.s);
-			archive_string_empty(&(file->pathname));
-			r = archive_string_append_from_wcs(&(file->pathname),
+			tk_archive_string_empty(&(file->pathname));
+			r = tk_archive_string_append_from_wcs(&(file->pathname),
 			    ws.s, ws.length);
-			archive_wstring_free(&ws);
+			tk_archive_wstring_free(&ws);
 			if (r < 0 && errno == ENOMEM) {
-				archive_set_error(&a->archive, ENOMEM,
+				tk_archive_set_error(&a->archive, ENOMEM,
 				    "Can't allocate memory");
 				return (ARCHIVE_FATAL);
 			}
@@ -1734,11 +1734,11 @@ mtree_entry_setup_filenames(struct archive_write *a, struct mtree_entry *file,
 #endif
 	pathname =  file->pathname.s;
 	if (strcmp(pathname, ".") == 0) {
-		archive_strcpy(&file->basename, ".");
+		tk_archive_strcpy(&file->basename, ".");
 		return (ARCHIVE_OK);
 	}
 
-	archive_strcpy(&(file->parentdir), pathname);
+	tk_archive_strcpy(&(file->parentdir), pathname);
 
 	len = file->parentdir.length;
 	p = dirname = file->parentdir.s;
@@ -1826,15 +1826,15 @@ mtree_entry_setup_filenames(struct archive_write *a, struct mtree_entry *file,
 	 * path.
 	 */
 	if (strcmp(p, ".") != 0 && strncmp(p, "./", 2) != 0) {
-		struct archive_string as;
-		archive_string_init(&as);
-		archive_strcpy(&as, "./");
-		archive_strncat(&as, p, len);
-		archive_string_empty(&file->parentdir);
-		archive_string_concat(&file->parentdir, &as);
-		archive_string_free(&as);
+		struct tk_archive_string as;
+		tk_archive_string_init(&as);
+		tk_archive_strcpy(&as, "./");
+		tk_archive_strncat(&as, p, len);
+		tk_archive_string_empty(&file->parentdir);
+		tk_archive_string_concat(&file->parentdir, &as);
+		tk_archive_string_free(&as);
 		p = file->parentdir.s;
-		len = archive_strlen(&file->parentdir);
+		len = tk_archive_strlen(&file->parentdir);
 	}
 
 	/*
@@ -1849,8 +1849,8 @@ mtree_entry_setup_filenames(struct archive_write *a, struct mtree_entry *file,
 	if (slash == NULL) {
 		/* The pathname doesn't have a parent directory. */
 		file->parentdir.length = len;
-		archive_string_copy(&(file->basename), &(file->parentdir));
-		archive_string_empty(&(file->parentdir));
+		tk_archive_string_copy(&(file->basename), &(file->parentdir));
+		tk_archive_string_empty(&(file->parentdir));
 		*file->parentdir.s = '\0';
 		return (ret);
 	}
@@ -1858,34 +1858,34 @@ mtree_entry_setup_filenames(struct archive_write *a, struct mtree_entry *file,
 	/* Make a basename from dirname and slash */
 	*slash  = '\0';
 	file->parentdir.length = slash - dirname;
-	archive_strcpy(&(file->basename),  slash + 1);
+	tk_archive_strcpy(&(file->basename),  slash + 1);
 	return (ret);
 }
 
 static int
-mtree_entry_create_virtual_dir(struct archive_write *a, const char *pathname,
+mtree_entry_create_virtual_dir(struct tk_archive_write *a, const char *pathname,
     struct mtree_entry **m_entry)
 {
-	struct archive_entry *entry;
+	struct tk_archive_entry *entry;
 	struct mtree_entry *file;
 	int r;
 
-	entry = archive_entry_new();
+	entry = tk_archive_entry_new();
 	if (entry == NULL) {
 		*m_entry = NULL;
-		archive_set_error(&a->archive, ENOMEM,
+		tk_archive_set_error(&a->archive, ENOMEM,
 		    "Can't allocate memory");
 		return (ARCHIVE_FATAL);
 	}
-	archive_entry_copy_pathname(entry, pathname);
-	archive_entry_set_mode(entry, AE_IFDIR | 0755);
-	archive_entry_set_mtime(entry, time(NULL), 0);
+	tk_archive_entry_copy_pathname(entry, pathname);
+	tk_archive_entry_set_mode(entry, AE_IFDIR | 0755);
+	tk_archive_entry_set_mtime(entry, time(NULL), 0);
 
 	r = mtree_entry_new(a, entry, &file);
-	archive_entry_free(entry);
+	tk_archive_entry_free(entry);
 	if (r < ARCHIVE_WARN) {
 		*m_entry = NULL;
-		archive_set_error(&a->archive, ENOMEM,
+		tk_archive_set_error(&a->archive, ENOMEM,
 		    "Can't allocate memory");
 		return (ARCHIVE_FATAL);
 	}
@@ -1944,7 +1944,7 @@ mtree_entry_find_child(struct mtree_entry *parent, const char *child_name)
 
 	if (parent == NULL)
 		return (NULL);
-	np = (struct mtree_entry *)__archive_rb_tree_find_node(
+	np = (struct mtree_entry *)__tk_archive_rb_tree_find_node(
 	    &(parent->dir_info->rbtree), child_name);
 	return (np);
 }
@@ -1973,7 +1973,7 @@ get_path_component(char *name, size_t n, const char *fn)
  * Add a new entry into the tree.
  */
 static int
-mtree_entry_tree_add(struct archive_write *a, struct mtree_entry **filep)
+mtree_entry_tree_add(struct tk_archive_write *a, struct mtree_entry **filep)
 {
 #if defined(_WIN32) && !defined(__CYGWIN__)
 	char name[_MAX_FNAME];/* Included null terminator size. */
@@ -2001,7 +2001,7 @@ mtree_entry_tree_add(struct archive_write *a, struct mtree_entry **filep)
 	}
 
 	if (file->parentdir.length == 0) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 		    "Internal programing error "
 		    "in generating canonical name for %s",
 		    file->pathname.s);
@@ -2015,14 +2015,14 @@ mtree_entry_tree_add(struct archive_write *a, struct mtree_entry **filep)
 	 * the same as the path of `cur_dirent', add `file' entry to
 	 * `cur_dirent'.
 	 */
-	if (archive_strlen(&(mtree->cur_dirstr))
-	      == archive_strlen(&(file->parentdir)) &&
+	if (tk_archive_strlen(&(mtree->cur_dirstr))
+	      == tk_archive_strlen(&(file->parentdir)) &&
 	    strcmp(mtree->cur_dirstr.s, fn) == 0) {
-		if (!__archive_rb_tree_insert_node(
+		if (!__tk_archive_rb_tree_insert_node(
 		    &(mtree->cur_dirent->dir_info->rbtree),
-		    (struct archive_rb_node *)file)) {
+		    (struct tk_archive_rb_node *)file)) {
 			/* There is the same name in the tree. */
-			np = (struct mtree_entry *)__archive_rb_tree_find_node(
+			np = (struct mtree_entry *)__tk_archive_rb_tree_find_node(
 			    &(mtree->cur_dirent->dir_info->rbtree),
 			    file->basename.s);
 			goto same_entry;
@@ -2040,7 +2040,7 @@ mtree_entry_tree_add(struct archive_write *a, struct mtree_entry **filep)
 			break;
 		}
 		if (l < 0) {
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_MISC,
 			    "A name buffer is too small");
 			return (ARCHIVE_FATAL);
@@ -2060,7 +2060,7 @@ mtree_entry_tree_add(struct archive_write *a, struct mtree_entry **filep)
 		/* Find next sub directory. */
 		if (!np->dir_info) {
 			/* NOT Directory! */
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_MISC,
 			    "`%s' is not directory, we cannot insert `%s' ",
 			    np->pathname.s, file->pathname.s);
@@ -2077,16 +2077,16 @@ mtree_entry_tree_add(struct archive_write *a, struct mtree_entry **filep)
 		 */
 		while (fn[0] != '\0') {
 			struct mtree_entry *vp;
-			struct archive_string as;
+			struct tk_archive_string as;
 
-			archive_string_init(&as);
-			archive_strncat(&as, p, fn - p + l);
+			tk_archive_string_init(&as);
+			tk_archive_strncat(&as, p, fn - p + l);
 			if (as.s[as.length-1] == '/') {
 				as.s[as.length-1] = '\0';
 				as.length--;
 			}
 			r = mtree_entry_create_virtual_dir(a, as.s, &vp);
-			archive_string_free(&as);
+			tk_archive_string_free(&as);
 			if (r < ARCHIVE_WARN)
 				return (r);
 
@@ -2094,9 +2094,9 @@ mtree_entry_tree_add(struct archive_write *a, struct mtree_entry **filep)
 				vp->parent = vp;
 				mtree->root = vp;
 			} else {
-				__archive_rb_tree_insert_node(
+				__tk_archive_rb_tree_insert_node(
 				    &(dent->dir_info->rbtree),
-				    (struct archive_rb_node *)vp);
+				    (struct tk_archive_rb_node *)vp);
 				vp->parent = dent;
 			}
 			mtree_entry_register_add(mtree, vp);
@@ -2107,8 +2107,8 @@ mtree_entry_tree_add(struct archive_write *a, struct mtree_entry **filep)
 				fn++;
 			l = get_path_component(name, sizeof(name), fn);
 			if (l < 0) {
-				archive_string_free(&as);
-				archive_set_error(&a->archive,
+				tk_archive_string_free(&as);
+				tk_archive_set_error(&a->archive,
 				    ARCHIVE_ERRNO_MISC,
 				    "A name buffer is too small");
 				return (ARCHIVE_FATAL);
@@ -2119,28 +2119,28 @@ mtree_entry_tree_add(struct archive_write *a, struct mtree_entry **filep)
 		/* Found out the parent directory where `file' can be
 		 * inserted. */
 		mtree->cur_dirent = dent;
-		archive_string_empty(&(mtree->cur_dirstr));
-		archive_string_ensure(&(mtree->cur_dirstr),
-		    archive_strlen(&(dent->parentdir)) +
-		    archive_strlen(&(dent->basename)) + 2);
-		if (archive_strlen(&(dent->parentdir)) +
-		    archive_strlen(&(dent->basename)) == 0)
+		tk_archive_string_empty(&(mtree->cur_dirstr));
+		tk_archive_string_ensure(&(mtree->cur_dirstr),
+		    tk_archive_strlen(&(dent->parentdir)) +
+		    tk_archive_strlen(&(dent->basename)) + 2);
+		if (tk_archive_strlen(&(dent->parentdir)) +
+		    tk_archive_strlen(&(dent->basename)) == 0)
 			mtree->cur_dirstr.s[0] = 0;
 		else {
-			if (archive_strlen(&(dent->parentdir)) > 0) {
-				archive_string_copy(&(mtree->cur_dirstr),
+			if (tk_archive_strlen(&(dent->parentdir)) > 0) {
+				tk_archive_string_copy(&(mtree->cur_dirstr),
 				    &(dent->parentdir));
-				archive_strappend_char(
+				tk_archive_strappend_char(
 				    &(mtree->cur_dirstr), '/');
 			}
-			archive_string_concat(&(mtree->cur_dirstr),
+			tk_archive_string_concat(&(mtree->cur_dirstr),
 			    &(dent->basename));
 		}
 
-		if (!__archive_rb_tree_insert_node(
+		if (!__tk_archive_rb_tree_insert_node(
 		    &(dent->dir_info->rbtree),
-		    (struct archive_rb_node *)file)) {
-			np = (struct mtree_entry *)__archive_rb_tree_find_node(
+		    (struct tk_archive_rb_node *)file)) {
+			np = (struct mtree_entry *)__tk_archive_rb_tree_find_node(
 			    &(dent->dir_info->rbtree), file->basename.s);
 			goto same_entry;
 		}
@@ -2165,12 +2165,12 @@ same_entry:
 }
 
 static int
-mtree_entry_exchange_same_entry(struct archive_write *a, struct mtree_entry *np,
+mtree_entry_exchange_same_entry(struct tk_archive_write *a, struct mtree_entry *np,
     struct mtree_entry *file)
 {
 
 	if ((np->mode & AE_IFMT) != (file->mode & AE_IFMT)) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 		    "Found duplicate entries `%s' and its file type is "
 		    "different",
 		    np->pathname.s);
@@ -2178,14 +2178,14 @@ mtree_entry_exchange_same_entry(struct archive_write *a, struct mtree_entry *np,
 	}
 
 	/* Update the existent mtree entry's attributes by the new one's. */
-	archive_string_empty(&np->symlink);
-	archive_string_concat(&np->symlink, &file->symlink);
-	archive_string_empty(&np->uname);
-	archive_string_concat(&np->uname, &file->uname);
-	archive_string_empty(&np->gname);
-	archive_string_concat(&np->gname, &file->gname);
-	archive_string_empty(&np->fflags_text);
-	archive_string_concat(&np->fflags_text, &file->fflags_text);
+	tk_archive_string_empty(&np->symlink);
+	tk_archive_string_concat(&np->symlink, &file->symlink);
+	tk_archive_string_empty(&np->uname);
+	tk_archive_string_concat(&np->uname, &file->uname);
+	tk_archive_string_empty(&np->gname);
+	tk_archive_string_concat(&np->gname, &file->gname);
+	tk_archive_string_empty(&np->fflags_text);
+	tk_archive_string_concat(&np->fflags_text, &file->fflags_text);
 	np->nlink = file->nlink;
 	np->filetype = file->filetype;
 	np->mode = file->mode;

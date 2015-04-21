@@ -36,7 +36,7 @@ verify_write_data(struct archive *a, int sparse)
 {
 	static const char data[]="abcdefghijklmnopqrstuvwxyz";
 	struct stat st;
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	size_t buff_size = 64 * 1024;
 	char *buff, *p;
 	const char *msg = sparse ? "sparse" : "non-sparse";
@@ -47,12 +47,12 @@ verify_write_data(struct archive *a, int sparse)
 	if (buff == NULL)
 		return;
 
-	ae = archive_entry_new();
+	ae = tk_archive_entry_new();
 	assert(ae != NULL);
-	archive_entry_set_size(ae, 8 * buff_size);
-	archive_entry_set_pathname(ae, "test_write_data");
-	archive_entry_set_mode(ae, AE_IFREG | 0755);
-	assertEqualIntA(a, 0, archive_write_header(a, ae));
+	tk_archive_entry_set_size(ae, 8 * buff_size);
+	tk_archive_entry_set_pathname(ae, "test_write_data");
+	tk_archive_entry_set_mode(ae, AE_IFREG | 0755);
+	assertEqualIntA(a, 0, tk_archive_write_header(a, ae));
 
 	/* Use archive_write_data() to write three relatively sparse blocks. */
 
@@ -60,27 +60,27 @@ verify_write_data(struct archive *a, int sparse)
 	memset(buff, 0, buff_size);
 	memcpy(buff, data, sizeof(data));
 	failure("%s", msg);
-	assertEqualInt(buff_size, archive_write_data(a, buff, buff_size));
+	assertEqualInt(buff_size, tk_archive_write_data(a, buff, buff_size));
 
 	/* Second has non-null data in the middle. */
 	memset(buff, 0, buff_size);
 	memcpy(buff + buff_size / 2 - 3, data, sizeof(data));
 	failure("%s", msg);
-	assertEqualInt(buff_size, archive_write_data(a, buff, buff_size));
+	assertEqualInt(buff_size, tk_archive_write_data(a, buff, buff_size));
 
 	/* Third has non-null data at the end. */
 	memset(buff, 0, buff_size);
 	memcpy(buff + buff_size - sizeof(data), data, sizeof(data));
 	failure("%s", msg);
-	assertEqualInt(buff_size, archive_write_data(a, buff, buff_size));
+	assertEqualInt(buff_size, tk_archive_write_data(a, buff, buff_size));
 
 	failure("%s", msg);
-	assertEqualIntA(a, 0, archive_write_finish_entry(a));
+	assertEqualIntA(a, 0, tk_archive_write_finish_entry(a));
 
 	/* Test the entry on disk. */
-	assert(0 == stat(archive_entry_pathname(ae), &st));
+	assert(0 == stat(tk_archive_entry_pathname(ae), &st));
         assertEqualInt(st.st_size, 8 * buff_size);
-	f = fopen(archive_entry_pathname(ae), "rb");
+	f = fopen(tk_archive_entry_pathname(ae), "rb");
 	assert(f != NULL);
 	if (f == NULL) {
 		free(buff);
@@ -121,7 +121,7 @@ verify_write_data(struct archive *a, int sparse)
 	/* XXX more XXX */
 
 	assertEqualInt(0, fclose(f));
-	archive_entry_free(ae);
+	tk_archive_entry_free(ae);
 	free(buff);
 }
 
@@ -133,7 +133,7 @@ verify_write_data_block(struct archive *a, int sparse)
 {
 	static const char data[]="abcdefghijklmnopqrstuvwxyz";
 	struct stat st;
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	size_t buff_size = 64 * 1024;
 	char *buff, *p;
 	const char *msg = sparse ? "sparse" : "non-sparse";
@@ -144,12 +144,12 @@ verify_write_data_block(struct archive *a, int sparse)
 	if (buff == NULL)
 		return;
 
-	ae = archive_entry_new();
+	ae = tk_archive_entry_new();
 	assert(ae != NULL);
-	archive_entry_set_size(ae, 8 * buff_size);
-	archive_entry_set_pathname(ae, "test_write_data_block");
-	archive_entry_set_mode(ae, AE_IFREG | 0755);
-	assertEqualIntA(a, 0, archive_write_header(a, ae));
+	tk_archive_entry_set_size(ae, 8 * buff_size);
+	tk_archive_entry_set_pathname(ae, "test_write_data_block");
+	tk_archive_entry_set_mode(ae, AE_IFREG | 0755);
+	assertEqualIntA(a, 0, tk_archive_write_header(a, ae));
 
 	/* Use archive_write_data_block() to write three
 	   relatively sparse blocks. */
@@ -159,29 +159,29 @@ verify_write_data_block(struct archive *a, int sparse)
 	memcpy(buff, data, sizeof(data));
 	failure("%s", msg);
 	assertEqualInt(ARCHIVE_OK,
-	    archive_write_data_block(a, buff, buff_size, 100));
+	    tk_archive_write_data_block(a, buff, buff_size, 100));
 
 	/* Second has non-null data in the middle. */
 	memset(buff, 0, buff_size);
 	memcpy(buff + buff_size / 2 - 3, data, sizeof(data));
 	failure("%s", msg);
 	assertEqualInt(ARCHIVE_OK,
-	    archive_write_data_block(a, buff, buff_size, buff_size + 200));
+	    tk_archive_write_data_block(a, buff, buff_size, buff_size + 200));
 
 	/* Third has non-null data at the end. */
 	memset(buff, 0, buff_size);
 	memcpy(buff + buff_size - sizeof(data), data, sizeof(data));
 	failure("%s", msg);
 	assertEqualInt(ARCHIVE_OK,
-	    archive_write_data_block(a, buff, buff_size, buff_size * 2 + 300));
+	    tk_archive_write_data_block(a, buff, buff_size, buff_size * 2 + 300));
 
 	failure("%s", msg);
-	assertEqualIntA(a, 0, archive_write_finish_entry(a));
+	assertEqualIntA(a, 0, tk_archive_write_finish_entry(a));
 
 	/* Test the entry on disk. */
-	assert(0 == stat(archive_entry_pathname(ae), &st));
+	assert(0 == stat(tk_archive_entry_pathname(ae), &st));
         assertEqualInt(st.st_size, 8 * buff_size);
-	f = fopen(archive_entry_pathname(ae), "rb");
+	f = fopen(tk_archive_entry_pathname(ae), "rb");
 	assert(f != NULL);
 	if (f == NULL) {
 		free(buff);
@@ -260,7 +260,7 @@ verify_write_data_block(struct archive *a, int sparse)
 
 	assertEqualInt(0, fclose(f));
 	free(buff);
-	archive_entry_free(ae);
+	tk_archive_entry_free(ae);
 }
 
 DEFINE_TEST(test_write_disk_sparse)
@@ -275,16 +275,16 @@ DEFINE_TEST(test_write_disk_sparse)
 	 * write calls to the disk should vary, of course, but the
 	 * client program shouldn't see any difference.)
 	 */
-	assert((ad = archive_write_disk_new()) != NULL);
-        archive_write_disk_set_options(ad, 0);
+	assert((ad = tk_archive_write_disk_new()) != NULL);
+        tk_archive_write_disk_set_options(ad, 0);
 	verify_write_data(ad, 0);
 	verify_write_data_block(ad, 0);
-	assertEqualInt(0, archive_write_free(ad));
+	assertEqualInt(0, tk_archive_write_free(ad));
 
-	assert((ad = archive_write_disk_new()) != NULL);
-        archive_write_disk_set_options(ad, ARCHIVE_EXTRACT_SPARSE);
+	assert((ad = tk_archive_write_disk_new()) != NULL);
+        tk_archive_write_disk_set_options(ad, ARCHIVE_EXTRACT_SPARSE);
 	verify_write_data(ad, 1);
 	verify_write_data_block(ad, 1);
-	assertEqualInt(0, archive_write_free(ad));
+	assertEqualInt(0, tk_archive_write_free(ad));
 
 }

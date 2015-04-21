@@ -41,22 +41,22 @@ __FBSDID("$FreeBSD$");
 static
 struct { int code; int (*setter)(struct archive *); } codes[] =
 {
-	{ ARCHIVE_FILTER_NONE,		archive_write_add_filter_none },
-	{ ARCHIVE_FILTER_GZIP,		archive_write_add_filter_gzip },
-	{ ARCHIVE_FILTER_BZIP2,		archive_write_add_filter_bzip2 },
-	{ ARCHIVE_FILTER_COMPRESS,	archive_write_add_filter_compress },
-	{ ARCHIVE_FILTER_GRZIP,		archive_write_add_filter_grzip },
-	{ ARCHIVE_FILTER_LRZIP,		archive_write_add_filter_lrzip },
-	{ ARCHIVE_FILTER_LZIP,		archive_write_add_filter_lzip },
-	{ ARCHIVE_FILTER_LZMA,		archive_write_add_filter_lzma },
-	{ ARCHIVE_FILTER_LZOP,		archive_write_add_filter_lzip },
-	{ ARCHIVE_FILTER_UU,		archive_write_add_filter_uuencode },
-	{ ARCHIVE_FILTER_XZ,		archive_write_add_filter_xz },
+	{ ARCHIVE_FILTER_NONE,		tk_archive_write_add_filter_none },
+	{ ARCHIVE_FILTER_GZIP,		tk_archive_write_add_filter_gzip },
+	{ ARCHIVE_FILTER_BZIP2,		tk_archive_write_add_filter_bzip2 },
+	{ ARCHIVE_FILTER_COMPRESS,	tk_archive_write_add_filter_compress },
+	{ ARCHIVE_FILTER_GRZIP,		tk_archive_write_add_filter_grzip },
+	{ ARCHIVE_FILTER_LRZIP,		tk_archive_write_add_filter_lrzip },
+	{ ARCHIVE_FILTER_LZIP,		tk_archive_write_add_filter_lzip },
+	{ ARCHIVE_FILTER_LZMA,		tk_archive_write_add_filter_lzma },
+	{ ARCHIVE_FILTER_LZOP,		tk_archive_write_add_filter_lzip },
+	{ ARCHIVE_FILTER_UU,		tk_archive_write_add_filter_uuencode },
+	{ ARCHIVE_FILTER_XZ,		tk_archive_write_add_filter_xz },
 	{ -1,			NULL }
 };
 
 int
-archive_write_add_filter(struct archive *a, int code)
+tk_archive_write_add_filter(struct archive *a, int code)
 {
 	int i;
 
@@ -65,6 +65,6 @@ archive_write_add_filter(struct archive *a, int code)
 			return ((codes[i].setter)(a));
 	}
 
-	archive_set_error(a, EINVAL, "No such filter");
+	tk_archive_set_error(a, EINVAL, "No such filter");
 	return (ARCHIVE_FATAL);
 }

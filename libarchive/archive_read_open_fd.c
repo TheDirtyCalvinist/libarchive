@@ -62,22 +62,22 @@ static ssize_t	file_read(struct archive *, void *, const void **buff);
 static int64_t	file_skip(struct archive *, void *, int64_t request);
 
 int
-archive_read_open_fd(struct archive *a, int fd, size_t block_size)
+tk_archive_read_open_fd(struct archive *a, int fd, size_t block_size)
 {
 	struct stat st;
 	struct read_fd_data *mine;
 	void *b;
 
-	archive_clear_error(a);
+	tk_archive_clear_error(a);
 	if (fstat(fd, &st) != 0) {
-		archive_set_error(a, errno, "Can't stat fd %d", fd);
+		tk_archive_set_error(a, errno, "Can't stat fd %d", fd);
 		return (ARCHIVE_FATAL);
 	}
 
 	mine = (struct read_fd_data *)calloc(1, sizeof(*mine));
 	b = malloc(block_size);
 	if (mine == NULL || b == NULL) {
-		archive_set_error(a, ENOMEM, "No memory");
+		tk_archive_set_error(a, ENOMEM, "No memory");
 		free(mine);
 		free(b);
 		return (ARCHIVE_FATAL);
@@ -93,18 +93,18 @@ archive_read_open_fd(struct archive *a, int fd, size_t block_size)
 	 * only enable this optimization for regular files.
 	 */
 	if (S_ISREG(st.st_mode)) {
-		archive_read_extract_set_skip_file(a, st.st_dev, st.st_ino);
+		tk_archive_read_extract_set_skip_file(a, st.st_dev, st.st_ino);
 		mine->use_lseek = 1;
 	}
 #if defined(__CYGWIN__) || defined(_WIN32)
 	setmode(mine->fd, O_BINARY);
 #endif
 
-	archive_read_set_read_callback(a, file_read);
-	archive_read_set_skip_callback(a, file_skip);
-	archive_read_set_close_callback(a, file_close);
-	archive_read_set_callback_data(a, mine);
-	return (archive_read_open1(a));
+	tk_archive_read_set_read_callback(a, file_read);
+	tk_archive_read_set_skip_callback(a, file_skip);
+	tk_archive_read_set_close_callback(a, file_close);
+	tk_archive_read_set_callback_data(a, mine);
+	return (tk_archive_read_open1(a));
 }
 
 static ssize_t
@@ -119,7 +119,7 @@ file_read(struct archive *a, void *client_data, const void **buff)
 		if (bytes_read < 0) {
 			if (errno == EINTR)
 				continue;
-			archive_set_error(a, errno, "Error reading fd %d",
+			tk_archive_set_error(a, errno, "Error reading fd %d",
 			    mine->fd);
 		}
 		return (bytes_read);
@@ -166,7 +166,7 @@ file_skip(struct archive *a, void *client_data, int64_t request)
 	 * likely caused by a programmer error (too large request)
 	 * or a corrupted archive file.
 	 */
-	archive_set_error(a, errno, "Error seeking");
+	tk_archive_set_error(a, errno, "Error seeking");
 	return (-1);
 }
 

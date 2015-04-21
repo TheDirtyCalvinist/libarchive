@@ -60,31 +60,31 @@
 #define	ARCHIVE_STATE_FATAL	0x8000U
 #define	ARCHIVE_STATE_ANY	(0xFFFFU & ~ARCHIVE_STATE_FATAL)
 
-struct archive_vtable {
-	int	(*archive_close)(struct archive *);
-	int	(*archive_free)(struct archive *);
-	int	(*archive_write_header)(struct archive *,
-	    struct archive_entry *);
-	int	(*archive_write_finish_entry)(struct archive *);
-	ssize_t	(*archive_write_data)(struct archive *,
+struct tk_archive_vtable {
+	int	(*tk_archive_close)(struct archive *);
+	int	(*tk_archive_free)(struct archive *);
+	int	(*tk_archive_write_header)(struct archive *,
+	    struct tk_archive_entry *);
+	int	(*tk_archive_write_finish_entry)(struct archive *);
+	ssize_t	(*tk_archive_write_data)(struct archive *,
 	    const void *, size_t);
-	ssize_t	(*archive_write_data_block)(struct archive *,
+	ssize_t	(*tk_archive_write_data_block)(struct archive *,
 	    const void *, size_t, int64_t);
 
-	int	(*archive_read_next_header)(struct archive *,
-	    struct archive_entry **);
-	int	(*archive_read_next_header2)(struct archive *,
-	    struct archive_entry *);
-	int	(*archive_read_data_block)(struct archive *,
+	int	(*tk_archive_read_next_header)(struct archive *,
+	    struct tk_archive_entry **);
+	int	(*tk_archive_read_next_header2)(struct archive *,
+	    struct tk_archive_entry *);
+	int	(*tk_archive_read_data_block)(struct archive *,
 	    const void **, size_t *, int64_t *);
 
-	int	(*archive_filter_count)(struct archive *);
-	int64_t (*archive_filter_bytes)(struct archive *, int);
-	int	(*archive_filter_code)(struct archive *, int);
-	const char * (*archive_filter_name)(struct archive *, int);
+	int	(*tk_archive_filter_count)(struct archive *);
+	int64_t (*tk_archive_filter_bytes)(struct archive *, int);
+	int	(*tk_archive_filter_code)(struct archive *, int);
+	const char * (*tk_archive_filter_name)(struct archive *, int);
 };
 
-struct archive_string_conv;
+struct tk_archive_string_conv;
 
 struct archive {
 	/*
@@ -100,10 +100,10 @@ struct archive {
 	 * Some public API functions depend on the "real" type of the
 	 * archive object.
 	 */
-	struct archive_vtable *vtable;
+	struct tk_archive_vtable *vtable;
 
-	int		  archive_format;
-	const char	 *archive_format_name;
+	int		  tk_archive_format;
+	const char	 *tk_archive_format_name;
 
 	int	  compression_code;	/* Currently active compression. */
 	const char *compression_name;
@@ -111,33 +111,33 @@ struct archive {
 	/* Number of file entries processed. */
 	int		  file_count;
 
-	int		  archive_error_number;
+	int		  tk_archive_error_number;
 	const char	 *error;
-	struct archive_string	error_string;
+	struct tk_archive_string	error_string;
 
 	char *current_code;
 	unsigned current_codepage; /* Current ACP(ANSI CodePage). */
 	unsigned current_oemcp; /* Current OEMCP(OEM CodePage). */
-	struct archive_string_conv *sconv;
+	struct tk_archive_string_conv *sconv;
 };
 
 /* Check magic value and state; return(ARCHIVE_FATAL) if it isn't valid. */
-int	__archive_check_magic(struct archive *, unsigned int magic,
+int	__tk_archive_check_magic(struct archive *, unsigned int magic,
 	    unsigned int state, const char *func);
-#define	archive_check_magic(a, expected_magic, allowed_states, function_name) \
+#define	tk_archive_check_magic(a, expected_magic, allowed_states, function_name) \
 	do { \
-		int magic_test = __archive_check_magic((a), (expected_magic), \
+		int magic_test = __tk_archive_check_magic((a), (expected_magic), \
 			(allowed_states), (function_name)); \
 		if (magic_test == ARCHIVE_FATAL) \
 			return ARCHIVE_FATAL; \
 	} while (0)
 
-void	__archive_errx(int retvalue, const char *msg) __LA_DEAD;
+void	__tk_archive_errx(int retvalue, const char *msg) __LA_DEAD;
 
-void	__archive_ensure_cloexec_flag(int fd);
-int	__archive_mktemp(const char *tmpdir);
+void	__tk_archive_ensure_cloexec_flag(int fd);
+int	__tk_archive_mktemp(const char *tmpdir);
 
-int	__archive_clean(struct archive *);
+int	__tk_archive_clean(struct archive *);
 
 #define	err_combine(a,b)	((a) < (b) ? (a) : (b))
 

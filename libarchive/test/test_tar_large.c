@@ -201,7 +201,7 @@ DEFINE_TEST(test_tar_large)
 	int i;
 	char namebuff[64];
 	struct memdata memdata;
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	struct archive *a;
 	int64_t  filesize;
 	size_t writesize;
@@ -214,25 +214,25 @@ DEFINE_TEST(test_tar_large)
 	/*
 	 * Open an archive for writing.
 	 */
-	a = archive_write_new();
-	archive_write_set_format_pax_restricted(a);
-	archive_write_set_bytes_per_block(a, 0); /* No buffering. */
-	archive_write_open(a, &memdata, NULL, memory_write, NULL);
+	a = tk_archive_write_new();
+	tk_archive_write_set_format_pax_restricted(a);
+	tk_archive_write_set_bytes_per_block(a, 0); /* No buffering. */
+	tk_archive_write_open(a, &memdata, NULL, memory_write, NULL);
 
 	/*
 	 * Write a series of large files to it.
 	 */
 	for (i = 0; tests[i] != 0; i++) {
-		assert((ae = archive_entry_new()) != NULL);
+		assert((ae = tk_archive_entry_new()) != NULL);
 		sprintf(namebuff, "file_%d", i);
-		archive_entry_copy_pathname(ae, namebuff);
-		archive_entry_set_mode(ae, S_IFREG | 0755);
+		tk_archive_entry_copy_pathname(ae, namebuff);
+		tk_archive_entry_set_mode(ae, S_IFREG | 0755);
 		filesize = tests[i];
 
-		archive_entry_set_size(ae, filesize);
+		tk_archive_entry_set_size(ae, filesize);
 
-		assertA(0 == archive_write_header(a, ae));
-		archive_entry_free(ae);
+		assertA(0 == tk_archive_write_header(a, ae));
+		tk_archive_entry_free(ae);
 
 		/*
 		 * Write the actual data to the archive.
@@ -242,47 +242,47 @@ DEFINE_TEST(test_tar_large)
 			if ((int64_t)writesize > filesize)
 				writesize = (size_t)filesize;
 			assertA((int)writesize
-			    == archive_write_data(a, filedata, writesize));
+			    == tk_archive_write_data(a, filedata, writesize));
 			filesize -= writesize;
 		}
 	}
 
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_copy_pathname(ae, "lastfile");
-	archive_entry_set_mode(ae, S_IFREG | 0755);
-	assertA(0 == archive_write_header(a, ae));
-	archive_entry_free(ae);
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_copy_pathname(ae, "lastfile");
+	tk_archive_entry_set_mode(ae, S_IFREG | 0755);
+	assertA(0 == tk_archive_write_header(a, ae));
+	tk_archive_entry_free(ae);
 
 
 	/* Close out the archive. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 
 	/*
 	 * Open the same archive for reading.
 	 */
-	a = archive_read_new();
-	archive_read_support_format_tar(a);
-	archive_read_open2(a, &memdata, NULL,
+	a = tk_archive_read_new();
+	tk_archive_read_support_format_tar(a);
+	tk_archive_read_open2(a, &memdata, NULL,
 	    memory_read, memory_read_skip, NULL);
 
 	/*
 	 * Read entries back.
 	 */
 	for (i = 0; tests[i] > 0; i++) {
-		assertEqualIntA(a, 0, archive_read_next_header(a, &ae));
+		assertEqualIntA(a, 0, tk_archive_read_next_header(a, &ae));
 		sprintf(namebuff, "file_%d", i);
-		assertEqualString(namebuff, archive_entry_pathname(ae));
-		assert(tests[i] == archive_entry_size(ae));
+		assertEqualString(namebuff, tk_archive_entry_pathname(ae));
+		assert(tests[i] == tk_archive_entry_size(ae));
 	}
-	assertEqualIntA(a, 0, archive_read_next_header(a, &ae));
-	assertEqualString("lastfile", archive_entry_pathname(ae));
+	assertEqualIntA(a, 0, tk_archive_read_next_header(a, &ae));
+	assertEqualString("lastfile", tk_archive_entry_pathname(ae));
 
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
 
 	/* Close out the archive. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 
 	free(memdata.buff);
 	free(filedata);

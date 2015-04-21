@@ -79,46 +79,46 @@ static unsigned char archive1[] = {
 0x5c,0x00,0x00,0x00,0x00,0xff,0xff,0x03,0x00,0x37,0xf7,0x06,0x47
 };
 
-static void verify0(struct archive *a, struct archive_entry *ae)
+static void verify0(struct archive *a, struct tk_archive_entry *ae)
 {
 	const void *p;
 	size_t size;
 	int64_t offset;
 
-	assert(archive_entry_filetype(ae) == AE_IFREG);
-	assertEqualInt(archive_entry_mode(ae) & 0777, 0644);
-	assertEqualInt(archive_entry_uid(ae), UID);
-	assertEqualInt(archive_entry_gid(ae), GID);
-	assertEqualString(archive_entry_uname(ae), UNAME);
-	assertEqualString(archive_entry_gname(ae), GNAME);
-	assertEqualString(archive_entry_pathname(ae), "f1");
-	assert(archive_entry_hardlink(ae) == NULL);
-	assert(archive_entry_symlink(ae) == NULL);
-	assertEqualInt(archive_entry_mtime(ae), 86401);
-	assertEqualInt(archive_entry_size(ae), 16);
-	assertEqualInt(archive_read_data_block(a, &p, &size, &offset), 0);
+	assert(tk_archive_entry_filetype(ae) == AE_IFREG);
+	assertEqualInt(tk_archive_entry_mode(ae) & 0777, 0644);
+	assertEqualInt(tk_archive_entry_uid(ae), UID);
+	assertEqualInt(tk_archive_entry_gid(ae), GID);
+	assertEqualString(tk_archive_entry_uname(ae), UNAME);
+	assertEqualString(tk_archive_entry_gname(ae), GNAME);
+	assertEqualString(tk_archive_entry_pathname(ae), "f1");
+	assert(tk_archive_entry_hardlink(ae) == NULL);
+	assert(tk_archive_entry_symlink(ae) == NULL);
+	assertEqualInt(tk_archive_entry_mtime(ae), 86401);
+	assertEqualInt(tk_archive_entry_size(ae), 16);
+	assertEqualInt(tk_archive_read_data_block(a, &p, &size, &offset), 0);
 	assertEqualInt((int)size, 16);
 	assertEqualInt((int)offset, 0);
 	assertEqualMem(p, "hellohellohello\n", 16);
 }
 
-static void verify1(struct archive *a, struct archive_entry *ae)
+static void verify1(struct archive *a, struct tk_archive_entry *ae)
 {
 	(void)a; /* UNUSED */
 	/* A hardlink is not a symlink. */
-	assert(archive_entry_filetype(ae) != AE_IFLNK);
+	assert(tk_archive_entry_filetype(ae) != AE_IFLNK);
 	/* Nor is it a directory. */
-	assert(archive_entry_filetype(ae) != AE_IFDIR);
-	assertEqualInt(archive_entry_mode(ae) & 0777, 0644);
-	assertEqualInt(archive_entry_uid(ae), UID);
-	assertEqualInt(archive_entry_gid(ae), GID);
-	assertEqualString(archive_entry_uname(ae), UNAME);
-	assertEqualString(archive_entry_gname(ae), GNAME);
-	assertEqualString(archive_entry_pathname(ae), "hardlink");
-	assertEqualString(archive_entry_hardlink(ae), "f1");
-	assert(archive_entry_symlink(ae) == NULL);
-	assertEqualInt(archive_entry_mtime(ae), 86401);
-	assertEqualInt(archive_entry_nlink(ae), 2);
+	assert(tk_archive_entry_filetype(ae) != AE_IFDIR);
+	assertEqualInt(tk_archive_entry_mode(ae) & 0777, 0644);
+	assertEqualInt(tk_archive_entry_uid(ae), UID);
+	assertEqualInt(tk_archive_entry_gid(ae), GID);
+	assertEqualString(tk_archive_entry_uname(ae), UNAME);
+	assertEqualString(tk_archive_entry_gname(ae), GNAME);
+	assertEqualString(tk_archive_entry_pathname(ae), "hardlink");
+	assertEqualString(tk_archive_entry_hardlink(ae), "f1");
+	assert(tk_archive_entry_symlink(ae) == NULL);
+	assertEqualInt(tk_archive_entry_mtime(ae), 86401);
+	assertEqualInt(tk_archive_entry_nlink(ae), 2);
 }
 
 /* Verify that symlinks are read correctly.
@@ -171,18 +171,18 @@ static unsigned char archive2[] = {
 0x80,0x13,0x5c,0x00,0x00,0x00,0x00,0xff,0xff,0x03,0x00,0x37,0xf7,0x06,0x47
 };
 
-static void verify2(struct archive *a, struct archive_entry *ae)
+static void verify2(struct archive *a, struct tk_archive_entry *ae)
 {
 	(void)a; /* UNUSED */
-	assertEqualInt(archive_entry_filetype(ae), AE_IFLNK);
-	assertEqualInt(archive_entry_mode(ae) & 0777, 0755);
-	assertEqualInt(archive_entry_uid(ae), UID);
-	assertEqualInt(archive_entry_gid(ae), GID);
-	assertEqualString(archive_entry_uname(ae), UNAME);
-	assertEqualString(archive_entry_gname(ae), GNAME);
-	assertEqualString(archive_entry_pathname(ae), "symlink");
-	assertEqualString(archive_entry_symlink(ae), "f1");
-	assert(archive_entry_hardlink(ae) == NULL);
+	assertEqualInt(tk_archive_entry_filetype(ae), AE_IFLNK);
+	assertEqualInt(tk_archive_entry_mode(ae) & 0777, 0755);
+	assertEqualInt(tk_archive_entry_uid(ae), UID);
+	assertEqualInt(tk_archive_entry_gid(ae), GID);
+	assertEqualString(tk_archive_entry_uname(ae), UNAME);
+	assertEqualString(tk_archive_entry_gname(ae), GNAME);
+	assertEqualString(tk_archive_entry_pathname(ae), "symlink");
+	assertEqualString(tk_archive_entry_symlink(ae), "f1");
+	assert(tk_archive_entry_hardlink(ae) == NULL);
 }
 
 /* Character device node.
@@ -220,19 +220,19 @@ static unsigned char archive3[] = {
 0x16,0xa1,0x56,0x99,0x1f,0x83,0x77,0x41
 };
 
-static void verify3(struct archive *a, struct archive_entry *ae)
+static void verify3(struct archive *a, struct tk_archive_entry *ae)
 {
 	(void)a; /* UNUSED */
-	assertEqualInt(archive_entry_filetype(ae), AE_IFCHR);
-	assertEqualInt(archive_entry_mode(ae) & 0777, 0644);
-	assertEqualInt(archive_entry_uid(ae), UID);
-	assertEqualInt(archive_entry_gid(ae), GID);
-	assertEqualString(archive_entry_uname(ae), UNAME);
-	assertEqualString(archive_entry_gname(ae), GNAME);
-	assertEqualString(archive_entry_pathname(ae), "devchar");
-	assert(archive_entry_symlink(ae) == NULL);
-	assert(archive_entry_hardlink(ae) == NULL);
-	assertEqualInt(archive_entry_mtime(ae), 86401);
+	assertEqualInt(tk_archive_entry_filetype(ae), AE_IFCHR);
+	assertEqualInt(tk_archive_entry_mode(ae) & 0777, 0644);
+	assertEqualInt(tk_archive_entry_uid(ae), UID);
+	assertEqualInt(tk_archive_entry_gid(ae), GID);
+	assertEqualString(tk_archive_entry_uname(ae), UNAME);
+	assertEqualString(tk_archive_entry_gname(ae), GNAME);
+	assertEqualString(tk_archive_entry_pathname(ae), "devchar");
+	assert(tk_archive_entry_symlink(ae) == NULL);
+	assert(tk_archive_entry_hardlink(ae) == NULL);
+	assertEqualInt(tk_archive_entry_mtime(ae), 86401);
 }
 
 /* Block device node.
@@ -270,19 +270,19 @@ static unsigned char archive4[] = {
 0x7a,0x5d,0x21,0xde
 };
 
-static void verify4(struct archive *a, struct archive_entry *ae)
+static void verify4(struct archive *a, struct tk_archive_entry *ae)
 {
 	(void)a; /* UNUSED */
-	assertEqualInt(archive_entry_filetype(ae), AE_IFBLK);
-	assertEqualInt(archive_entry_mode(ae) & 0777, 0644);
-	assertEqualInt(archive_entry_uid(ae), UID);
-	assertEqualInt(archive_entry_gid(ae), GID);
-	assertEqualString(archive_entry_uname(ae), UNAME);
-	assertEqualString(archive_entry_gname(ae), GNAME);
-	assertEqualString(archive_entry_pathname(ae), "devblock");
-	assert(archive_entry_symlink(ae) == NULL);
-	assert(archive_entry_hardlink(ae) == NULL);
-	assertEqualInt(archive_entry_mtime(ae), 86401);
+	assertEqualInt(tk_archive_entry_filetype(ae), AE_IFBLK);
+	assertEqualInt(tk_archive_entry_mode(ae) & 0777, 0644);
+	assertEqualInt(tk_archive_entry_uid(ae), UID);
+	assertEqualInt(tk_archive_entry_gid(ae), GID);
+	assertEqualString(tk_archive_entry_uname(ae), UNAME);
+	assertEqualString(tk_archive_entry_gname(ae), GNAME);
+	assertEqualString(tk_archive_entry_pathname(ae), "devblock");
+	assert(tk_archive_entry_symlink(ae) == NULL);
+	assert(tk_archive_entry_hardlink(ae) == NULL);
+	assertEqualInt(tk_archive_entry_mtime(ae), 86401);
 }
 
 /* Directory.
@@ -318,16 +318,16 @@ static unsigned char archive5[] = {
 0x70,0x64,0xa3,0xff,0xb9,0x35
 };
 
-static void verify5(struct archive *a, struct archive_entry *ae)
+static void verify5(struct archive *a, struct tk_archive_entry *ae)
 {
 	(void)a; /* UNUSED */
-	assertEqualInt(archive_entry_filetype(ae), AE_IFDIR);
-	assertEqualInt(archive_entry_mtime(ae), 86401);
-	assertEqualInt(archive_entry_mode(ae) & 0777, 0755);
-	assertEqualInt(archive_entry_uid(ae), UID);
-	assertEqualInt(archive_entry_gid(ae), GID);
-	assertEqualString(archive_entry_uname(ae), UNAME);
-	assertEqualString(archive_entry_gname(ae), GNAME);
+	assertEqualInt(tk_archive_entry_filetype(ae), AE_IFDIR);
+	assertEqualInt(tk_archive_entry_mtime(ae), 86401);
+	assertEqualInt(tk_archive_entry_mode(ae) & 0777, 0755);
+	assertEqualInt(tk_archive_entry_uid(ae), UID);
+	assertEqualInt(tk_archive_entry_gid(ae), GID);
+	assertEqualString(tk_archive_entry_uname(ae), UNAME);
+	assertEqualString(tk_archive_entry_gname(ae), GNAME);
 }
 
 /* fifo
@@ -361,19 +361,19 @@ static unsigned char archive6[] = {
 0x7d,0x65,0xa5,0x82,0xdb,0xaa,0xc2,0xcb,0xbe,0xf0,0x1f,0xd1,0xf9,0x56
 };
 
-static void verify6(struct archive *a, struct archive_entry *ae)
+static void verify6(struct archive *a, struct tk_archive_entry *ae)
 {
 	(void)a; /* UNUSED */
-	assertEqualInt(archive_entry_filetype(ae), AE_IFIFO);
-	assertEqualInt(archive_entry_mode(ae) & 0777, 0755);
-	assertEqualInt(archive_entry_uid(ae), UID);
-	assertEqualInt(archive_entry_gid(ae), GID);
-	assertEqualString(archive_entry_uname(ae), UNAME);
-	assertEqualString(archive_entry_gname(ae), GNAME);
-	assertEqualString(archive_entry_pathname(ae), "fifo");
-	assert(archive_entry_symlink(ae) == NULL);
-	assert(archive_entry_hardlink(ae) == NULL);
-	assertEqualInt(archive_entry_mtime(ae), 86401);
+	assertEqualInt(tk_archive_entry_filetype(ae), AE_IFIFO);
+	assertEqualInt(tk_archive_entry_mode(ae) & 0777, 0755);
+	assertEqualInt(tk_archive_entry_uid(ae), UID);
+	assertEqualInt(tk_archive_entry_gid(ae), GID);
+	assertEqualString(tk_archive_entry_uname(ae), UNAME);
+	assertEqualString(tk_archive_entry_gname(ae), GNAME);
+	assertEqualString(tk_archive_entry_pathname(ae), "fifo");
+	assert(tk_archive_entry_symlink(ae) == NULL);
+	assert(tk_archive_entry_hardlink(ae) == NULL);
+	assertEqualInt(tk_archive_entry_mtime(ae), 86401);
 }
 
 /* Verify that a file records with directory name.
@@ -423,19 +423,19 @@ static unsigned char archive7[] = {
 0x06,0x47
 };
 
-static void verify7(struct archive *a, struct archive_entry *ae)
+static void verify7(struct archive *a, struct tk_archive_entry *ae)
 {
 	(void)a; /* UNUSED */
-	assert(archive_entry_filetype(ae) == AE_IFREG);
-	assertEqualInt(archive_entry_mode(ae) & 0777, 0644);
-	assertEqualInt(archive_entry_uid(ae), UID);
-	assertEqualInt(archive_entry_gid(ae), GID);
-	assertEqualString(archive_entry_uname(ae), UNAME);
-	assertEqualString(archive_entry_gname(ae), GNAME);
-	assertEqualString(archive_entry_pathname(ae), "dir1/f1");
-	assert(archive_entry_hardlink(ae) == NULL);
-	assert(archive_entry_symlink(ae) == NULL);
-	assertEqualInt(archive_entry_mtime(ae), 86401);
+	assert(tk_archive_entry_filetype(ae) == AE_IFREG);
+	assertEqualInt(tk_archive_entry_mode(ae) & 0777, 0644);
+	assertEqualInt(tk_archive_entry_uid(ae), UID);
+	assertEqualInt(tk_archive_entry_gid(ae), GID);
+	assertEqualString(tk_archive_entry_uname(ae), UNAME);
+	assertEqualString(tk_archive_entry_gname(ae), GNAME);
+	assertEqualString(tk_archive_entry_pathname(ae), "dir1/f1");
+	assert(tk_archive_entry_hardlink(ae) == NULL);
+	assert(tk_archive_entry_symlink(ae) == NULL);
+	assertEqualInt(tk_archive_entry_mtime(ae), 86401);
 }
 
 /* Verify that a file records with bzip2 compression
@@ -620,23 +620,23 @@ enum enc {
 };
 
 static void verify(unsigned char *d, size_t s,
-    void (*f1)(struct archive *, struct archive_entry *),
-    void (*f2)(struct archive *, struct archive_entry *),
+    void (*f1)(struct archive *, struct tk_archive_entry *),
+    void (*f2)(struct archive *, struct tk_archive_entry *),
     enum enc etype)
 {
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	struct archive *a;
 	unsigned char *buff;
 	int r;
 
-	assert((a = archive_read_new()) != NULL);
+	assert((a = tk_archive_read_new()) != NULL);
 	switch (etype) {
 	case BZIP2:
 		/* This is only check whether bzip is supported or not.
 		 * This filter won't be used this test.  */
-		if (ARCHIVE_OK != archive_read_support_filter_bzip2(a)) {
+		if (ARCHIVE_OK != tk_archive_read_support_filter_bzip2(a)) {
 			skipping("Unsupported bzip2");
-			assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+			assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 			return;
 		}
 		break;
@@ -645,11 +645,11 @@ static void verify(unsigned char *d, size_t s,
 		 * will return a warning if gzip is unsupported. */
 		break;
 	}
-	assertA(0 == archive_read_support_filter_all(a));
-	r = archive_read_support_format_xar(a);
+	assertA(0 == tk_archive_read_support_filter_all(a));
+	r = tk_archive_read_support_format_xar(a);
 	if (r == ARCHIVE_WARN) {
 		skipping("xar reading not fully supported on this platform");
-		assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+		assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 		return;
 	}
 	assert((buff = malloc(100000)) != NULL);
@@ -658,28 +658,28 @@ static void verify(unsigned char *d, size_t s,
 	memcpy(buff, d, s);
 	memset(buff + s, 0, 2048);
 
-	assertA(0 == archive_read_support_format_all(a));
-	assertA(0 == archive_read_open_memory(a, buff, s + 1024));
-	assertA(0 == archive_read_next_header(a, &ae));
-	assertEqualInt(archive_filter_code(a, 0), ARCHIVE_FILTER_NONE);
-	assertEqualInt(archive_format(a), ARCHIVE_FORMAT_XAR);
+	assertA(0 == tk_archive_read_support_format_all(a));
+	assertA(0 == tk_archive_read_open_memory(a, buff, s + 1024));
+	assertA(0 == tk_archive_read_next_header(a, &ae));
+	assertEqualInt(tk_archive_filter_code(a, 0), ARCHIVE_FILTER_NONE);
+	assertEqualInt(tk_archive_format(a), ARCHIVE_FORMAT_XAR);
 	/* Verify the only entry. */
 	f1(a, ae);
 	if (f2) {
-		assertA(0 == archive_read_next_header(a, &ae));
-		assertEqualInt(archive_filter_code(a, 0), ARCHIVE_FILTER_NONE);
-		assertEqualInt(archive_format(a), ARCHIVE_FORMAT_XAR);
+		assertA(0 == tk_archive_read_next_header(a, &ae));
+		assertEqualInt(tk_archive_filter_code(a, 0), ARCHIVE_FILTER_NONE);
+		assertEqualInt(tk_archive_format(a), ARCHIVE_FORMAT_XAR);
 		/* Verify the only entry. */
 		f2(a, ae);
-		assertEqualInt(2, archive_file_count(a));
+		assertEqualInt(2, tk_archive_file_count(a));
 	} else {
-		assertEqualInt(1, archive_file_count(a));
+		assertEqualInt(1, tk_archive_file_count(a));
 	}
 	/* End of archive. */
-	assertEqualInt(ARCHIVE_EOF, archive_read_next_header(a, &ae));
+	assertEqualInt(ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
 
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 	free(buff);
 }
 

@@ -150,31 +150,31 @@ static size_t wcslen(const wchar_t *s)
  *
  ****************************************************************************/
 
-struct archive_entry *
-archive_entry_clear(struct archive_entry *entry)
+struct tk_archive_entry *
+tk_archive_entry_clear(struct tk_archive_entry *entry)
 {
 	if (entry == NULL)
 		return (NULL);
-	archive_mstring_clean(&entry->ae_fflags_text);
-	archive_mstring_clean(&entry->ae_gname);
-	archive_mstring_clean(&entry->ae_hardlink);
-	archive_mstring_clean(&entry->ae_pathname);
-	archive_mstring_clean(&entry->ae_sourcepath);
-	archive_mstring_clean(&entry->ae_symlink);
-	archive_mstring_clean(&entry->ae_uname);
-	archive_entry_copy_mac_metadata(entry, NULL, 0);
-	archive_acl_clear(&entry->acl);
-	archive_entry_xattr_clear(entry);
-	archive_entry_sparse_clear(entry);
+	tk_archive_mstring_clean(&entry->ae_fflags_text);
+	tk_archive_mstring_clean(&entry->ae_gname);
+	tk_archive_mstring_clean(&entry->ae_hardlink);
+	tk_archive_mstring_clean(&entry->ae_pathname);
+	tk_archive_mstring_clean(&entry->ae_sourcepath);
+	tk_archive_mstring_clean(&entry->ae_symlink);
+	tk_archive_mstring_clean(&entry->ae_uname);
+	tk_archive_entry_copy_mac_metadata(entry, NULL, 0);
+	tk_archive_acl_clear(&entry->acl);
+	tk_archive_entry_xattr_clear(entry);
+	tk_archive_entry_sparse_clear(entry);
 	free(entry->stat);
 	memset(entry, 0, sizeof(*entry));
 	return entry;
 }
 
-struct archive_entry *
-archive_entry_clone(struct archive_entry *entry)
+struct tk_archive_entry *
+tk_archive_entry_clone(struct tk_archive_entry *entry)
 {
-	struct archive_entry *entry2;
+	struct tk_archive_entry *entry2;
 	struct ae_xattr *xp;
 	struct ae_sparse *sp;
 	size_t s;
@@ -183,7 +183,7 @@ archive_entry_clone(struct archive_entry *entry)
 	/* Allocate new structure and copy over all of the fields. */
 	/* TODO: Should we copy the archive over?  Or require a new archive
 	 * as an argument? */
-	entry2 = archive_entry_new2(entry->archive);
+	entry2 = tk_archive_entry_new2(entry->archive);
 	if (entry2 == NULL)
 		return (NULL);
 	entry2->ae_stat = entry->ae_stat;
@@ -192,26 +192,26 @@ archive_entry_clone(struct archive_entry *entry)
 
 	/* TODO: XXX If clone can have a different archive, what do we do here if
 	 * character sets are different? XXX */
-	archive_mstring_copy(&entry2->ae_fflags_text, &entry->ae_fflags_text);
-	archive_mstring_copy(&entry2->ae_gname, &entry->ae_gname);
-	archive_mstring_copy(&entry2->ae_hardlink, &entry->ae_hardlink);
-	archive_mstring_copy(&entry2->ae_pathname, &entry->ae_pathname);
-	archive_mstring_copy(&entry2->ae_sourcepath, &entry->ae_sourcepath);
-	archive_mstring_copy(&entry2->ae_symlink, &entry->ae_symlink);
+	tk_archive_mstring_copy(&entry2->ae_fflags_text, &entry->ae_fflags_text);
+	tk_archive_mstring_copy(&entry2->ae_gname, &entry->ae_gname);
+	tk_archive_mstring_copy(&entry2->ae_hardlink, &entry->ae_hardlink);
+	tk_archive_mstring_copy(&entry2->ae_pathname, &entry->ae_pathname);
+	tk_archive_mstring_copy(&entry2->ae_sourcepath, &entry->ae_sourcepath);
+	tk_archive_mstring_copy(&entry2->ae_symlink, &entry->ae_symlink);
 	entry2->ae_set = entry->ae_set;
-	archive_mstring_copy(&entry2->ae_uname, &entry->ae_uname);
+	tk_archive_mstring_copy(&entry2->ae_uname, &entry->ae_uname);
 
 	/* Copy ACL data over. */
-	archive_acl_copy(&entry2->acl, &entry->acl);
+	tk_archive_acl_copy(&entry2->acl, &entry->acl);
 
 	/* Copy Mac OS metadata. */
-	p = archive_entry_mac_metadata(entry, &s);
-	archive_entry_copy_mac_metadata(entry2, p, s);
+	p = tk_archive_entry_mac_metadata(entry, &s);
+	tk_archive_entry_copy_mac_metadata(entry2, p, s);
 
 	/* Copy xattr data over. */
 	xp = entry->xattr_head;
 	while (xp != NULL) {
-		archive_entry_xattr_add_entry(entry2,
+		tk_archive_entry_xattr_add_entry(entry2,
 		    xp->name, xp->value, xp->size);
 		xp = xp->next;
 	}
@@ -219,7 +219,7 @@ archive_entry_clone(struct archive_entry *entry)
 	/* Copy sparse data over. */
 	sp = entry->sparse_head;
 	while (sp != NULL) {
-		archive_entry_sparse_add_entry(entry2,
+		tk_archive_entry_sparse_add_entry(entry2,
 		    sp->offset, sp->length);
 		sp = sp->next;
 	}
@@ -228,24 +228,24 @@ archive_entry_clone(struct archive_entry *entry)
 }
 
 void
-archive_entry_free(struct archive_entry *entry)
+tk_archive_entry_free(struct tk_archive_entry *entry)
 {
-	archive_entry_clear(entry);
+	tk_archive_entry_clear(entry);
 	free(entry);
 }
 
-struct archive_entry *
-archive_entry_new(void)
+struct tk_archive_entry *
+tk_archive_entry_new(void)
 {
-	return archive_entry_new2(NULL);
+	return tk_archive_entry_new2(NULL);
 }
 
-struct archive_entry *
-archive_entry_new2(struct archive *a)
+struct tk_archive_entry *
+tk_archive_entry_new2(struct archive *a)
 {
-	struct archive_entry *entry;
+	struct tk_archive_entry *entry;
 
-	entry = (struct archive_entry *)malloc(sizeof(*entry));
+	entry = (struct tk_archive_entry *)malloc(sizeof(*entry));
 	if (entry == NULL)
 		return (NULL);
 	memset(entry, 0, sizeof(*entry));
@@ -258,61 +258,61 @@ archive_entry_new2(struct archive *a)
  */
 
 time_t
-archive_entry_atime(struct archive_entry *entry)
+tk_archive_entry_atime(struct tk_archive_entry *entry)
 {
 	return (entry->ae_stat.aest_atime);
 }
 
 long
-archive_entry_atime_nsec(struct archive_entry *entry)
+tk_archive_entry_atime_nsec(struct tk_archive_entry *entry)
 {
 	return (entry->ae_stat.aest_atime_nsec);
 }
 
 int
-archive_entry_atime_is_set(struct archive_entry *entry)
+tk_archive_entry_atime_is_set(struct tk_archive_entry *entry)
 {
 	return (entry->ae_set & AE_SET_ATIME);
 }
 
 time_t
-archive_entry_birthtime(struct archive_entry *entry)
+tk_archive_entry_birthtime(struct tk_archive_entry *entry)
 {
 	return (entry->ae_stat.aest_birthtime);
 }
 
 long
-archive_entry_birthtime_nsec(struct archive_entry *entry)
+tk_archive_entry_birthtime_nsec(struct tk_archive_entry *entry)
 {
 	return (entry->ae_stat.aest_birthtime_nsec);
 }
 
 int
-archive_entry_birthtime_is_set(struct archive_entry *entry)
+tk_archive_entry_birthtime_is_set(struct tk_archive_entry *entry)
 {
 	return (entry->ae_set & AE_SET_BIRTHTIME);
 }
 
 time_t
-archive_entry_ctime(struct archive_entry *entry)
+tk_archive_entry_ctime(struct tk_archive_entry *entry)
 {
 	return (entry->ae_stat.aest_ctime);
 }
 
 int
-archive_entry_ctime_is_set(struct archive_entry *entry)
+tk_archive_entry_ctime_is_set(struct tk_archive_entry *entry)
 {
 	return (entry->ae_set & AE_SET_CTIME);
 }
 
 long
-archive_entry_ctime_nsec(struct archive_entry *entry)
+tk_archive_entry_ctime_nsec(struct tk_archive_entry *entry)
 {
 	return (entry->ae_stat.aest_ctime_nsec);
 }
 
 dev_t
-archive_entry_dev(struct archive_entry *entry)
+tk_archive_entry_dev(struct tk_archive_entry *entry)
 {
 	if (entry->ae_stat.aest_dev_is_broken_down)
 		return ae_makedev(entry->ae_stat.aest_devmajor,
@@ -322,13 +322,13 @@ archive_entry_dev(struct archive_entry *entry)
 }
 
 int
-archive_entry_dev_is_set(struct archive_entry *entry)
+tk_archive_entry_dev_is_set(struct tk_archive_entry *entry)
 {
 	return (entry->ae_set & AE_SET_DEV);
 }
 
 dev_t
-archive_entry_devmajor(struct archive_entry *entry)
+tk_archive_entry_devmajor(struct tk_archive_entry *entry)
 {
 	if (entry->ae_stat.aest_dev_is_broken_down)
 		return (entry->ae_stat.aest_devmajor);
@@ -337,7 +337,7 @@ archive_entry_devmajor(struct archive_entry *entry)
 }
 
 dev_t
-archive_entry_devminor(struct archive_entry *entry)
+tk_archive_entry_devminor(struct tk_archive_entry *entry)
 {
 	if (entry->ae_stat.aest_dev_is_broken_down)
 		return (entry->ae_stat.aest_devminor);
@@ -346,13 +346,13 @@ archive_entry_devminor(struct archive_entry *entry)
 }
 
 mode_t
-archive_entry_filetype(struct archive_entry *entry)
+tk_archive_entry_filetype(struct tk_archive_entry *entry)
 {
 	return (AE_IFMT & entry->acl.mode);
 }
 
 void
-archive_entry_fflags(struct archive_entry *entry,
+tk_archive_entry_fflags(struct tk_archive_entry *entry,
     unsigned long *set, unsigned long *clear)
 {
 	*set = entry->ae_fflags_set;
@@ -369,17 +369,17 @@ archive_entry_fflags(struct archive_entry *entry,
  * conversions are platform-specific (see below).
  */
 const char *
-archive_entry_fflags_text(struct archive_entry *entry)
+tk_archive_entry_fflags_text(struct tk_archive_entry *entry)
 {
 	const char *f;
 	char *p;
 
-	if (archive_mstring_get_mbs(entry->archive,
+	if (tk_archive_mstring_get_mbs(entry->archive,
 	    &entry->ae_fflags_text, &f) == 0) {
 		if (f != NULL)
 			return (f);
 	} else if (errno == ENOMEM)
-		__archive_errx(1, "No memory");
+		__tk_archive_errx(1, "No memory");
 
 	if (entry->ae_fflags_set == 0  &&  entry->ae_fflags_clear == 0)
 		return (NULL);
@@ -388,178 +388,178 @@ archive_entry_fflags_text(struct archive_entry *entry)
 	if (p == NULL)
 		return (NULL);
 
-	archive_mstring_copy_mbs(&entry->ae_fflags_text, p);
+	tk_archive_mstring_copy_mbs(&entry->ae_fflags_text, p);
 	free(p);
-	if (archive_mstring_get_mbs(entry->archive,
+	if (tk_archive_mstring_get_mbs(entry->archive,
 	    &entry->ae_fflags_text, &f) == 0)
 		return (f);
 	if (errno == ENOMEM)
-		__archive_errx(1, "No memory");
+		__tk_archive_errx(1, "No memory");
 	return (NULL);
 }
 
 int64_t
-archive_entry_gid(struct archive_entry *entry)
+tk_archive_entry_gid(struct tk_archive_entry *entry)
 {
 	return (entry->ae_stat.aest_gid);
 }
 
 const char *
-archive_entry_gname(struct archive_entry *entry)
+tk_archive_entry_gname(struct tk_archive_entry *entry)
 {
 	const char *p;
-	if (archive_mstring_get_mbs(entry->archive, &entry->ae_gname, &p) == 0)
+	if (tk_archive_mstring_get_mbs(entry->archive, &entry->ae_gname, &p) == 0)
 		return (p);
 	if (errno == ENOMEM)
-		__archive_errx(1, "No memory");
+		__tk_archive_errx(1, "No memory");
 	return (NULL);
 }
 
 const wchar_t *
-archive_entry_gname_w(struct archive_entry *entry)
+tk_archive_entry_gname_w(struct tk_archive_entry *entry)
 {
 	const wchar_t *p;
-	if (archive_mstring_get_wcs(entry->archive, &entry->ae_gname, &p) == 0)
+	if (tk_archive_mstring_get_wcs(entry->archive, &entry->ae_gname, &p) == 0)
 		return (p);
 	if (errno == ENOMEM)
-		__archive_errx(1, "No memory");
+		__tk_archive_errx(1, "No memory");
 	return (NULL);
 }
 
 int
-_archive_entry_gname_l(struct archive_entry *entry,
-    const char **p, size_t *len, struct archive_string_conv *sc)
+_tk_archive_entry_gname_l(struct tk_archive_entry *entry,
+    const char **p, size_t *len, struct tk_archive_string_conv *sc)
 {
-	return (archive_mstring_get_mbs_l(&entry->ae_gname, p, len, sc));
+	return (tk_archive_mstring_get_mbs_l(&entry->ae_gname, p, len, sc));
 }
 
 const char *
-archive_entry_hardlink(struct archive_entry *entry)
+tk_archive_entry_hardlink(struct tk_archive_entry *entry)
 {
 	const char *p;
 	if ((entry->ae_set & AE_SET_HARDLINK) == 0)
 		return (NULL);
-	if (archive_mstring_get_mbs(
+	if (tk_archive_mstring_get_mbs(
 	    entry->archive, &entry->ae_hardlink, &p) == 0)
 		return (p);
 	if (errno == ENOMEM)
-		__archive_errx(1, "No memory");
+		__tk_archive_errx(1, "No memory");
 	return (NULL);
 }
 
 const wchar_t *
-archive_entry_hardlink_w(struct archive_entry *entry)
+tk_archive_entry_hardlink_w(struct tk_archive_entry *entry)
 {
 	const wchar_t *p;
 	if ((entry->ae_set & AE_SET_HARDLINK) == 0)
 		return (NULL);
-	if (archive_mstring_get_wcs(
+	if (tk_archive_mstring_get_wcs(
 	    entry->archive, &entry->ae_hardlink, &p) == 0)
 		return (p);
 	if (errno == ENOMEM)
-		__archive_errx(1, "No memory");
+		__tk_archive_errx(1, "No memory");
 	return (NULL);
 }
 
 int
-_archive_entry_hardlink_l(struct archive_entry *entry,
-    const char **p, size_t *len, struct archive_string_conv *sc)
+_tk_archive_entry_hardlink_l(struct tk_archive_entry *entry,
+    const char **p, size_t *len, struct tk_archive_string_conv *sc)
 {
 	if ((entry->ae_set & AE_SET_HARDLINK) == 0) {
 		*p = NULL;
 		*len = 0;
 		return (0);
 	}
-	return (archive_mstring_get_mbs_l(&entry->ae_hardlink, p, len, sc));
+	return (tk_archive_mstring_get_mbs_l(&entry->ae_hardlink, p, len, sc));
 }
 
 int64_t
-archive_entry_ino(struct archive_entry *entry)
+tk_archive_entry_ino(struct tk_archive_entry *entry)
 {
 	return (entry->ae_stat.aest_ino);
 }
 
 int
-archive_entry_ino_is_set(struct archive_entry *entry)
+tk_archive_entry_ino_is_set(struct tk_archive_entry *entry)
 {
 	return (entry->ae_set & AE_SET_INO);
 }
 
 int64_t
-archive_entry_ino64(struct archive_entry *entry)
+tk_archive_entry_ino64(struct tk_archive_entry *entry)
 {
 	return (entry->ae_stat.aest_ino);
 }
 
 mode_t
-archive_entry_mode(struct archive_entry *entry)
+tk_archive_entry_mode(struct tk_archive_entry *entry)
 {
 	return (entry->acl.mode);
 }
 
 time_t
-archive_entry_mtime(struct archive_entry *entry)
+tk_archive_entry_mtime(struct tk_archive_entry *entry)
 {
 	return (entry->ae_stat.aest_mtime);
 }
 
 long
-archive_entry_mtime_nsec(struct archive_entry *entry)
+tk_archive_entry_mtime_nsec(struct tk_archive_entry *entry)
 {
 	return (entry->ae_stat.aest_mtime_nsec);
 }
 
 int
-archive_entry_mtime_is_set(struct archive_entry *entry)
+tk_archive_entry_mtime_is_set(struct tk_archive_entry *entry)
 {
 	return (entry->ae_set & AE_SET_MTIME);
 }
 
 unsigned int
-archive_entry_nlink(struct archive_entry *entry)
+tk_archive_entry_nlink(struct tk_archive_entry *entry)
 {
 	return (entry->ae_stat.aest_nlink);
 }
 
 const char *
-archive_entry_pathname(struct archive_entry *entry)
+tk_archive_entry_pathname(struct tk_archive_entry *entry)
 {
 	const char *p;
-	if (archive_mstring_get_mbs(
+	if (tk_archive_mstring_get_mbs(
 	    entry->archive, &entry->ae_pathname, &p) == 0)
 		return (p);
 	if (errno == ENOMEM)
-		__archive_errx(1, "No memory");
+		__tk_archive_errx(1, "No memory");
 	return (NULL);
 }
 
 const wchar_t *
-archive_entry_pathname_w(struct archive_entry *entry)
+tk_archive_entry_pathname_w(struct tk_archive_entry *entry)
 {
 	const wchar_t *p;
-	if (archive_mstring_get_wcs(
+	if (tk_archive_mstring_get_wcs(
 	    entry->archive, &entry->ae_pathname, &p) == 0)
 		return (p);
 	if (errno == ENOMEM)
-		__archive_errx(1, "No memory");
+		__tk_archive_errx(1, "No memory");
 	return (NULL);
 }
 
 int
-_archive_entry_pathname_l(struct archive_entry *entry,
-    const char **p, size_t *len, struct archive_string_conv *sc)
+_tk_archive_entry_pathname_l(struct tk_archive_entry *entry,
+    const char **p, size_t *len, struct tk_archive_string_conv *sc)
 {
-	return (archive_mstring_get_mbs_l(&entry->ae_pathname, p, len, sc));
+	return (tk_archive_mstring_get_mbs_l(&entry->ae_pathname, p, len, sc));
 }
 
 mode_t
-archive_entry_perm(struct archive_entry *entry)
+tk_archive_entry_perm(struct tk_archive_entry *entry)
 {
 	return (~AE_IFMT & entry->acl.mode);
 }
 
 dev_t
-archive_entry_rdev(struct archive_entry *entry)
+tk_archive_entry_rdev(struct tk_archive_entry *entry)
 {
 	if (entry->ae_stat.aest_rdev_is_broken_down)
 		return ae_makedev(entry->ae_stat.aest_rdevmajor,
@@ -569,7 +569,7 @@ archive_entry_rdev(struct archive_entry *entry)
 }
 
 dev_t
-archive_entry_rdevmajor(struct archive_entry *entry)
+tk_archive_entry_rdevmajor(struct tk_archive_entry *entry)
 {
 	if (entry->ae_stat.aest_rdev_is_broken_down)
 		return (entry->ae_stat.aest_rdevmajor);
@@ -578,7 +578,7 @@ archive_entry_rdevmajor(struct archive_entry *entry)
 }
 
 dev_t
-archive_entry_rdevminor(struct archive_entry *entry)
+tk_archive_entry_rdevminor(struct tk_archive_entry *entry)
 {
 	if (entry->ae_stat.aest_rdev_is_broken_down)
 		return (entry->ae_stat.aest_rdevminor);
@@ -587,112 +587,112 @@ archive_entry_rdevminor(struct archive_entry *entry)
 }
 
 int64_t
-archive_entry_size(struct archive_entry *entry)
+tk_archive_entry_size(struct tk_archive_entry *entry)
 {
 	return (entry->ae_stat.aest_size);
 }
 
 int
-archive_entry_size_is_set(struct archive_entry *entry)
+tk_archive_entry_size_is_set(struct tk_archive_entry *entry)
 {
 	return (entry->ae_set & AE_SET_SIZE);
 }
 
 const char *
-archive_entry_sourcepath(struct archive_entry *entry)
+tk_archive_entry_sourcepath(struct tk_archive_entry *entry)
 {
 	const char *p;
-	if (archive_mstring_get_mbs(
+	if (tk_archive_mstring_get_mbs(
 	    entry->archive, &entry->ae_sourcepath, &p) == 0)
 		return (p);
 	if (errno == ENOMEM)
-		__archive_errx(1, "No memory");
+		__tk_archive_errx(1, "No memory");
 	return (NULL);
 }
 
 const wchar_t *
-archive_entry_sourcepath_w(struct archive_entry *entry)
+tk_archive_entry_sourcepath_w(struct tk_archive_entry *entry)
 {
 	const wchar_t *p;
-	if (archive_mstring_get_wcs(
+	if (tk_archive_mstring_get_wcs(
 	    entry->archive, &entry->ae_sourcepath, &p) == 0)
 		return (p);
 	return (NULL);
 }
 
 const char *
-archive_entry_symlink(struct archive_entry *entry)
+tk_archive_entry_symlink(struct tk_archive_entry *entry)
 {
 	const char *p;
 	if ((entry->ae_set & AE_SET_SYMLINK) == 0)
 		return (NULL);
-	if (archive_mstring_get_mbs(
+	if (tk_archive_mstring_get_mbs(
 	    entry->archive, &entry->ae_symlink, &p) == 0)
 		return (p);
 	if (errno == ENOMEM)
-		__archive_errx(1, "No memory");
+		__tk_archive_errx(1, "No memory");
 	return (NULL);
 }
 
 const wchar_t *
-archive_entry_symlink_w(struct archive_entry *entry)
+tk_archive_entry_symlink_w(struct tk_archive_entry *entry)
 {
 	const wchar_t *p;
 	if ((entry->ae_set & AE_SET_SYMLINK) == 0)
 		return (NULL);
-	if (archive_mstring_get_wcs(
+	if (tk_archive_mstring_get_wcs(
 	    entry->archive, &entry->ae_symlink, &p) == 0)
 		return (p);
 	if (errno == ENOMEM)
-		__archive_errx(1, "No memory");
+		__tk_archive_errx(1, "No memory");
 	return (NULL);
 }
 
 int
-_archive_entry_symlink_l(struct archive_entry *entry,
-    const char **p, size_t *len, struct archive_string_conv *sc)
+_tk_archive_entry_symlink_l(struct tk_archive_entry *entry,
+    const char **p, size_t *len, struct tk_archive_string_conv *sc)
 {
 	if ((entry->ae_set & AE_SET_SYMLINK) == 0) {
 		*p = NULL;
 		*len = 0;
 		return (0);
 	}
-	return (archive_mstring_get_mbs_l( &entry->ae_symlink, p, len, sc));
+	return (tk_archive_mstring_get_mbs_l( &entry->ae_symlink, p, len, sc));
 }
 
 int64_t
-archive_entry_uid(struct archive_entry *entry)
+tk_archive_entry_uid(struct tk_archive_entry *entry)
 {
 	return (entry->ae_stat.aest_uid);
 }
 
 const char *
-archive_entry_uname(struct archive_entry *entry)
+tk_archive_entry_uname(struct tk_archive_entry *entry)
 {
 	const char *p;
-	if (archive_mstring_get_mbs(entry->archive, &entry->ae_uname, &p) == 0)
+	if (tk_archive_mstring_get_mbs(entry->archive, &entry->ae_uname, &p) == 0)
 		return (p);
 	if (errno == ENOMEM)
-		__archive_errx(1, "No memory");
+		__tk_archive_errx(1, "No memory");
 	return (NULL);
 }
 
 const wchar_t *
-archive_entry_uname_w(struct archive_entry *entry)
+tk_archive_entry_uname_w(struct tk_archive_entry *entry)
 {
 	const wchar_t *p;
-	if (archive_mstring_get_wcs(entry->archive, &entry->ae_uname, &p) == 0)
+	if (tk_archive_mstring_get_wcs(entry->archive, &entry->ae_uname, &p) == 0)
 		return (p);
 	if (errno == ENOMEM)
-		__archive_errx(1, "No memory");
+		__tk_archive_errx(1, "No memory");
 	return (NULL);
 }
 
 int
-_archive_entry_uname_l(struct archive_entry *entry,
-    const char **p, size_t *len, struct archive_string_conv *sc)
+_tk_archive_entry_uname_l(struct tk_archive_entry *entry,
+    const char **p, size_t *len, struct tk_archive_string_conv *sc)
 {
-	return (archive_mstring_get_mbs_l(&entry->ae_uname, p, len, sc));
+	return (tk_archive_mstring_get_mbs_l(&entry->ae_uname, p, len, sc));
 }
 
 /*
@@ -700,7 +700,7 @@ _archive_entry_uname_l(struct archive_entry *entry,
  */
 
 void
-archive_entry_set_filetype(struct archive_entry *entry, unsigned int type)
+tk_archive_entry_set_filetype(struct tk_archive_entry *entry, unsigned int type)
 {
 	entry->stat_valid = 0;
 	entry->acl.mode &= ~AE_IFMT;
@@ -708,77 +708,77 @@ archive_entry_set_filetype(struct archive_entry *entry, unsigned int type)
 }
 
 void
-archive_entry_set_fflags(struct archive_entry *entry,
+tk_archive_entry_set_fflags(struct tk_archive_entry *entry,
     unsigned long set, unsigned long clear)
 {
-	archive_mstring_clean(&entry->ae_fflags_text);
+	tk_archive_mstring_clean(&entry->ae_fflags_text);
 	entry->ae_fflags_set = set;
 	entry->ae_fflags_clear = clear;
 }
 
 const char *
-archive_entry_copy_fflags_text(struct archive_entry *entry,
+tk_archive_entry_copy_fflags_text(struct tk_archive_entry *entry,
     const char *flags)
 {
-	archive_mstring_copy_mbs(&entry->ae_fflags_text, flags);
+	tk_archive_mstring_copy_mbs(&entry->ae_fflags_text, flags);
 	return (ae_strtofflags(flags,
 		    &entry->ae_fflags_set, &entry->ae_fflags_clear));
 }
 
 const wchar_t *
-archive_entry_copy_fflags_text_w(struct archive_entry *entry,
+tk_archive_entry_copy_fflags_text_w(struct tk_archive_entry *entry,
     const wchar_t *flags)
 {
-	archive_mstring_copy_wcs(&entry->ae_fflags_text, flags);
+	tk_archive_mstring_copy_wcs(&entry->ae_fflags_text, flags);
 	return (ae_wcstofflags(flags,
 		    &entry->ae_fflags_set, &entry->ae_fflags_clear));
 }
 
 void
-archive_entry_set_gid(struct archive_entry *entry, int64_t g)
+tk_archive_entry_set_gid(struct tk_archive_entry *entry, int64_t g)
 {
 	entry->stat_valid = 0;
 	entry->ae_stat.aest_gid = g;
 }
 
 void
-archive_entry_set_gname(struct archive_entry *entry, const char *name)
+tk_archive_entry_set_gname(struct tk_archive_entry *entry, const char *name)
 {
-	archive_mstring_copy_mbs(&entry->ae_gname, name);
+	tk_archive_mstring_copy_mbs(&entry->ae_gname, name);
 }
 
 void
-archive_entry_copy_gname(struct archive_entry *entry, const char *name)
+tk_archive_entry_copy_gname(struct tk_archive_entry *entry, const char *name)
 {
-	archive_mstring_copy_mbs(&entry->ae_gname, name);
+	tk_archive_mstring_copy_mbs(&entry->ae_gname, name);
 }
 
 void
-archive_entry_copy_gname_w(struct archive_entry *entry, const wchar_t *name)
+tk_archive_entry_copy_gname_w(struct tk_archive_entry *entry, const wchar_t *name)
 {
-	archive_mstring_copy_wcs(&entry->ae_gname, name);
+	tk_archive_mstring_copy_wcs(&entry->ae_gname, name);
 }
 
 int
-archive_entry_update_gname_utf8(struct archive_entry *entry, const char *name)
+tk_archive_entry_update_gname_utf8(struct tk_archive_entry *entry, const char *name)
 {
-	if (archive_mstring_update_utf8(entry->archive,
+	if (tk_archive_mstring_update_utf8(entry->archive,
 	    &entry->ae_gname, name) == 0)
 		return (1);
 	if (errno == ENOMEM)
-		__archive_errx(1, "No memory");
+		__tk_archive_errx(1, "No memory");
 	return (0);
 }
 
 int
-_archive_entry_copy_gname_l(struct archive_entry *entry,
-    const char *name, size_t len, struct archive_string_conv *sc)
+_tk_archive_entry_copy_gname_l(struct tk_archive_entry *entry,
+    const char *name, size_t len, struct tk_archive_string_conv *sc)
 {
-	return (archive_mstring_copy_mbs_len_l(&entry->ae_gname, name, len, sc));
+	return (tk_archive_mstring_copy_mbs_len_l(&entry->ae_gname, name, len, sc));
 }
 
 void
-archive_entry_set_ino(struct archive_entry *entry, int64_t ino)
+tk_archive_entry_set_ino(struct tk_archive_entry *entry, int64_t ino)
 {
 	entry->stat_valid = 0;
 	entry->ae_set |= AE_SET_INO;
@@ -786,7 +786,7 @@ archive_entry_set_ino(struct archive_entry *entry, int64_t ino)
 }
 
 void
-archive_entry_set_ino64(struct archive_entry *entry, int64_t ino)
+tk_archive_entry_set_ino64(struct tk_archive_entry *entry, int64_t ino)
 {
 	entry->stat_valid = 0;
 	entry->ae_set |= AE_SET_INO;
@@ -794,9 +794,9 @@ archive_entry_set_ino64(struct archive_entry *entry, int64_t ino)
 }
 
 void
-archive_entry_set_hardlink(struct archive_entry *entry, const char *target)
+tk_archive_entry_set_hardlink(struct tk_archive_entry *entry, const char *target)
 {
-	archive_mstring_copy_mbs(&entry->ae_hardlink, target);
+	tk_archive_mstring_copy_mbs(&entry->ae_hardlink, target);
 	if (target != NULL)
 		entry->ae_set |= AE_SET_HARDLINK;
 	else
@@ -804,9 +804,9 @@ archive_entry_set_hardlink(struct archive_entry *entry, const char *target)
 }
 
 void
-archive_entry_copy_hardlink(struct archive_entry *entry, const char *target)
+tk_archive_entry_copy_hardlink(struct tk_archive_entry *entry, const char *target)
 {
-	archive_mstring_copy_mbs(&entry->ae_hardlink, target);
+	tk_archive_mstring_copy_mbs(&entry->ae_hardlink, target);
 	if (target != NULL)
 		entry->ae_set |= AE_SET_HARDLINK;
 	else
@@ -814,9 +814,9 @@ archive_entry_copy_hardlink(struct archive_entry *entry, const char *target)
 }
 
 void
-archive_entry_copy_hardlink_w(struct archive_entry *entry, const wchar_t *target)
+tk_archive_entry_copy_hardlink_w(struct tk_archive_entry *entry, const wchar_t *target)
 {
-	archive_mstring_copy_wcs(&entry->ae_hardlink, target);
+	tk_archive_mstring_copy_wcs(&entry->ae_hardlink, target);
 	if (target != NULL)
 		entry->ae_set |= AE_SET_HARDLINK;
 	else
@@ -824,27 +824,27 @@ archive_entry_copy_hardlink_w(struct archive_entry *entry, const wchar_t *target
 }
 
 int
-archive_entry_update_hardlink_utf8(struct archive_entry *entry, const char *target)
+tk_archive_entry_update_hardlink_utf8(struct tk_archive_entry *entry, const char *target)
 {
 	if (target != NULL)
 		entry->ae_set |= AE_SET_HARDLINK;
 	else
 		entry->ae_set &= ~AE_SET_HARDLINK;
-	if (archive_mstring_update_utf8(entry->archive,
+	if (tk_archive_mstring_update_utf8(entry->archive,
 	    &entry->ae_hardlink, target) == 0)
 		return (1);
 	if (errno == ENOMEM)
-		__archive_errx(1, "No memory");
+		__tk_archive_errx(1, "No memory");
 	return (0);
 }
 
 int
-_archive_entry_copy_hardlink_l(struct archive_entry *entry,
-    const char *target, size_t len, struct archive_string_conv *sc)
+_tk_archive_entry_copy_hardlink_l(struct tk_archive_entry *entry,
+    const char *target, size_t len, struct tk_archive_string_conv *sc)
 {
 	int r;
 
-	r = archive_mstring_copy_mbs_len_l(&entry->ae_hardlink,
+	r = tk_archive_mstring_copy_mbs_len_l(&entry->ae_hardlink,
 	    target, len, sc);
 	if (target != NULL && r == 0)
 		entry->ae_set |= AE_SET_HARDLINK;
@@ -854,7 +854,7 @@ _archive_entry_copy_hardlink_l(struct archive_entry *entry,
 }
 
 void
-archive_entry_set_atime(struct archive_entry *entry, time_t t, long ns)
+tk_archive_entry_set_atime(struct tk_archive_entry *entry, time_t t, long ns)
 {
 	FIX_NS(t, ns);
 	entry->stat_valid = 0;
@@ -864,14 +864,14 @@ archive_entry_set_atime(struct archive_entry *entry, time_t t, long ns)
 }
 
 void
-archive_entry_unset_atime(struct archive_entry *entry)
+tk_archive_entry_unset_atime(struct tk_archive_entry *entry)
 {
-	archive_entry_set_atime(entry, 0, 0);
+	tk_archive_entry_set_atime(entry, 0, 0);
 	entry->ae_set &= ~AE_SET_ATIME;
 }
 
 void
-archive_entry_set_birthtime(struct archive_entry *entry, time_t t, long ns)
+tk_archive_entry_set_birthtime(struct tk_archive_entry *entry, time_t t, long ns)
 {
 	FIX_NS(t, ns);
 	entry->stat_valid = 0;
@@ -881,14 +881,14 @@ archive_entry_set_birthtime(struct archive_entry *entry, time_t t, long ns)
 }
 
 void
-archive_entry_unset_birthtime(struct archive_entry *entry)
+tk_archive_entry_unset_birthtime(struct tk_archive_entry *entry)
 {
-	archive_entry_set_birthtime(entry, 0, 0);
+	tk_archive_entry_set_birthtime(entry, 0, 0);
 	entry->ae_set &= ~AE_SET_BIRTHTIME;
 }
 
 void
-archive_entry_set_ctime(struct archive_entry *entry, time_t t, long ns)
+tk_archive_entry_set_ctime(struct tk_archive_entry *entry, time_t t, long ns)
 {
 	FIX_NS(t, ns);
 	entry->stat_valid = 0;
@@ -898,14 +898,14 @@ archive_entry_set_ctime(struct archive_entry *entry, time_t t, long ns)
 }
 
 void
-archive_entry_unset_ctime(struct archive_entry *entry)
+tk_archive_entry_unset_ctime(struct tk_archive_entry *entry)
 {
-	archive_entry_set_ctime(entry, 0, 0);
+	tk_archive_entry_set_ctime(entry, 0, 0);
 	entry->ae_set &= ~AE_SET_CTIME;
 }
 
 void
-archive_entry_set_dev(struct archive_entry *entry, dev_t d)
+tk_archive_entry_set_dev(struct tk_archive_entry *entry, dev_t d)
 {
 	entry->stat_valid = 0;
 	entry->ae_set |= AE_SET_DEV;
@@ -914,7 +914,7 @@ archive_entry_set_dev(struct archive_entry *entry, dev_t d)
 }
 
 void
-archive_entry_set_devmajor(struct archive_entry *entry, dev_t m)
+tk_archive_entry_set_devmajor(struct tk_archive_entry *entry, dev_t m)
 {
 	entry->stat_valid = 0;
 	entry->ae_set |= AE_SET_DEV;
@@ -923,7 +923,7 @@ archive_entry_set_devmajor(struct archive_entry *entry, dev_t m)
 }
 
 void
-archive_entry_set_devminor(struct archive_entry *entry, dev_t m)
+tk_archive_entry_set_devminor(struct tk_archive_entry *entry, dev_t m)
 {
 	entry->stat_valid = 0;
 	entry->ae_set |= AE_SET_DEV;
@@ -933,75 +933,75 @@ archive_entry_set_devminor(struct archive_entry *entry, dev_t m)
 
 /* Set symlink if symlink is already set, else set hardlink. */
 void
-archive_entry_set_link(struct archive_entry *entry, const char *target)
+tk_archive_entry_set_link(struct tk_archive_entry *entry, const char *target)
 {
 	if (entry->ae_set & AE_SET_SYMLINK)
-		archive_mstring_copy_mbs(&entry->ae_symlink, target);
+		tk_archive_mstring_copy_mbs(&entry->ae_symlink, target);
 	else
-		archive_mstring_copy_mbs(&entry->ae_hardlink, target);
+		tk_archive_mstring_copy_mbs(&entry->ae_hardlink, target);
 }
 
 /* Set symlink if symlink is already set, else set hardlink. */
 void
-archive_entry_copy_link(struct archive_entry *entry, const char *target)
+tk_archive_entry_copy_link(struct tk_archive_entry *entry, const char *target)
 {
 	if (entry->ae_set & AE_SET_SYMLINK)
-		archive_mstring_copy_mbs(&entry->ae_symlink, target);
+		tk_archive_mstring_copy_mbs(&entry->ae_symlink, target);
 	else
-		archive_mstring_copy_mbs(&entry->ae_hardlink, target);
+		tk_archive_mstring_copy_mbs(&entry->ae_hardlink, target);
 }
 
 /* Set symlink if symlink is already set, else set hardlink. */
 void
-archive_entry_copy_link_w(struct archive_entry *entry, const wchar_t *target)
+tk_archive_entry_copy_link_w(struct tk_archive_entry *entry, const wchar_t *target)
 {
 	if (entry->ae_set & AE_SET_SYMLINK)
-		archive_mstring_copy_wcs(&entry->ae_symlink, target);
+		tk_archive_mstring_copy_wcs(&entry->ae_symlink, target);
 	else
-		archive_mstring_copy_wcs(&entry->ae_hardlink, target);
+		tk_archive_mstring_copy_wcs(&entry->ae_hardlink, target);
 }
 
 int
-archive_entry_update_link_utf8(struct archive_entry *entry, const char *target)
+tk_archive_entry_update_link_utf8(struct tk_archive_entry *entry, const char *target)
 {
 	int r;
 	if (entry->ae_set & AE_SET_SYMLINK)
-		r = archive_mstring_update_utf8(entry->archive,
+		r = tk_archive_mstring_update_utf8(entry->archive,
 		    &entry->ae_symlink, target);
 	else
-		r = archive_mstring_update_utf8(entry->archive,
+		r = tk_archive_mstring_update_utf8(entry->archive,
 		    &entry->ae_hardlink, target);
 	if (r == 0)
 		return (1);
 	if (errno == ENOMEM)
-		__archive_errx(1, "No memory");
+		__tk_archive_errx(1, "No memory");
 	return (0);
 }
 
 int
-_archive_entry_copy_link_l(struct archive_entry *entry,
-    const char *target, size_t len, struct archive_string_conv *sc)
+_tk_archive_entry_copy_link_l(struct tk_archive_entry *entry,
+    const char *target, size_t len, struct tk_archive_string_conv *sc)
 {
 	int r;
 
 	if (entry->ae_set & AE_SET_SYMLINK)
-		r = archive_mstring_copy_mbs_len_l(&entry->ae_symlink,
+		r = tk_archive_mstring_copy_mbs_len_l(&entry->ae_symlink,
 		    target, len, sc);
 	else
-		r = archive_mstring_copy_mbs_len_l(&entry->ae_hardlink,
+		r = tk_archive_mstring_copy_mbs_len_l(&entry->ae_hardlink,
 		    target, len, sc);
 	return (r);
 }
 
 void
-archive_entry_set_mode(struct archive_entry *entry, mode_t m)
+tk_archive_entry_set_mode(struct tk_archive_entry *entry, mode_t m)
 {
 	entry->stat_valid = 0;
 	entry->acl.mode = m;
 }
 
 void
-archive_entry_set_mtime(struct archive_entry *entry, time_t t, long ns)
+tk_archive_entry_set_mtime(struct tk_archive_entry *entry, time_t t, long ns)
 {
 	FIX_NS(t, ns);
 	entry->stat_valid = 0;
@@ -1011,58 +1011,58 @@ archive_entry_set_mtime(struct archive_entry *entry, time_t t, long ns)
 }
 
 void
-archive_entry_unset_mtime(struct archive_entry *entry)
+tk_archive_entry_unset_mtime(struct tk_archive_entry *entry)
 {
-	archive_entry_set_mtime(entry, 0, 0);
+	tk_archive_entry_set_mtime(entry, 0, 0);
 	entry->ae_set &= ~AE_SET_MTIME;
 }
 
 void
-archive_entry_set_nlink(struct archive_entry *entry, unsigned int nlink)
+tk_archive_entry_set_nlink(struct tk_archive_entry *entry, unsigned int nlink)
 {
 	entry->stat_valid = 0;
 	entry->ae_stat.aest_nlink = nlink;
 }
 
 void
-archive_entry_set_pathname(struct archive_entry *entry, const char *name)
+tk_archive_entry_set_pathname(struct tk_archive_entry *entry, const char *name)
 {
-	archive_mstring_copy_mbs(&entry->ae_pathname, name);
+	tk_archive_mstring_copy_mbs(&entry->ae_pathname, name);
 }
 
 void
-archive_entry_copy_pathname(struct archive_entry *entry, const char *name)
+tk_archive_entry_copy_pathname(struct tk_archive_entry *entry, const char *name)
 {
-	archive_mstring_copy_mbs(&entry->ae_pathname, name);
+	tk_archive_mstring_copy_mbs(&entry->ae_pathname, name);
 }
 
 void
-archive_entry_copy_pathname_w(struct archive_entry *entry, const wchar_t *name)
+tk_archive_entry_copy_pathname_w(struct tk_archive_entry *entry, const wchar_t *name)
 {
-	archive_mstring_copy_wcs(&entry->ae_pathname, name);
+	tk_archive_mstring_copy_wcs(&entry->ae_pathname, name);
 }
 
 int
-archive_entry_update_pathname_utf8(struct archive_entry *entry, const char *name)
+tk_archive_entry_update_pathname_utf8(struct tk_archive_entry *entry, const char *name)
 {
-	if (archive_mstring_update_utf8(entry->archive,
+	if (tk_archive_mstring_update_utf8(entry->archive,
 	    &entry->ae_pathname, name) == 0)
 		return (1);
 	if (errno == ENOMEM)
-		__archive_errx(1, "No memory");
+		__tk_archive_errx(1, "No memory");
 	return (0);
 }
 
 int
-_archive_entry_copy_pathname_l(struct archive_entry *entry,
-    const char *name, size_t len, struct archive_string_conv *sc)
+_tk_archive_entry_copy_pathname_l(struct tk_archive_entry *entry,
+    const char *name, size_t len, struct tk_archive_string_conv *sc)
 {
-	return (archive_mstring_copy_mbs_len_l(&entry->ae_pathname,
+	return (tk_archive_mstring_copy_mbs_len_l(&entry->ae_pathname,
 	    name, len, sc));
 }
 
 void
-archive_entry_set_perm(struct archive_entry *entry, mode_t p)
+tk_archive_entry_set_perm(struct tk_archive_entry *entry, mode_t p)
 {
 	entry->stat_valid = 0;
 	entry->acl.mode &= AE_IFMT;
@@ -1070,7 +1070,7 @@ archive_entry_set_perm(struct archive_entry *entry, mode_t p)
 }
 
 void
-archive_entry_set_rdev(struct archive_entry *entry, dev_t m)
+tk_archive_entry_set_rdev(struct tk_archive_entry *entry, dev_t m)
 {
 	entry->stat_valid = 0;
 	entry->ae_stat.aest_rdev = m;
@@ -1078,7 +1078,7 @@ archive_entry_set_rdev(struct archive_entry *entry, dev_t m)
 }
 
 void
-archive_entry_set_rdevmajor(struct archive_entry *entry, dev_t m)
+tk_archive_entry_set_rdevmajor(struct tk_archive_entry *entry, dev_t m)
 {
 	entry->stat_valid = 0;
 	entry->ae_stat.aest_rdev_is_broken_down = 1;
@@ -1086,7 +1086,7 @@ archive_entry_set_rdevmajor(struct archive_entry *entry, dev_t m)
 }
 
 void
-archive_entry_set_rdevminor(struct archive_entry *entry, dev_t m)
+tk_archive_entry_set_rdevminor(struct tk_archive_entry *entry, dev_t m)
 {
 	entry->stat_valid = 0;
 	entry->ae_stat.aest_rdev_is_broken_down = 1;
@@ -1094,7 +1094,7 @@ archive_entry_set_rdevminor(struct archive_entry *entry, dev_t m)
 }
 
 void
-archive_entry_set_size(struct archive_entry *entry, int64_t s)
+tk_archive_entry_set_size(struct tk_archive_entry *entry, int64_t s)
 {
 	entry->stat_valid = 0;
 	entry->ae_stat.aest_size = s;
@@ -1102,28 +1102,28 @@ archive_entry_set_size(struct archive_entry *entry, int64_t s)
 }
 
 void
-archive_entry_unset_size(struct archive_entry *entry)
+tk_archive_entry_unset_size(struct tk_archive_entry *entry)
 {
-	archive_entry_set_size(entry, 0);
+	tk_archive_entry_set_size(entry, 0);
 	entry->ae_set &= ~AE_SET_SIZE;
 }
 
 void
-archive_entry_copy_sourcepath(struct archive_entry *entry, const char *path)
+tk_archive_entry_copy_sourcepath(struct tk_archive_entry *entry, const char *path)
 {
-	archive_mstring_copy_mbs(&entry->ae_sourcepath, path);
+	tk_archive_mstring_copy_mbs(&entry->ae_sourcepath, path);
 }
 
 void
-archive_entry_copy_sourcepath_w(struct archive_entry *entry, const wchar_t *path)
+tk_archive_entry_copy_sourcepath_w(struct tk_archive_entry *entry, const wchar_t *path)
 {
-	archive_mstring_copy_wcs(&entry->ae_sourcepath, path);
+	tk_archive_mstring_copy_wcs(&entry->ae_sourcepath, path);
 }
 
 void
-archive_entry_set_symlink(struct archive_entry *entry, const char *linkname)
+tk_archive_entry_set_symlink(struct tk_archive_entry *entry, const char *linkname)
 {
-	archive_mstring_copy_mbs(&entry->ae_symlink, linkname);
+	tk_archive_mstring_copy_mbs(&entry->ae_symlink, linkname);
 	if (linkname != NULL)
 		entry->ae_set |= AE_SET_SYMLINK;
 	else
@@ -1131,9 +1131,9 @@ archive_entry_set_symlink(struct archive_entry *entry, const char *linkname)
 }
 
 void
-archive_entry_copy_symlink(struct archive_entry *entry, const char *linkname)
+tk_archive_entry_copy_symlink(struct tk_archive_entry *entry, const char *linkname)
 {
-	archive_mstring_copy_mbs(&entry->ae_symlink, linkname);
+	tk_archive_mstring_copy_mbs(&entry->ae_symlink, linkname);
 	if (linkname != NULL)
 		entry->ae_set |= AE_SET_SYMLINK;
 	else
@@ -1141,9 +1141,9 @@ archive_entry_copy_symlink(struct archive_entry *entry, const char *linkname)
 }
 
 void
-archive_entry_copy_symlink_w(struct archive_entry *entry, const wchar_t *linkname)
+tk_archive_entry_copy_symlink_w(struct tk_archive_entry *entry, const wchar_t *linkname)
 {
-	archive_mstring_copy_wcs(&entry->ae_symlink, linkname);
+	tk_archive_mstring_copy_wcs(&entry->ae_symlink, linkname);
 	if (linkname != NULL)
 		entry->ae_set |= AE_SET_SYMLINK;
 	else
@@ -1151,27 +1151,27 @@ archive_entry_copy_symlink_w(struct archive_entry *entry, const wchar_t *linknam
 }
 
 int
-archive_entry_update_symlink_utf8(struct archive_entry *entry, const char *linkname)
+tk_archive_entry_update_symlink_utf8(struct tk_archive_entry *entry, const char *linkname)
 {
 	if (linkname != NULL)
 		entry->ae_set |= AE_SET_SYMLINK;
 	else
 		entry->ae_set &= ~AE_SET_SYMLINK;
-	if (archive_mstring_update_utf8(entry->archive,
+	if (tk_archive_mstring_update_utf8(entry->archive,
 	    &entry->ae_symlink, linkname) == 0)
 		return (1);
 	if (errno == ENOMEM)
-		__archive_errx(1, "No memory");
+		__tk_archive_errx(1, "No memory");
 	return (0);
 }
 
 int
-_archive_entry_copy_symlink_l(struct archive_entry *entry,
-    const char *linkname, size_t len, struct archive_string_conv *sc)
+_tk_archive_entry_copy_symlink_l(struct tk_archive_entry *entry,
+    const char *linkname, size_t len, struct tk_archive_string_conv *sc)
 {
 	int r;
 
-	r = archive_mstring_copy_mbs_len_l(&entry->ae_symlink,
+	r = tk_archive_mstring_copy_mbs_len_l(&entry->ae_symlink,
 	    linkname, len, sc);
 	if (linkname != NULL && r == 0)
 		entry->ae_set |= AE_SET_SYMLINK;
@@ -1181,58 +1181,58 @@ _archive_entry_copy_symlink_l(struct archive_entry *entry,
 }
 
 void
-archive_entry_set_uid(struct archive_entry *entry, int64_t u)
+tk_archive_entry_set_uid(struct tk_archive_entry *entry, int64_t u)
 {
 	entry->stat_valid = 0;
 	entry->ae_stat.aest_uid = u;
 }
 
 void
-archive_entry_set_uname(struct archive_entry *entry, const char *name)
+tk_archive_entry_set_uname(struct tk_archive_entry *entry, const char *name)
 {
-	archive_mstring_copy_mbs(&entry->ae_uname, name);
+	tk_archive_mstring_copy_mbs(&entry->ae_uname, name);
 }
 
 void
-archive_entry_copy_uname(struct archive_entry *entry, const char *name)
+tk_archive_entry_copy_uname(struct tk_archive_entry *entry, const char *name)
 {
-	archive_mstring_copy_mbs(&entry->ae_uname, name);
+	tk_archive_mstring_copy_mbs(&entry->ae_uname, name);
 }
 
 void
-archive_entry_copy_uname_w(struct archive_entry *entry, const wchar_t *name)
+tk_archive_entry_copy_uname_w(struct tk_archive_entry *entry, const wchar_t *name)
 {
-	archive_mstring_copy_wcs(&entry->ae_uname, name);
+	tk_archive_mstring_copy_wcs(&entry->ae_uname, name);
 }
 
 int
-archive_entry_update_uname_utf8(struct archive_entry *entry, const char *name)
+tk_archive_entry_update_uname_utf8(struct tk_archive_entry *entry, const char *name)
 {
-	if (archive_mstring_update_utf8(entry->archive,
+	if (tk_archive_mstring_update_utf8(entry->archive,
 	    &entry->ae_uname, name) == 0)
 		return (1);
 	if (errno == ENOMEM)
-		__archive_errx(1, "No memory");
+		__tk_archive_errx(1, "No memory");
 	return (0);
 }
 
 int
-_archive_entry_copy_uname_l(struct archive_entry *entry,
-    const char *name, size_t len, struct archive_string_conv *sc)
+_tk_archive_entry_copy_uname_l(struct tk_archive_entry *entry,
+    const char *name, size_t len, struct tk_archive_string_conv *sc)
 {
-	return (archive_mstring_copy_mbs_len_l(&entry->ae_uname,
+	return (tk_archive_mstring_copy_mbs_len_l(&entry->ae_uname,
 	    name, len, sc));
 }
 
 const void *
-archive_entry_mac_metadata(struct archive_entry *entry, size_t *s)
+tk_archive_entry_mac_metadata(struct tk_archive_entry *entry, size_t *s)
 {
   *s = entry->mac_metadata_size;
   return entry->mac_metadata;
 }
 
 void
-archive_entry_copy_mac_metadata(struct archive_entry *entry,
+tk_archive_entry_copy_mac_metadata(struct tk_archive_entry *entry,
     const void *p, size_t s)
 {
   free(entry->mac_metadata);
@@ -1257,36 +1257,36 @@ archive_entry_copy_mac_metadata(struct archive_entry *entry,
  * uninitiated.
  */
 
-struct archive_acl *
-archive_entry_acl(struct archive_entry *entry)
+struct tk_archive_acl *
+tk_archive_entry_acl(struct tk_archive_entry *entry)
 {
 	return &entry->acl;
 }
 
 void
-archive_entry_acl_clear(struct archive_entry *entry)
+tk_archive_entry_acl_clear(struct tk_archive_entry *entry)
 {
-	archive_acl_clear(&entry->acl);
+	tk_archive_acl_clear(&entry->acl);
 }
 
 /*
  * Add a single ACL entry to the internal list of ACL data.
  */
 int
-archive_entry_acl_add_entry(struct archive_entry *entry,
+tk_archive_entry_acl_add_entry(struct tk_archive_entry *entry,
     int type, int permset, int tag, int id, const char *name)
 {
-	return archive_acl_add_entry(&entry->acl, type, permset, tag, id, name);
+	return tk_archive_acl_add_entry(&entry->acl, type, permset, tag, id, name);
 }
 
 /*
  * As above, but with a wide-character name.
  */
 int
-archive_entry_acl_add_entry_w(struct archive_entry *entry,
+tk_archive_entry_acl_add_entry_w(struct tk_archive_entry *entry,
     int type, int permset, int tag, int id, const wchar_t *name)
 {
-	return archive_acl_add_entry_w_len(&entry->acl,
+	return tk_archive_acl_add_entry_w_len(&entry->acl,
 	    type, permset, tag, id, name, wcslen(name));
 }
 
@@ -1294,9 +1294,9 @@ archive_entry_acl_add_entry_w(struct archive_entry *entry,
  * Return a count of entries matching "want_type".
  */
 int
-archive_entry_acl_count(struct archive_entry *entry, int want_type)
+tk_archive_entry_acl_count(struct tk_archive_entry *entry, int want_type)
 {
-	return archive_acl_count(&entry->acl, want_type);
+	return tk_archive_acl_count(&entry->acl, want_type);
 }
 
 /*
@@ -1305,9 +1305,9 @@ archive_entry_acl_count(struct archive_entry *entry, int want_type)
  * non-extended ACL entries of that type.
  */
 int
-archive_entry_acl_reset(struct archive_entry *entry, int want_type)
+tk_archive_entry_acl_reset(struct tk_archive_entry *entry, int want_type)
 {
-	return archive_acl_reset(&entry->acl, want_type);
+	return tk_archive_acl_reset(&entry->acl, want_type);
 }
 
 /*
@@ -1315,14 +1315,14 @@ archive_entry_acl_reset(struct archive_entry *entry, int want_type)
  * standard permissions and include them in the returned list.
  */
 int
-archive_entry_acl_next(struct archive_entry *entry, int want_type, int *type,
+tk_archive_entry_acl_next(struct tk_archive_entry *entry, int want_type, int *type,
     int *permset, int *tag, int *id, const char **name)
 {
 	int r;
-	r = archive_acl_next(entry->archive, &entry->acl, want_type, type,
+	r = tk_archive_acl_next(entry->archive, &entry->acl, want_type, type,
 		permset, tag, id, name);
 	if (r == ARCHIVE_FATAL && errno == ENOMEM)
-		__archive_errx(1, "No memory");
+		__tk_archive_errx(1, "No memory");
 	return (r);
 }
 
@@ -1331,30 +1331,30 @@ archive_entry_acl_next(struct archive_entry *entry, int want_type, int *type,
  * the style of the generated ACL.
  */
 const wchar_t *
-archive_entry_acl_text_w(struct archive_entry *entry, int flags)
+tk_archive_entry_acl_text_w(struct tk_archive_entry *entry, int flags)
 {
 	const wchar_t *r;
-	r = archive_acl_text_w(entry->archive, &entry->acl, flags);
+	r = tk_archive_acl_text_w(entry->archive, &entry->acl, flags);
 	if (r == NULL && errno == ENOMEM)
-		__archive_errx(1, "No memory");
+		__tk_archive_errx(1, "No memory");
 	return (r);
 }
 
 const char *
-archive_entry_acl_text(struct archive_entry *entry, int flags)
+tk_archive_entry_acl_text(struct tk_archive_entry *entry, int flags)
 {
 	const char *p;
-	if (archive_acl_text_l(&entry->acl, flags, &p, NULL, NULL) != 0
+	if (tk_archive_acl_text_l(&entry->acl, flags, &p, NULL, NULL) != 0
 	    && errno == ENOMEM)
-		__archive_errx(1, "No memory");
+		__tk_archive_errx(1, "No memory");
 	return (p);
 }
 
 int
-_archive_entry_acl_text_l(struct archive_entry *entry, int flags,
-    const char **acl_text, size_t *len, struct archive_string_conv *sc)
+_tk_archive_entry_acl_text_l(struct tk_archive_entry *entry, int flags,
+    const char **acl_text, size_t *len, struct tk_archive_string_conv *sc)
 {
-	return (archive_acl_text_l(&entry->acl, flags, acl_text, len, sc));
+	return (tk_archive_acl_text_l(&entry->acl, flags, acl_text, len, sc));
 }
 
 /*
@@ -1697,16 +1697,16 @@ ae_wcstofflags(const wchar_t *s, unsigned long *setp, unsigned long *clrp)
 int
 main(int argc, char **argv)
 {
-	struct archive_entry *entry = archive_entry_new();
+	struct tk_archive_entry *entry = tk_archive_entry_new();
 	unsigned long set, clear;
 	const wchar_t *remainder;
 
-	remainder = archive_entry_copy_fflags_text_w(entry, L"nosappnd dump archive,,,,,,,");
-	archive_entry_fflags(entry, &set, &clear);
+	remainder = tk_archive_entry_copy_fflags_text_w(entry, L"nosappnd dump archive,,,,,,,");
+	tk_archive_entry_fflags(entry, &set, &clear);
 
 	wprintf(L"set=0x%lX clear=0x%lX remainder='%ls'\n", set, clear, remainder);
 
-	wprintf(L"new flags='%s'\n", archive_entry_fflags_text(entry));
+	wprintf(L"new flags='%s'\n", tk_archive_entry_fflags_text(entry));
 	return (0);
 }
 #endif

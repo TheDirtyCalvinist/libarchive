@@ -36,27 +36,27 @@ static unsigned char archive[] = {
 DEFINE_TEST(test_read_filter_program)
 {
 	int r;
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	struct archive *a;
 
 	/*
 	 * First, test handling when a non-existent compression
 	 * program is requested.
 	 */
-	assert((a = archive_read_new()) != NULL);
-	r = archive_read_support_filter_program(a, "nonexistent");
+	assert((a = tk_archive_read_new()) != NULL);
+	r = tk_archive_read_support_filter_program(a, "nonexistent");
 	if (r == ARCHIVE_FATAL) {
-		skipping("archive_read_support_filter_program() "
+		skipping("tk_archive_read_support_filter_program() "
 		    "unsupported on this platform");
 		return;
 	}
 	assertEqualIntA(a, ARCHIVE_OK, r);
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_support_format_all(a));
+	    tk_archive_read_support_format_all(a));
 	assertEqualIntA(a, ARCHIVE_FATAL,
-	    archive_read_open_memory(a, archive, sizeof(archive)));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	    tk_archive_read_open_memory(a, archive, sizeof(archive)));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 
 	/*
 	 * If we have "gzip -d", try using that.
@@ -65,19 +65,19 @@ DEFINE_TEST(test_read_filter_program)
 		skipping("Can't run gzip program on this platform");
 		return;
 	}
-	assert((a = archive_read_new()) != NULL);
+	assert((a = tk_archive_read_new()) != NULL);
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_support_filter_none(a));
+	    tk_archive_read_support_filter_none(a));
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_support_filter_program(a, "gzip -d"));
+	    tk_archive_read_support_filter_program(a, "gzip -d"));
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_support_format_all(a));
+	    tk_archive_read_support_format_all(a));
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_open_memory(a, archive, sizeof(archive)));
+	    tk_archive_read_open_memory(a, archive, sizeof(archive)));
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_next_header(a, &ae));
-	assertEqualInt(archive_filter_code(a, 0), ARCHIVE_FILTER_PROGRAM);
-	assertEqualInt(archive_format(a), ARCHIVE_FORMAT_TAR_USTAR);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	    tk_archive_read_next_header(a, &ae));
+	assertEqualInt(tk_archive_filter_code(a, 0), ARCHIVE_FILTER_PROGRAM);
+	assertEqualInt(tk_archive_format(a), ARCHIVE_FORMAT_TAR_USTAR);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }

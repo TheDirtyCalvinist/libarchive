@@ -203,7 +203,7 @@ pm(const char *p, const char *s, int flags)
 			if (*p == '\0')
 				return (1);
 			while (*s) {
-				if (archive_pathmatch(p, s, flags))
+				if (tk_archive_pathmatch(p, s, flags))
 					return (1);
 				++s;
 			}
@@ -308,7 +308,7 @@ pm_w(const wchar_t *p, const wchar_t *s, int flags)
 			if (*p == L'\0')
 				return (1);
 			while (*s) {
-				if (archive_pathmatch_w(p, s, flags))
+				if (tk_archive_pathmatch_w(p, s, flags))
 					return (1);
 				++s;
 			}
@@ -379,7 +379,7 @@ pm_w(const wchar_t *p, const wchar_t *s, int flags)
 
 /* Main entry point. */
 int
-__archive_pathmatch(const char *p, const char *s, int flags)
+__tk_archive_pathmatch(const char *p, const char *s, int flags)
 {
 	/* Empty pattern only matches the empty string. */
 	if (p == NULL || *p == '\0')
@@ -419,7 +419,7 @@ __archive_pathmatch(const char *p, const char *s, int flags)
 }
 
 int
-__archive_pathmatch_w(const wchar_t *p, const wchar_t *s, int flags)
+__tk_archive_pathmatch_w(const wchar_t *p, const wchar_t *s, int flags)
 {
 	/* Empty pattern only matches the empty string. */
 	if (p == NULL || *p == L'\0')

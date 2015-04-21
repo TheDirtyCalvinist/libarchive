@@ -174,16 +174,16 @@ struct lha {
 	mode_t			 mode;
 	int64_t			 uid;
 	int64_t			 gid;
-	struct archive_string 	 uname;
-	struct archive_string 	 gname;
+	struct tk_archive_string 	 uname;
+	struct tk_archive_string 	 gname;
 	uint16_t		 header_crc;
 	uint16_t		 crc;
-	struct archive_string_conv *sconv;
-	struct archive_string_conv *opt_sconv;
+	struct tk_archive_string_conv *sconv;
+	struct tk_archive_string_conv *opt_sconv;
 
-	struct archive_string 	 dirname;
-	struct archive_string 	 filename;
-	struct archive_wstring	 ws;
+	struct tk_archive_string 	 dirname;
+	struct tk_archive_string 	 filename;
+	struct tk_archive_wstring	 ws;
 
 	unsigned char		 dos_attr;
 
@@ -249,35 +249,35 @@ static const uint16_t crc16tbl[256] = {
 	0x8201,0x42C0,0x4380,0x8341,0x4100,0x81C1,0x8081,0x4040
 };
 
-static int      archive_read_format_lha_bid(struct archive_read *, int);
-static int      archive_read_format_lha_options(struct archive_read *,
+static int      tk_archive_read_format_lha_bid(struct tk_archive_read *, int);
+static int      tk_archive_read_format_lha_options(struct tk_archive_read *,
 		    const char *, const char *);
-static int	archive_read_format_lha_read_header(struct archive_read *,
-		    struct archive_entry *);
-static int	archive_read_format_lha_read_data(struct archive_read *,
+static int	tk_archive_read_format_lha_read_header(struct tk_archive_read *,
+		    struct tk_archive_entry *);
+static int	tk_archive_read_format_lha_read_data(struct tk_archive_read *,
 		    const void **, size_t *, int64_t *);
-static int	archive_read_format_lha_read_data_skip(struct archive_read *);
-static int	archive_read_format_lha_cleanup(struct archive_read *);
+static int	tk_archive_read_format_lha_read_data_skip(struct tk_archive_read *);
+static int	tk_archive_read_format_lha_cleanup(struct tk_archive_read *);
 
 static void	lha_replace_path_separator(struct lha *,
-		    struct archive_entry *);
-static int	lha_read_file_header_0(struct archive_read *, struct lha *);
-static int	lha_read_file_header_1(struct archive_read *, struct lha *);
-static int	lha_read_file_header_2(struct archive_read *, struct lha *);
-static int	lha_read_file_header_3(struct archive_read *, struct lha *);
-static int	lha_read_file_extended_header(struct archive_read *,
+		    struct tk_archive_entry *);
+static int	lha_read_file_header_0(struct tk_archive_read *, struct lha *);
+static int	lha_read_file_header_1(struct tk_archive_read *, struct lha *);
+static int	lha_read_file_header_2(struct tk_archive_read *, struct lha *);
+static int	lha_read_file_header_3(struct tk_archive_read *, struct lha *);
+static int	lha_read_file_extended_header(struct tk_archive_read *,
 		    struct lha *, uint16_t *, int, size_t, size_t *);
 static size_t	lha_check_header_format(const void *);
-static int	lha_skip_sfx(struct archive_read *);
+static int	lha_skip_sfx(struct tk_archive_read *);
 static time_t	lha_dos_time(const unsigned char *);
 static time_t	lha_win_time(uint64_t, long *);
 static unsigned char	lha_calcsum(unsigned char, const void *,
 		    int, size_t);
-static int	lha_parse_linkname(struct archive_string *,
-		    struct archive_string *);
-static int	lha_read_data_none(struct archive_read *, const void **,
+static int	lha_parse_linkname(struct tk_archive_string *,
+		    struct tk_archive_string *);
+static int	lha_read_data_none(struct tk_archive_read *, const void **,
 		    size_t *, int64_t *);
-static int	lha_read_data_lzh(struct archive_read *, const void **,
+static int	lha_read_data_lzh(struct tk_archive_read *, const void **,
 		    size_t *, int64_t *);
 static uint16_t lha_crc16(uint16_t, const void *, size_t);
 static int	lzh_decode_init(struct lzh_stream *, const char *);
@@ -294,33 +294,33 @@ static int	lzh_decode_huffman_tree(struct huffman *, unsigned, int);
 
 
 int
-archive_read_support_format_lha(struct archive *_a)
+tk_archive_read_support_format_lha(struct archive *_a)
 {
-	struct archive_read *a = (struct archive_read *)_a;
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
 	struct lha *lha;
 	int r;
 
-	archive_check_magic(_a, ARCHIVE_READ_MAGIC,
-	    ARCHIVE_STATE_NEW, "archive_read_support_format_lha");
+	tk_archive_check_magic(_a, ARCHIVE_READ_MAGIC,
+	    ARCHIVE_STATE_NEW, "tk_archive_read_support_format_lha");
 
 	lha = (struct lha *)calloc(1, sizeof(*lha));
 	if (lha == NULL) {
-		archive_set_error(&a->archive, ENOMEM,
+		tk_archive_set_error(&a->archive, ENOMEM,
 		    "Can't allocate lha data");
 		return (ARCHIVE_FATAL);
 	}
-	archive_string_init(&lha->ws);
+	tk_archive_string_init(&lha->ws);
 
-	r = __archive_read_register_format(a,
+	r = __tk_archive_read_register_format(a,
 	    lha,
 	    "lha",
-	    archive_read_format_lha_bid,
-	    archive_read_format_lha_options,
-	    archive_read_format_lha_read_header,
-	    archive_read_format_lha_read_data,
-	    archive_read_format_lha_read_data_skip,
+	    tk_archive_read_format_lha_bid,
+	    tk_archive_read_format_lha_options,
+	    tk_archive_read_format_lha_read_header,
+	    tk_archive_read_format_lha_read_data,
+	    tk_archive_read_format_lha_read_data_skip,
 	    NULL,
-	    archive_read_format_lha_cleanup);
+	    tk_archive_read_format_lha_cleanup);
 
 	if (r != ARCHIVE_OK)
 		free(lha);
@@ -381,7 +381,7 @@ lha_check_header_format(const void *h)
 }
 
 static int
-archive_read_format_lha_bid(struct archive_read *a, int best_bid)
+tk_archive_read_format_lha_bid(struct tk_archive_read *a, int best_bid)
 {
 	const char *p;
 	const void *buff;
@@ -393,7 +393,7 @@ archive_read_format_lha_bid(struct archive_read *a, int best_bid)
 	if (best_bid > 30)
 		return (-1);
 
-	if ((p = __archive_read_ahead(a, H_SIZE, NULL)) == NULL)
+	if ((p = __tk_archive_read_ahead(a, H_SIZE, NULL)) == NULL)
 		return (-1);
 
 	if (lha_check_header_format(p) == 0)
@@ -404,7 +404,7 @@ archive_read_format_lha_bid(struct archive_read *a, int best_bid)
 		offset = 0;
 		window = 4096;
 		while (offset < (1024 * 20)) {
-			buff = __archive_read_ahead(a, offset + window,
+			buff = __tk_archive_read_ahead(a, offset + window,
 			    &bytes_avail);
 			if (buff == NULL) {
 				/* Remaining bytes are less than window. */
@@ -426,7 +426,7 @@ archive_read_format_lha_bid(struct archive_read *a, int best_bid)
 }
 
 static int
-archive_read_format_lha_options(struct archive_read *a,
+tk_archive_read_format_lha_options(struct tk_archive_read *a,
     const char *key, const char *val)
 {
 	struct lha *lha;
@@ -435,11 +435,11 @@ archive_read_format_lha_options(struct archive_read *a,
 	lha = (struct lha *)(a->format->data);
 	if (strcmp(key, "hdrcharset")  == 0) {
 		if (val == NULL || val[0] == 0)
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "lha: hdrcharset option needs a character-set name");
 		else {
 			lha->opt_sconv =
-			    archive_string_conversion_from_charset(
+			    tk_archive_string_conversion_from_charset(
 				&a->archive, val, 0);
 			if (lha->opt_sconv != NULL)
 				ret = ARCHIVE_OK;
@@ -456,7 +456,7 @@ archive_read_format_lha_options(struct archive_read *a,
 }
 
 static int
-lha_skip_sfx(struct archive_read *a)
+lha_skip_sfx(struct tk_archive_read *a)
 {
 	const void *h;
 	const char *p, *q;
@@ -465,7 +465,7 @@ lha_skip_sfx(struct archive_read *a)
 
 	window = 4096;
 	for (;;) {
-		h = __archive_read_ahead(a, window, &bytes);
+		h = __tk_archive_read_ahead(a, window, &bytes);
 		if (h == NULL) {
 			/* Remaining bytes are less than window. */
 			window >>= 1;
@@ -485,42 +485,42 @@ lha_skip_sfx(struct archive_read *a)
 		while (p + H_SIZE < q) {
 			if ((next = lha_check_header_format(p)) == 0) {
 				skip = p - (const char *)h;
-				__archive_read_consume(a, skip);
+				__tk_archive_read_consume(a, skip);
 				return (ARCHIVE_OK);
 			}
 			p += next;
 		}
 		skip = p - (const char *)h;
-		__archive_read_consume(a, skip);
+		__tk_archive_read_consume(a, skip);
 	}
 fatal:
-	archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+	tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 	    "Couldn't find out LHa header");
 	return (ARCHIVE_FATAL);
 }
 
 static int
-truncated_error(struct archive_read *a)
+truncated_error(struct tk_archive_read *a)
 {
-	archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+	tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 	    "Truncated LHa header");
 	return (ARCHIVE_FATAL);
 }
 
 static int
-archive_read_format_lha_read_header(struct archive_read *a,
-    struct archive_entry *entry)
+tk_archive_read_format_lha_read_header(struct tk_archive_read *a,
+    struct tk_archive_entry *entry)
 {
-	struct archive_string linkname;
-	struct archive_string pathname;
+	struct tk_archive_string linkname;
+	struct tk_archive_string pathname;
 	struct lha *lha;
 	const unsigned char *p;
 	const char *signature;
 	int err;
 	
-	a->archive.archive_format = ARCHIVE_FORMAT_LHA;
-	if (a->archive.archive_format_name == NULL)
-		a->archive.archive_format_name = "lha";
+	a->archive.tk_archive_format = ARCHIVE_FORMAT_LHA;
+	if (a->archive.tk_archive_format_name == NULL)
+		a->archive.tk_archive_format_name = "lha";
 
 	lha = (struct lha *)(a->format->data);
 	lha->decompress_init = 0;
@@ -528,12 +528,12 @@ archive_read_format_lha_read_header(struct archive_read *a,
 	lha->end_of_entry_cleanup = 0;
 	lha->entry_unconsumed = 0;
 
-	if ((p = __archive_read_ahead(a, H_SIZE, NULL)) == NULL) {
+	if ((p = __tk_archive_read_ahead(a, H_SIZE, NULL)) == NULL) {
 		/*
 		 * LHa archiver added 0 to the tail of its archive file as
 		 * the mark of the end of the archive.
 		 */
-		signature = __archive_read_ahead(a, sizeof(signature[0]), NULL);
+		signature = __tk_archive_read_ahead(a, sizeof(signature[0]), NULL);
 		if (signature == NULL || signature[0] == 0)
 			return (ARCHIVE_EOF);
 		return (truncated_error(a));
@@ -547,7 +547,7 @@ archive_read_format_lha_read_header(struct archive_read *a,
 		if (err < ARCHIVE_WARN)
 			return (err);
 
-		if ((p = __archive_read_ahead(a, sizeof(*p), NULL)) == NULL)
+		if ((p = __tk_archive_read_ahead(a, sizeof(*p), NULL)) == NULL)
 			return (truncated_error(a));
 		signature = (const char *)p;
 	}
@@ -559,7 +559,7 @@ archive_read_format_lha_read_header(struct archive_read *a,
 	 * Check the header format and method type.
 	 */
 	if (lha_check_header_format(p) != 0) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Bad LHa file");
 		return (ARCHIVE_FATAL);
 	}
@@ -594,8 +594,8 @@ archive_read_format_lha_read_header(struct archive_read *a,
 	lha->mode = (lha->directory)? 0777 : 0666;
 	lha->uid = 0;
 	lha->gid = 0;
-	archive_string_empty(&lha->dirname);
-	archive_string_empty(&lha->filename);
+	tk_archive_string_empty(&lha->dirname);
+	tk_archive_string_empty(&lha->filename);
 	lha->dos_attr = 0;
 	if (lha->opt_sconv != NULL)
 		lha->sconv = lha->opt_sconv;
@@ -616,7 +616,7 @@ archive_read_format_lha_read_header(struct archive_read *a,
 		err = lha_read_file_header_3(a, lha);
 		break;
 	default:
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Unsupported LHa header level %d", p[H_LEVEL_OFFSET]);
 		err = ARCHIVE_FATAL;
 		break;
@@ -625,17 +625,17 @@ archive_read_format_lha_read_header(struct archive_read *a,
 		return (err);
 
 
-	if (!lha->directory && archive_strlen(&lha->filename) == 0)
+	if (!lha->directory && tk_archive_strlen(&lha->filename) == 0)
 		/* The filename has not been set */
 		return (truncated_error(a));
 
 	/*
 	 * Make a pathname from a dirname and a filename.
 	 */
-	archive_string_concat(&lha->dirname, &lha->filename);
-	archive_string_init(&pathname);
-	archive_string_init(&linkname);
-	archive_string_copy(&pathname, &lha->dirname);
+	tk_archive_string_concat(&lha->dirname, &lha->filename);
+	tk_archive_string_init(&pathname);
+	tk_archive_string_init(&linkname);
+	tk_archive_string_copy(&pathname, &lha->dirname);
 
 	if ((lha->mode & AE_IFMT) == AE_IFLNK) {
 		/*
@@ -643,11 +643,11 @@ archive_read_format_lha_read_header(struct archive_read *a,
 	 	 */
 		if (!lha_parse_linkname(&linkname, &pathname)) {
 			/* We couldn't get the symlink-name. */
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 		    	    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "Unknown symlink-name");
-			archive_string_free(&pathname);
-			archive_string_free(&linkname);
+			tk_archive_string_free(&pathname);
+			tk_archive_string_free(&linkname);
 			return (ARCHIVE_FAILED);
 		}
 	} else {
@@ -665,39 +665,39 @@ archive_read_format_lha_read_header(struct archive_read *a,
 	/*
 	 * Set basic file parameters.
 	 */
-	if (archive_entry_copy_pathname_l(entry, pathname.s,
+	if (tk_archive_entry_copy_pathname_l(entry, pathname.s,
 	    pathname.length, lha->sconv) != 0) {
 		if (errno == ENOMEM) {
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate memory for Pathname");
 			return (ARCHIVE_FATAL);
 		}
-		archive_set_error(&a->archive,
+		tk_archive_set_error(&a->archive,
 		    ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Pathname cannot be converted "
 		    "from %s to current locale.",
-		    archive_string_conversion_charset_name(lha->sconv));
+		    tk_archive_string_conversion_charset_name(lha->sconv));
 		err = ARCHIVE_WARN;
 	}
-	archive_string_free(&pathname);
-	if (archive_strlen(&linkname) > 0) {
-		if (archive_entry_copy_symlink_l(entry, linkname.s,
+	tk_archive_string_free(&pathname);
+	if (tk_archive_strlen(&linkname) > 0) {
+		if (tk_archive_entry_copy_symlink_l(entry, linkname.s,
 		    linkname.length, lha->sconv) != 0) {
 			if (errno == ENOMEM) {
-				archive_set_error(&a->archive, ENOMEM,
+				tk_archive_set_error(&a->archive, ENOMEM,
 				    "Can't allocate memory for Linkname");
 				return (ARCHIVE_FATAL);
 			}
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "Linkname cannot be converted "
 			    "from %s to current locale.",
-			    archive_string_conversion_charset_name(lha->sconv));
+			    tk_archive_string_conversion_charset_name(lha->sconv));
 			err = ARCHIVE_WARN;
 		}
 	} else
-		archive_entry_set_symlink(entry, NULL);
-	archive_string_free(&linkname);
+		tk_archive_entry_set_symlink(entry, NULL);
+	tk_archive_string_free(&linkname);
 	/*
 	 * When a header level is 0, there is a possibility that
 	 * a pathname and a symlink has '\' character, a directory
@@ -706,32 +706,32 @@ archive_read_format_lha_read_header(struct archive_read *a,
 	if (p[H_LEVEL_OFFSET] == 0)
 		lha_replace_path_separator(lha, entry);
 
-	archive_entry_set_mode(entry, lha->mode);
-	archive_entry_set_uid(entry, lha->uid);
-	archive_entry_set_gid(entry, lha->gid);
-	if (archive_strlen(&lha->uname) > 0)
-		archive_entry_set_uname(entry, lha->uname.s);
-	if (archive_strlen(&lha->gname) > 0)
-		archive_entry_set_gname(entry, lha->gname.s);
+	tk_archive_entry_set_mode(entry, lha->mode);
+	tk_archive_entry_set_uid(entry, lha->uid);
+	tk_archive_entry_set_gid(entry, lha->gid);
+	if (tk_archive_strlen(&lha->uname) > 0)
+		tk_archive_entry_set_uname(entry, lha->uname.s);
+	if (tk_archive_strlen(&lha->gname) > 0)
+		tk_archive_entry_set_gname(entry, lha->gname.s);
 	if (lha->setflag & BIRTHTIME_IS_SET) {
-		archive_entry_set_birthtime(entry, lha->birthtime,
+		tk_archive_entry_set_birthtime(entry, lha->birthtime,
 		    lha->birthtime_tv_nsec);
-		archive_entry_set_ctime(entry, lha->birthtime,
+		tk_archive_entry_set_ctime(entry, lha->birthtime,
 		    lha->birthtime_tv_nsec);
 	} else {
-		archive_entry_unset_birthtime(entry);
-		archive_entry_unset_ctime(entry);
+		tk_archive_entry_unset_birthtime(entry);
+		tk_archive_entry_unset_ctime(entry);
 	}
-	archive_entry_set_mtime(entry, lha->mtime, lha->mtime_tv_nsec);
+	tk_archive_entry_set_mtime(entry, lha->mtime, lha->mtime_tv_nsec);
 	if (lha->setflag & ATIME_IS_SET)
-		archive_entry_set_atime(entry, lha->atime,
+		tk_archive_entry_set_atime(entry, lha->atime,
 		    lha->atime_tv_nsec);
 	else
-		archive_entry_unset_atime(entry);
-	if (lha->directory || archive_entry_symlink(entry) != NULL)
-		archive_entry_unset_size(entry);
+		tk_archive_entry_unset_atime(entry);
+	if (lha->directory || tk_archive_entry_symlink(entry) != NULL)
+		tk_archive_entry_unset_size(entry);
 	else
-		archive_entry_set_size(entry, lha->origsize);
+		tk_archive_entry_set_size(entry, lha->origsize);
 
 	/*
 	 * Prepare variables used to read a file content.
@@ -748,7 +748,7 @@ archive_read_format_lha_read_header(struct archive_read *a,
 
 	sprintf(lha->format_name, "lha -%c%c%c-",
 	    lha->method[0], lha->method[1], lha->method[2]);
-	a->archive.archive_format_name = lha->format_name;
+	a->archive.tk_archive_format_name = lha->format_name;
 
 	return (err);
 }
@@ -758,27 +758,27 @@ archive_read_format_lha_read_header(struct archive_read *a,
  * Some multi-byte character set have  a character '\' in its second byte.
  */
 static void
-lha_replace_path_separator(struct lha *lha, struct archive_entry *entry)
+lha_replace_path_separator(struct lha *lha, struct tk_archive_entry *entry)
 {
 	const wchar_t *wp;
 	size_t i;
 
-	if ((wp = archive_entry_pathname_w(entry)) != NULL) {
-		archive_wstrcpy(&(lha->ws), wp);
-		for (i = 0; i < archive_strlen(&(lha->ws)); i++) {
+	if ((wp = tk_archive_entry_pathname_w(entry)) != NULL) {
+		tk_archive_wstrcpy(&(lha->ws), wp);
+		for (i = 0; i < tk_archive_strlen(&(lha->ws)); i++) {
 			if (lha->ws.s[i] == L'\\')
 				lha->ws.s[i] = L'/';
 		}
-		archive_entry_copy_pathname_w(entry, lha->ws.s);
+		tk_archive_entry_copy_pathname_w(entry, lha->ws.s);
 	}
 
-	if ((wp = archive_entry_symlink_w(entry)) != NULL) {
-		archive_wstrcpy(&(lha->ws), wp);
-		for (i = 0; i < archive_strlen(&(lha->ws)); i++) {
+	if ((wp = tk_archive_entry_symlink_w(entry)) != NULL) {
+		tk_archive_wstrcpy(&(lha->ws), wp);
+		for (i = 0; i < tk_archive_strlen(&(lha->ws)); i++) {
 			if (lha->ws.s[i] == L'\\')
 				lha->ws.s[i] = L'/';
 		}
-		archive_entry_copy_symlink_w(entry, lha->ws.s);
+		tk_archive_entry_copy_symlink_w(entry, lha->ws.s);
 	}
 }
 
@@ -814,33 +814,33 @@ lha_replace_path_separator(struct lha *lha, struct archive_entry *entry)
 #define H0_FILE_NAME_OFFSET	22
 #define H0_FIXED_SIZE		24
 static int
-lha_read_file_header_0(struct archive_read *a, struct lha *lha)
+lha_read_file_header_0(struct tk_archive_read *a, struct lha *lha)
 {
 	const unsigned char *p;
 	int extdsize, namelen;
 	unsigned char headersum, sum_calculated;
 
-	if ((p = __archive_read_ahead(a, H0_FIXED_SIZE, NULL)) == NULL)
+	if ((p = __tk_archive_read_ahead(a, H0_FIXED_SIZE, NULL)) == NULL)
 		return (truncated_error(a));
 	lha->header_size = p[H0_HEADER_SIZE_OFFSET] + 2;
 	headersum = p[H0_HEADER_SUM_OFFSET];
-	lha->compsize = archive_le32dec(p + H0_COMP_SIZE_OFFSET);
-	lha->origsize = archive_le32dec(p + H0_ORIG_SIZE_OFFSET);
+	lha->compsize = tk_archive_le32dec(p + H0_COMP_SIZE_OFFSET);
+	lha->origsize = tk_archive_le32dec(p + H0_ORIG_SIZE_OFFSET);
 	lha->mtime = lha_dos_time(p + H0_DOS_TIME_OFFSET);
 	namelen = p[H0_NAME_LEN_OFFSET];
 	extdsize = (int)lha->header_size - H0_FIXED_SIZE - namelen;
 	if ((namelen > 221 || extdsize < 0) && extdsize != -2) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Invalid LHa header");
 		return (ARCHIVE_FATAL);
 	}
-	if ((p = __archive_read_ahead(a, lha->header_size, NULL)) == NULL)
+	if ((p = __tk_archive_read_ahead(a, lha->header_size, NULL)) == NULL)
 		return (truncated_error(a));
 
-	archive_strncpy(&lha->filename, p + H0_FILE_NAME_OFFSET, namelen);
+	tk_archive_strncpy(&lha->filename, p + H0_FILE_NAME_OFFSET, namelen);
 	/* When extdsize == -2, A CRC16 value is not present in the header. */
 	if (extdsize >= 0) {
-		lha->crc = archive_le16dec(p + H0_FILE_NAME_OFFSET + namelen);
+		lha->crc = tk_archive_le16dec(p + H0_FILE_NAME_OFFSET + namelen);
 		lha->setflag |= CRC_IS_SET;
 	}
 	sum_calculated = lha_calcsum(0, p, 2, lha->header_size - 2);
@@ -853,17 +853,17 @@ lha_read_file_header_0(struct archive_read *a, struct lha *lha)
 		p += H0_FILE_NAME_OFFSET + namelen + 2;
 		if (p[0] == 'U' && extdsize == 12) {
 			/* p[1] is a minor version. */
-			lha->mtime = archive_le32dec(&p[2]);
-			lha->mode = archive_le16dec(&p[6]);
-			lha->uid = archive_le16dec(&p[8]);
-			lha->gid = archive_le16dec(&p[10]);
+			lha->mtime = tk_archive_le32dec(&p[2]);
+			lha->mode = tk_archive_le16dec(&p[6]);
+			lha->uid = tk_archive_le16dec(&p[8]);
+			lha->gid = tk_archive_le16dec(&p[10]);
 			lha->setflag |= UNIX_MODE_IS_SET;
 		}
 	}
-	__archive_read_consume(a, lha->header_size);
+	__tk_archive_read_consume(a, lha->header_size);
 
 	if (sum_calculated != headersum) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 		    "LHa header sum error");
 		return (ARCHIVE_FATAL);
 	}
@@ -908,7 +908,7 @@ lha_read_file_header_0(struct archive_read *a, struct lha *lha)
 #define H1_FILE_NAME_OFFSET	22
 #define H1_FIXED_SIZE		27
 static int
-lha_read_file_header_1(struct archive_read *a, struct lha *lha)
+lha_read_file_header_1(struct tk_archive_read *a, struct lha *lha)
 {
 	const unsigned char *p;
 	size_t extdsize;
@@ -918,14 +918,14 @@ lha_read_file_header_1(struct archive_read *a, struct lha *lha)
 
 	err = ARCHIVE_OK;
 
-	if ((p = __archive_read_ahead(a, H1_FIXED_SIZE, NULL)) == NULL)
+	if ((p = __tk_archive_read_ahead(a, H1_FIXED_SIZE, NULL)) == NULL)
 		return (truncated_error(a));
 
 	lha->header_size = p[H1_HEADER_SIZE_OFFSET] + 2;
 	headersum = p[H1_HEADER_SUM_OFFSET];
 	/* Note: An extended header size is included in a compsize. */
-	lha->compsize = archive_le32dec(p + H1_COMP_SIZE_OFFSET);
-	lha->origsize = archive_le32dec(p + H1_ORIG_SIZE_OFFSET);
+	lha->compsize = tk_archive_le32dec(p + H1_COMP_SIZE_OFFSET);
+	lha->origsize = tk_archive_le32dec(p + H1_ORIG_SIZE_OFFSET);
 	lha->mtime = lha_dos_time(p + H1_DOS_TIME_OFFSET);
 	namelen = p[H1_NAME_LEN_OFFSET];
 	/* Calculate a padding size. The result will be normally 0 only(?) */
@@ -934,21 +934,21 @@ lha_read_file_header_1(struct archive_read *a, struct lha *lha)
 	if (namelen > 230 || padding < 0)
 		goto invalid;
 
-	if ((p = __archive_read_ahead(a, lha->header_size, NULL)) == NULL)
+	if ((p = __tk_archive_read_ahead(a, lha->header_size, NULL)) == NULL)
 		return (truncated_error(a));
 
 	for (i = 0; i < namelen; i++) {
 		if (p[i + H1_FILE_NAME_OFFSET] == 0xff)
 			goto invalid;/* Invalid filename. */
 	}
-	archive_strncpy(&lha->filename, p + H1_FILE_NAME_OFFSET, namelen);
-	lha->crc = archive_le16dec(p + H1_FILE_NAME_OFFSET + namelen);
+	tk_archive_strncpy(&lha->filename, p + H1_FILE_NAME_OFFSET, namelen);
+	lha->crc = tk_archive_le16dec(p + H1_FILE_NAME_OFFSET + namelen);
 	lha->setflag |= CRC_IS_SET;
 
 	sum_calculated = lha_calcsum(0, p, 2, lha->header_size - 2);
 	/* Consume used bytes but not include `next header size' data
 	 * since it will be consumed in lha_read_file_extended_header(). */
-	__archive_read_consume(a, lha->header_size - 2);
+	__tk_archive_read_consume(a, lha->header_size - 2);
 
 	/* Read extended headers */
 	err2 = lha_read_file_extended_header(a, lha, NULL, 2,
@@ -961,13 +961,13 @@ lha_read_file_header_1(struct archive_read *a, struct lha *lha)
 	lha->compsize -= extdsize - 2;
 
 	if (sum_calculated != headersum) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 		    "LHa header sum error");
 		return (ARCHIVE_FATAL);
 	}
 	return (err);
 invalid:
-	archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+	tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 	    "Invalid LHa header");
 	return (ARCHIVE_FATAL);
 }
@@ -1001,31 +1001,31 @@ invalid:
 #define H2_CRC_OFFSET		21
 #define H2_FIXED_SIZE		24
 static int
-lha_read_file_header_2(struct archive_read *a, struct lha *lha)
+lha_read_file_header_2(struct tk_archive_read *a, struct lha *lha)
 {
 	const unsigned char *p;
 	size_t extdsize;
 	int err, padding;
 	uint16_t header_crc;
 
-	if ((p = __archive_read_ahead(a, H2_FIXED_SIZE, NULL)) == NULL)
+	if ((p = __tk_archive_read_ahead(a, H2_FIXED_SIZE, NULL)) == NULL)
 		return (truncated_error(a));
 
-	lha->header_size =archive_le16dec(p + H2_HEADER_SIZE_OFFSET);
-	lha->compsize = archive_le32dec(p + H2_COMP_SIZE_OFFSET);
-	lha->origsize = archive_le32dec(p + H2_ORIG_SIZE_OFFSET);
-	lha->mtime = archive_le32dec(p + H2_TIME_OFFSET);
-	lha->crc = archive_le16dec(p + H2_CRC_OFFSET);
+	lha->header_size =tk_archive_le16dec(p + H2_HEADER_SIZE_OFFSET);
+	lha->compsize = tk_archive_le32dec(p + H2_COMP_SIZE_OFFSET);
+	lha->origsize = tk_archive_le32dec(p + H2_ORIG_SIZE_OFFSET);
+	lha->mtime = tk_archive_le32dec(p + H2_TIME_OFFSET);
+	lha->crc = tk_archive_le16dec(p + H2_CRC_OFFSET);
 	lha->setflag |= CRC_IS_SET;
 
 	if (lha->header_size < H2_FIXED_SIZE) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Invalid LHa header size");
 		return (ARCHIVE_FATAL);
 	}
 
 	header_crc = lha_crc16(0, p, H2_FIXED_SIZE);
-	__archive_read_consume(a, H2_FIXED_SIZE);
+	__tk_archive_read_consume(a, H2_FIXED_SIZE);
 
 	/* Read extended headers */
 	err = lha_read_file_extended_header(a, lha, &header_crc, 2,
@@ -1036,14 +1036,14 @@ lha_read_file_header_2(struct archive_read *a, struct lha *lha)
 	/* Calculate a padding size. The result will be normally 0 or 1. */
 	padding = (int)lha->header_size - (int)(H2_FIXED_SIZE + extdsize);
 	if (padding > 0) {
-		if ((p = __archive_read_ahead(a, padding, NULL)) == NULL)
+		if ((p = __tk_archive_read_ahead(a, padding, NULL)) == NULL)
 			return (truncated_error(a));
 		header_crc = lha_crc16(header_crc, p, padding);
-		__archive_read_consume(a, padding);
+		__tk_archive_read_consume(a, padding);
 	}
 
 	if (header_crc != lha->header_crc) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "LHa header CRC error");
 		return (ARCHIVE_FATAL);
 	}
@@ -1080,29 +1080,29 @@ lha_read_file_header_2(struct archive_read *a, struct lha *lha)
 #define H3_HEADER_SIZE_OFFSET	24
 #define H3_FIXED_SIZE		28
 static int
-lha_read_file_header_3(struct archive_read *a, struct lha *lha)
+lha_read_file_header_3(struct tk_archive_read *a, struct lha *lha)
 {
 	const unsigned char *p;
 	size_t extdsize;
 	int err;
 	uint16_t header_crc;
 
-	if ((p = __archive_read_ahead(a, H3_FIXED_SIZE, NULL)) == NULL)
+	if ((p = __tk_archive_read_ahead(a, H3_FIXED_SIZE, NULL)) == NULL)
 		return (truncated_error(a));
 
-	if (archive_le16dec(p + H3_FIELD_LEN_OFFSET) != 4)
+	if (tk_archive_le16dec(p + H3_FIELD_LEN_OFFSET) != 4)
 		goto invalid;
-	lha->header_size =archive_le32dec(p + H3_HEADER_SIZE_OFFSET);
-	lha->compsize = archive_le32dec(p + H3_COMP_SIZE_OFFSET);
-	lha->origsize = archive_le32dec(p + H3_ORIG_SIZE_OFFSET);
-	lha->mtime = archive_le32dec(p + H3_TIME_OFFSET);
-	lha->crc = archive_le16dec(p + H3_CRC_OFFSET);
+	lha->header_size =tk_archive_le32dec(p + H3_HEADER_SIZE_OFFSET);
+	lha->compsize = tk_archive_le32dec(p + H3_COMP_SIZE_OFFSET);
+	lha->origsize = tk_archive_le32dec(p + H3_ORIG_SIZE_OFFSET);
+	lha->mtime = tk_archive_le32dec(p + H3_TIME_OFFSET);
+	lha->crc = tk_archive_le16dec(p + H3_CRC_OFFSET);
 	lha->setflag |= CRC_IS_SET;
 
 	if (lha->header_size < H3_FIXED_SIZE + 4)
 		goto invalid;
 	header_crc = lha_crc16(0, p, H3_FIXED_SIZE);
-	__archive_read_consume(a, H3_FIXED_SIZE);
+	__tk_archive_read_consume(a, H3_FIXED_SIZE);
 
 	/* Read extended headers */
 	err = lha_read_file_extended_header(a, lha, &header_crc, 4,
@@ -1111,13 +1111,13 @@ lha_read_file_header_3(struct archive_read *a, struct lha *lha)
 		return (err);
 
 	if (header_crc != lha->header_crc) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "LHa header CRC error");
 		return (ARCHIVE_FATAL);
 	}
 	return (err);
 invalid:
-	archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+	tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 	    "Invalid LHa header");
 	return (ARCHIVE_FATAL);
 }
@@ -1137,7 +1137,7 @@ invalid:
  *
  */
 static int
-lha_read_file_extended_header(struct archive_read *a, struct lha *lha,
+lha_read_file_extended_header(struct tk_archive_read *a, struct lha *lha,
     uint16_t *crc, int sizefield_length, size_t limitsize, size_t *total_size)
 {
 	const void *h;
@@ -1170,19 +1170,19 @@ lha_read_file_extended_header(struct archive_read *a, struct lha *lha,
 	for (;;) {
 		/* Read an extended header size. */
 		if ((h =
-		    __archive_read_ahead(a, sizefield_length, NULL)) == NULL)
+		    __tk_archive_read_ahead(a, sizefield_length, NULL)) == NULL)
 			return (truncated_error(a));
 		/* Check if the size is the zero indicates the end of the
 		 * extended header. */
 		if (sizefield_length == sizeof(uint16_t))
-			extdsize = archive_le16dec(h);
+			extdsize = tk_archive_le16dec(h);
 		else
-			extdsize = archive_le32dec(h);
+			extdsize = tk_archive_le32dec(h);
 		if (extdsize == 0) {
 			/* End of extended header */
 			if (crc != NULL)
 				*crc = lha_crc16(*crc, h, sizefield_length);
-			__archive_read_consume(a, sizefield_length);
+			__tk_archive_read_consume(a, sizefield_length);
 			return (ARCHIVE_OK);
 		}
 
@@ -1193,7 +1193,7 @@ lha_read_file_extended_header(struct archive_read *a, struct lha *lha,
 			goto invalid;
 
 		/* Read the extended header. */
-		if ((h = __archive_read_ahead(a, extdsize, NULL)) == NULL)
+		if ((h = __tk_archive_read_ahead(a, extdsize, NULL)) == NULL)
 			return (truncated_error(a));
 		*total_size += extdsize;
 
@@ -1212,7 +1212,7 @@ lha_read_file_extended_header(struct archive_read *a, struct lha *lha,
 			/* We only use a header CRC. Following data will not
 			 * be used. */
 			if (datasize >= 2) {
-				lha->header_crc = archive_le16dec(extdheader);
+				lha->header_crc = tk_archive_le16dec(extdheader);
 				if (crc != NULL) {
 					static const char zeros[2] = {0, 0};
 					*crc = lha_crc16(*crc, h,
@@ -1227,10 +1227,10 @@ lha_read_file_extended_header(struct archive_read *a, struct lha *lha,
 		case EXT_FILENAME:
 			if (datasize == 0) {
 				/* maybe directory header */
-				archive_string_empty(&lha->filename);
+				tk_archive_string_empty(&lha->filename);
 				break;
 			}
-			archive_strncpy(&lha->filename,
+			tk_archive_strncpy(&lha->filename,
 			    (const char *)extdheader, datasize);
 			break;
 		case EXT_DIRECTORY:
@@ -1238,7 +1238,7 @@ lha_read_file_extended_header(struct archive_read *a, struct lha *lha,
 				/* no directory name data. exit this case. */
 				break;
 
-			archive_strncpy(&lha->dirname,
+			tk_archive_strncpy(&lha->dirname,
 		  	    (const char *)extdheader, datasize);
 			/*
 			 * Convert directory delimiter from 0xFF
@@ -1256,20 +1256,20 @@ lha_read_file_extended_header(struct archive_read *a, struct lha *lha,
 		case EXT_DOS_ATTR:
 			if (datasize == 2)
 				lha->dos_attr = (unsigned char)
-				    (archive_le16dec(extdheader) & 0xff);
+				    (tk_archive_le16dec(extdheader) & 0xff);
 			break;
 		case EXT_TIMESTAMP:
 			if (datasize == (sizeof(uint64_t) * 3)) {
 				lha->birthtime = lha_win_time(
-				    archive_le64dec(extdheader),
+				    tk_archive_le64dec(extdheader),
 				    &lha->birthtime_tv_nsec);
 				extdheader += sizeof(uint64_t);
 				lha->mtime = lha_win_time(
-				    archive_le64dec(extdheader),
+				    tk_archive_le64dec(extdheader),
 				    &lha->mtime_tv_nsec);
 				extdheader += sizeof(uint64_t);
 				lha->atime = lha_win_time(
-				    archive_le64dec(extdheader),
+				    tk_archive_le64dec(extdheader),
 				    &lha->atime_tv_nsec);
 				lha->setflag |= BIRTHTIME_IS_SET |
 				    ATIME_IS_SET;
@@ -1277,9 +1277,9 @@ lha_read_file_extended_header(struct archive_read *a, struct lha *lha,
 			break;
 		case EXT_FILESIZE:
 			if (datasize == sizeof(uint64_t) * 2) {
-				lha->compsize = archive_le64dec(extdheader);
+				lha->compsize = tk_archive_le64dec(extdheader);
 				extdheader += sizeof(uint64_t);
-				lha->origsize = archive_le64dec(extdheader);
+				lha->origsize = tk_archive_le64dec(extdheader);
 			}
 			break;
 		case EXT_CODEPAGE:
@@ -1287,75 +1287,75 @@ lha_read_file_extended_header(struct archive_read *a, struct lha *lha,
 			 * This overwrites the charset specified by
 			 * hdrcharset option. */
 			if (datasize == sizeof(uint32_t)) {
-				struct archive_string cp;
+				struct tk_archive_string cp;
 				const char *charset;
 
-				archive_string_init(&cp);
-				switch (archive_le32dec(extdheader)) {
+				tk_archive_string_init(&cp);
+				switch (tk_archive_le32dec(extdheader)) {
 				case 65001: /* UTF-8 */
 					charset = "UTF-8";
 					break;
 				default:
-					archive_string_sprintf(&cp, "CP%d",
-					    (int)archive_le32dec(extdheader));
+					tk_archive_string_sprintf(&cp, "CP%d",
+					    (int)tk_archive_le32dec(extdheader));
 					charset = cp.s;
 					break;
 				}
 				lha->sconv =
-				    archive_string_conversion_from_charset(
+				    tk_archive_string_conversion_from_charset(
 					&(a->archive), charset, 1);
-				archive_string_free(&cp);
+				tk_archive_string_free(&cp);
 				if (lha->sconv == NULL)
 					return (ARCHIVE_FATAL);
 			}
 			break;
 		case EXT_UNIX_MODE:
 			if (datasize == sizeof(uint16_t)) {
-				lha->mode = archive_le16dec(extdheader);
+				lha->mode = tk_archive_le16dec(extdheader);
 				lha->setflag |= UNIX_MODE_IS_SET;
 			}
 			break;
 		case EXT_UNIX_GID_UID:
 			if (datasize == (sizeof(uint16_t) * 2)) {
-				lha->gid = archive_le16dec(extdheader);
-				lha->uid = archive_le16dec(extdheader+2);
+				lha->gid = tk_archive_le16dec(extdheader);
+				lha->uid = tk_archive_le16dec(extdheader+2);
 			}
 			break;
 		case EXT_UNIX_GNAME:
 			if (datasize > 0)
-				archive_strncpy(&lha->gname,
+				tk_archive_strncpy(&lha->gname,
 				    (const char *)extdheader, datasize);
 			break;
 		case EXT_UNIX_UNAME:
 			if (datasize > 0)
-				archive_strncpy(&lha->uname,
+				tk_archive_strncpy(&lha->uname,
 				    (const char *)extdheader, datasize);
 			break;
 		case EXT_UNIX_MTIME:
 			if (datasize == sizeof(uint32_t))
-				lha->mtime = archive_le32dec(extdheader);
+				lha->mtime = tk_archive_le32dec(extdheader);
 			break;
 		case EXT_OS2_NEW_ATTR:
 			/* This extended header is OS/2 depend. */
 			if (datasize == 16) {
 				lha->dos_attr = (unsigned char)
-				    (archive_le16dec(extdheader) & 0xff);
-				lha->mode = archive_le16dec(extdheader+2);
-				lha->gid = archive_le16dec(extdheader+4);
-				lha->uid = archive_le16dec(extdheader+6);
-				lha->birthtime = archive_le32dec(extdheader+8);
-				lha->atime = archive_le32dec(extdheader+12);
+				    (tk_archive_le16dec(extdheader) & 0xff);
+				lha->mode = tk_archive_le16dec(extdheader+2);
+				lha->gid = tk_archive_le16dec(extdheader+4);
+				lha->uid = tk_archive_le16dec(extdheader+6);
+				lha->birthtime = tk_archive_le32dec(extdheader+8);
+				lha->atime = tk_archive_le32dec(extdheader+12);
 				lha->setflag |= UNIX_MODE_IS_SET
 				    | BIRTHTIME_IS_SET | ATIME_IS_SET;
 			}
 			break;
 		case EXT_NEW_ATTR:
 			if (datasize == 20) {
-				lha->mode = (mode_t)archive_le32dec(extdheader);
-				lha->gid = archive_le32dec(extdheader+4);
-				lha->uid = archive_le32dec(extdheader+8);
-				lha->birthtime = archive_le32dec(extdheader+12);
-				lha->atime = archive_le32dec(extdheader+16);
+				lha->mode = (mode_t)tk_archive_le32dec(extdheader);
+				lha->gid = tk_archive_le32dec(extdheader+4);
+				lha->uid = tk_archive_le32dec(extdheader+8);
+				lha->birthtime = tk_archive_le32dec(extdheader+12);
+				lha->atime = tk_archive_le32dec(extdheader+16);
 				lha->setflag |= UNIX_MODE_IS_SET
 				    | BIRTHTIME_IS_SET | ATIME_IS_SET;
 			}
@@ -1367,16 +1367,16 @@ lha_read_file_extended_header(struct archive_read *a, struct lha *lha,
 			break;
 		}
 
-		__archive_read_consume(a, extdsize);
+		__tk_archive_read_consume(a, extdsize);
 	}
 invalid:
-	archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+	tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 	    "Invalid extended LHa header");
 	return (ARCHIVE_FATAL);
 }
 
 static int
-archive_read_format_lha_read_data(struct archive_read *a,
+tk_archive_read_format_lha_read_data(struct tk_archive_read *a,
     const void **buff, size_t *size, int64_t *offset)
 {
 	struct lha *lha = (struct lha *)(a->format->data);
@@ -1384,14 +1384,14 @@ archive_read_format_lha_read_data(struct archive_read *a,
 
 	if (lha->entry_unconsumed) {
 		/* Consume as much as the decompressor actually used. */
-		__archive_read_consume(a, lha->entry_unconsumed);
+		__tk_archive_read_consume(a, lha->entry_unconsumed);
 		lha->entry_unconsumed = 0;
 	}
 	if (lha->end_of_entry) {
 		if (!lha->end_of_entry_cleanup) {
 			if ((lha->setflag & CRC_IS_SET) &&
 			    lha->crc != lha->entry_crc_calculated) {
-				archive_set_error(&a->archive,
+				tk_archive_set_error(&a->archive,
 				    ARCHIVE_ERRNO_MISC,
 				    "LHa data CRC error");
 				return (ARCHIVE_WARN);
@@ -1421,7 +1421,7 @@ archive_read_format_lha_read_data(struct archive_read *a,
  * lha->end_of_entry if it consumes all of the data.
  */
 static int
-lha_read_data_none(struct archive_read *a, const void **buff,
+lha_read_data_none(struct tk_archive_read *a, const void **buff,
     size_t *size, int64_t *offset)
 {
 	struct lha *lha = (struct lha *)(a->format->data);
@@ -1440,9 +1440,9 @@ lha_read_data_none(struct archive_read *a, const void **buff,
 	 * available bytes; asking for more than that forces the
 	 * decompressor to combine reads by copying data.
 	 */
-	*buff = __archive_read_ahead(a, 1, &bytes_avail);
+	*buff = __tk_archive_read_ahead(a, 1, &bytes_avail);
 	if (bytes_avail <= 0) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Truncated LHa file data");
 		return (ARCHIVE_FATAL);
 	}
@@ -1468,7 +1468,7 @@ lha_read_data_none(struct archive_read *a, const void **buff,
  * all of the data.
  */
 static int
-lha_read_data_lzh(struct archive_read *a, const void **buff,
+lha_read_data_lzh(struct tk_archive_read *a, const void **buff,
     size_t *size, int64_t *offset)
 {
 	struct lha *lha = (struct lha *)(a->format->data);
@@ -1481,7 +1481,7 @@ lha_read_data_lzh(struct archive_read *a, const void **buff,
 		lha->uncompressed_buffer
 		    = (unsigned char *)malloc(lha->uncompressed_buffer_size);
 		if (lha->uncompressed_buffer == NULL) {
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "No memory for lzh decompression");
 			return (ARCHIVE_FATAL);
 		}
@@ -1498,15 +1498,15 @@ lha_read_data_lzh(struct archive_read *a, const void **buff,
 			*buff = NULL;
 			*size = 0;
 			*offset = 0;
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "Unsupported lzh compression method -%c%c%c-",
 			    lha->method[0], lha->method[1], lha->method[2]);
 			/* We know compressed size; just skip it. */
-			archive_read_format_lha_read_data_skip(a);
+			tk_archive_read_format_lha_read_data_skip(a);
 			return (ARCHIVE_WARN);
 		default:
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "Couldn't allocate memory "
 			    "for lzh decompression");
 			return (ARCHIVE_FATAL);
@@ -1523,9 +1523,9 @@ lha_read_data_lzh(struct archive_read *a, const void **buff,
 	 * available bytes; asking for more than that forces the
 	 * decompressor to combine reads by copying data.
 	 */
-	lha->strm.next_in = __archive_read_ahead(a, 1, &bytes_avail);
+	lha->strm.next_in = __tk_archive_read_ahead(a, 1, &bytes_avail);
 	if (bytes_avail <= 0) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Truncated LHa file body");
 		return (ARCHIVE_FATAL);
 	}
@@ -1547,7 +1547,7 @@ lha_read_data_lzh(struct archive_read *a, const void **buff,
 		lha->end_of_entry = 1;
 		break;
 	default:
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 		    "Bad lzh data");
 		return (ARCHIVE_FAILED);
 	}
@@ -1573,7 +1573,7 @@ lha_read_data_lzh(struct archive_read *a, const void **buff,
  * Skip a file content.
  */
 static int
-archive_read_format_lha_read_data_skip(struct archive_read *a)
+tk_archive_read_format_lha_read_data_skip(struct tk_archive_read *a)
 {
 	struct lha *lha;
 	int64_t bytes_skipped;
@@ -1582,7 +1582,7 @@ archive_read_format_lha_read_data_skip(struct archive_read *a)
 
 	if (lha->entry_unconsumed) {
 		/* Consume as much as the decompressor actually used. */
-		__archive_read_consume(a, lha->entry_unconsumed);
+		__tk_archive_read_consume(a, lha->entry_unconsumed);
 		lha->entry_unconsumed = 0;
 	}
 
@@ -1594,7 +1594,7 @@ archive_read_format_lha_read_data_skip(struct archive_read *a)
 	 * If the length is at the beginning, we can skip the
 	 * compressed data much more quickly.
 	 */
-	bytes_skipped = __archive_read_consume(a, lha->entry_bytes_remaining);
+	bytes_skipped = __tk_archive_read_consume(a, lha->entry_bytes_remaining);
 	if (bytes_skipped < 0)
 		return (ARCHIVE_FATAL);
 
@@ -1604,17 +1604,17 @@ archive_read_format_lha_read_data_skip(struct archive_read *a)
 }
 
 static int
-archive_read_format_lha_cleanup(struct archive_read *a)
+tk_archive_read_format_lha_cleanup(struct tk_archive_read *a)
 {
 	struct lha *lha = (struct lha *)(a->format->data);
 
 	lzh_decode_free(&(lha->strm));
 	free(lha->uncompressed_buffer);
-	archive_string_free(&(lha->dirname));
-	archive_string_free(&(lha->filename));
-	archive_string_free(&(lha->uname));
-	archive_string_free(&(lha->gname));
-	archive_wstring_free(&(lha->ws));
+	tk_archive_string_free(&(lha->dirname));
+	tk_archive_string_free(&(lha->filename));
+	tk_archive_string_free(&(lha->uname));
+	tk_archive_string_free(&(lha->gname));
+	tk_archive_wstring_free(&(lha->ws));
 	free(lha);
 	(a->format->data) = NULL;
 	return (ARCHIVE_OK);
@@ -1631,8 +1631,8 @@ archive_read_format_lha_cleanup(struct archive_read *a)
  *  then a archived pathname is 'xxx/bbb|aaa/bb/cc'
  */
 static int
-lha_parse_linkname(struct archive_string *linkname,
-    struct archive_string *pathname)
+lha_parse_linkname(struct tk_archive_string *linkname,
+    struct tk_archive_string *pathname)
 {
 	char *	linkptr;
 	size_t 	symlen;
@@ -1640,7 +1640,7 @@ lha_parse_linkname(struct archive_string *linkname,
 	linkptr = strchr(pathname->s, '|');
 	if (linkptr != NULL) {
 		symlen = strlen(linkptr + 1);
-		archive_strncpy(linkname, linkptr+1, symlen);
+		tk_archive_strncpy(linkname, linkptr+1, symlen);
 
 		*linkptr = 0;
 		pathname->length = strlen(pathname->s);
@@ -1657,8 +1657,8 @@ lha_dos_time(const unsigned char *p)
 	int msTime, msDate;
 	struct tm ts;
 
-	msTime = archive_le16dec(p);
-	msDate = archive_le16dec(p+2);
+	msTime = tk_archive_le16dec(p);
+	msDate = tk_archive_le16dec(p+2);
 
 	memset(&ts, 0, sizeof(ts));
 	ts.tm_year = ((msDate >> 9) & 0x7f) + 80;   /* Years since 1900. */

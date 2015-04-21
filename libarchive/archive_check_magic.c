@@ -87,14 +87,14 @@ state_name(unsigned s)
 }
 
 static const char *
-archive_handle_type_name(unsigned m)
+tk_archive_handle_type_name(unsigned m)
 {
 	switch (m) {
-	case ARCHIVE_WRITE_MAGIC:	return ("archive_write");
-	case ARCHIVE_READ_MAGIC:	return ("archive_read");
-	case ARCHIVE_WRITE_DISK_MAGIC:	return ("archive_write_disk");
-	case ARCHIVE_READ_DISK_MAGIC:	return ("archive_read_disk");
-	case ARCHIVE_MATCH_MAGIC:	return ("archive_match");
+	case ARCHIVE_WRITE_MAGIC:	return ("tk_archive_write");
+	case ARCHIVE_READ_MAGIC:	return ("tk_archive_read");
+	case ARCHIVE_WRITE_DISK_MAGIC:	return ("tk_archive_write_disk");
+	case ARCHIVE_READ_DISK_MAGIC:	return ("tk_archive_read_disk");
+	case ARCHIVE_MATCH_MAGIC:	return ("tk_archive_match");
 	default:			return NULL;
 	}
 }
@@ -127,7 +127,7 @@ write_all_states(char *buff, unsigned int states)
  * the libarchive API.
  */
 int
-__archive_check_magic(struct archive *a, unsigned int magic,
+__tk_archive_check_magic(struct archive *a, unsigned int magic,
     unsigned int state, const char *function)
 {
 	char states1[64];
@@ -139,7 +139,7 @@ __archive_check_magic(struct archive *a, unsigned int magic,
 	 * then the library user has screwed up so bad that
 	 * we don't even have a reliable way to report an error.
 	 */
-	handle_type = archive_handle_type_name(a->magic);
+	handle_type = tk_archive_handle_type_name(a->magic);
 
 	if (!handle_type) {
 		errmsg("PROGRAMMER ERROR: Function ");
@@ -149,7 +149,7 @@ __archive_check_magic(struct archive *a, unsigned int magic,
 	}
 
 	if (a->magic != magic) {
-		archive_set_error(a, -1,
+		tk_archive_set_error(a, -1,
 		    "PROGRAMMER ERROR: Function '%s' invoked"
 		    " on '%s' archive object, which is not supported.",
 		    function,
@@ -161,7 +161,7 @@ __archive_check_magic(struct archive *a, unsigned int magic,
 	if ((a->state & state) == 0) {
 		/* If we're already FATAL, don't overwrite the error. */
 		if (a->state != ARCHIVE_STATE_FATAL)
-			archive_set_error(a, -1,
+			tk_archive_set_error(a, -1,
 			    "INTERNAL ERROR: Function '%s' invoked with"
 			    " archive structure in state '%s',"
 			    " should be in state '%s'",

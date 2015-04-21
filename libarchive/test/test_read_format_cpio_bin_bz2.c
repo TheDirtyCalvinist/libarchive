@@ -34,25 +34,25 @@ static unsigned char archive[] = {
 
 DEFINE_TEST(test_read_format_cpio_bin_bz2)
 {
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	struct archive *a;
 	int r;
 
-	assert((a = archive_read_new()) != NULL);
-	r = archive_read_support_filter_bzip2(a);
+	assert((a = tk_archive_read_new()) != NULL);
+	r = tk_archive_read_support_filter_bzip2(a);
 	if (r != ARCHIVE_OK) {
 		skipping("bzip2 support unavailable");
-		archive_read_close(a);
+		tk_archive_read_close(a);
 		return;
 	}
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_open_memory(a, archive, sizeof(archive)));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assert(archive_filter_code(a, 0) == ARCHIVE_FILTER_BZIP2);
-	assert(archive_format(a) == ARCHIVE_FORMAT_CPIO_BIN_LE);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	    tk_archive_read_open_memory(a, archive, sizeof(archive)));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assert(tk_archive_filter_code(a, 0) == ARCHIVE_FILTER_BZIP2);
+	assert(tk_archive_format(a) == ARCHIVE_FORMAT_CPIO_BIN_LE);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 

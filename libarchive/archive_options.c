@@ -33,14 +33,14 @@ parse_option(const char **str,
     const char **mod, const char **opt, const char **val);
 
 int
-_archive_set_option(struct archive *a,
+_tk_archive_set_option(struct archive *a,
     const char *m, const char *o, const char *v,
     int magic, const char *fn, option_handler use_option)
 {
 	const char *mp, *op, *vp;
 	int r;
 
-	archive_check_magic(a, magic, ARCHIVE_STATE_NEW, fn);
+	tk_archive_check_magic(a, magic, ARCHIVE_STATE_NEW, fn);
 
 	mp = m != NULL && m[0] == '\0' ? NULL : m;
 	op = o != NULL && o[0] == '\0' ? NULL : o;
@@ -49,18 +49,18 @@ _archive_set_option(struct archive *a,
 	if (op == NULL && vp == NULL)
 		return (ARCHIVE_OK);
 	if (op == NULL) {
-		archive_set_error(a, ARCHIVE_ERRNO_MISC, "Empty option");
+		tk_archive_set_error(a, ARCHIVE_ERRNO_MISC, "Empty option");
 		return (ARCHIVE_FAILED);
 	}
 
 	r = use_option(a, mp, op, vp);
 	if (r == ARCHIVE_WARN - 1) {
-		archive_set_error(a, ARCHIVE_ERRNO_MISC,
+		tk_archive_set_error(a, ARCHIVE_ERRNO_MISC,
 		    "Unknown module name: `%s'", mp);
 		return (ARCHIVE_FAILED);
 	}
 	if (r == ARCHIVE_WARN) {
-		archive_set_error(a, ARCHIVE_ERRNO_MISC,
+		tk_archive_set_error(a, ARCHIVE_ERRNO_MISC,
 		    "Undefined option: `%s%s%s%s%s%s'",
 		    vp?"":"!", mp?mp:"", mp?":":"", op, vp?"=":"", vp?vp:"");
 		return (ARCHIVE_FAILED);
@@ -69,7 +69,7 @@ _archive_set_option(struct archive *a,
 }
 
 int
-_archive_set_either_option(struct archive *a, const char *m, const char *o, const char *v,
+_tk_archive_set_either_option(struct archive *a, const char *m, const char *o, const char *v,
     option_handler use_format_option, option_handler use_filter_option)
 {
 	int r1, r2;
@@ -93,14 +93,14 @@ _archive_set_either_option(struct archive *a, const char *m, const char *o, cons
 }
 
 int
-_archive_set_options(struct archive *a, const char *options,
+_tk_archive_set_options(struct archive *a, const char *options,
     int magic, const char *fn, option_handler use_option)
 {
 	int allok = 1, anyok = 0, ignore_mod_err = 0, r;
 	char *data;
 	const char *s, *mod, *opt, *val;
 
-	archive_check_magic(a, magic, ARCHIVE_STATE_NEW, fn);
+	tk_archive_check_magic(a, magic, ARCHIVE_STATE_NEW, fn);
 
 	if (options == NULL || options[0] == '\0')
 		return ARCHIVE_OK;
@@ -136,14 +136,14 @@ _archive_set_options(struct archive *a, const char *options,
 			if (ignore_mod_err)
 				continue;
 			/* The module name is wrong. */
-			archive_set_error(a, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(a, ARCHIVE_ERRNO_MISC,
 			    "Unknown module name: `%s'", mod);
 			free(data);
 			return (ARCHIVE_FAILED);
 		}
 		if (r == ARCHIVE_WARN) {
 			/* The option name is wrong. No-one used this. */
-			archive_set_error(a, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(a, ARCHIVE_ERRNO_MISC,
 			    "Undefined option: `%s%s%s'",
 			    mod?mod:"", mod?":":"", opt);
 			free(data);

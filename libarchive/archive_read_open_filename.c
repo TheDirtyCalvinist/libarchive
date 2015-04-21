@@ -93,22 +93,22 @@ static int64_t	file_skip(struct archive *, void *, int64_t request);
 static int64_t	file_skip_lseek(struct archive *, void *, int64_t request);
 
 int
-archive_read_open_file(struct archive *a, const char *filename,
+tk_archive_read_open_file(struct archive *a, const char *filename,
     size_t block_size)
 {
-	return (archive_read_open_filename(a, filename, block_size));
+	return (tk_archive_read_open_filename(a, filename, block_size));
 }
 
 int
-archive_read_open_filename(struct archive *a, const char *filename,
+tk_archive_read_open_filename(struct archive *a, const char *filename,
     size_t block_size)
 {
 	const char *filenames[2] = { filename, NULL };
-	return archive_read_open_filenames(a, filenames, block_size);
+	return tk_archive_read_open_filenames(a, filenames, block_size);
 }
 
 int
-archive_read_open_filenames(struct archive *a, const char **filenames,
+tk_archive_read_open_filenames(struct archive *a, const char **filenames,
     size_t block_size)
 {
 	struct read_file_data *mine;
@@ -116,7 +116,7 @@ archive_read_open_filenames(struct archive *a, const char **filenames,
 	if (filenames)
 		filename = *(filenames++);
 
-	archive_clear_error(a);
+	tk_archive_clear_error(a);
 	do
 	{
 		if (filename == NULL)
@@ -134,34 +134,34 @@ archive_read_open_filenames(struct archive *a, const char **filenames,
 			mine->filename_type = FNT_STDIN;
 		} else
 			mine->filename_type = FNT_MBS;
-		if (archive_read_append_callback_data(a, mine) != (ARCHIVE_OK))
+		if (tk_archive_read_append_callback_data(a, mine) != (ARCHIVE_OK))
 			return (ARCHIVE_FATAL);
 		if (filenames == NULL)
 			break;
 		filename = *(filenames++);
 	} while (filename != NULL && filename[0] != '\0');
-	archive_read_set_open_callback(a, file_open);
-	archive_read_set_read_callback(a, file_read);
-	archive_read_set_skip_callback(a, file_skip);
-	archive_read_set_close_callback(a, file_close);
-	archive_read_set_switch_callback(a, file_switch);
-	archive_read_set_seek_callback(a, file_seek);
+	tk_archive_read_set_open_callback(a, file_open);
+	tk_archive_read_set_read_callback(a, file_read);
+	tk_archive_read_set_skip_callback(a, file_skip);
+	tk_archive_read_set_close_callback(a, file_close);
+	tk_archive_read_set_switch_callback(a, file_switch);
+	tk_archive_read_set_seek_callback(a, file_seek);
 
-	return (archive_read_open1(a));
+	return (tk_archive_read_open1(a));
 no_memory:
-	archive_set_error(a, ENOMEM, "No memory");
+	tk_archive_set_error(a, ENOMEM, "No memory");
 	return (ARCHIVE_FATAL);
 }
 
 int
-archive_read_open_filename_w(struct archive *a, const wchar_t *wfilename,
+tk_archive_read_open_filename_w(struct archive *a, const wchar_t *wfilename,
     size_t block_size)
 {
 	struct read_file_data *mine = (struct read_file_data *)calloc(1,
 		sizeof(*mine) + wcslen(wfilename) * sizeof(wchar_t));
 	if (!mine)
 	{
-		archive_set_error(a, ENOMEM, "No memory");
+		tk_archive_set_error(a, ENOMEM, "No memory");
 		return (ARCHIVE_FATAL);
 	}
 	mine->fd = -1;
@@ -179,37 +179,37 @@ archive_read_open_filename_w(struct archive *a, const wchar_t *wfilename,
 		 * open() system call, so we have to translate a whcar_t
 		 * filename to multi-byte one and use it.
 		 */
-		struct archive_string fn;
+		struct tk_archive_string fn;
 
-		archive_string_init(&fn);
-		if (archive_string_append_from_wcs(&fn, wfilename,
+		tk_archive_string_init(&fn);
+		if (tk_archive_string_append_from_wcs(&fn, wfilename,
 		    wcslen(wfilename)) != 0) {
 			if (errno == ENOMEM)
-				archive_set_error(a, errno,
+				tk_archive_set_error(a, errno,
 				    "Can't allocate memory");
 			else
-				archive_set_error(a, EINVAL,
+				tk_archive_set_error(a, EINVAL,
 				    "Failed to convert a wide-character"
 				    " filename to a multi-byte filename");
-			archive_string_free(&fn);
+			tk_archive_string_free(&fn);
 			free(mine);
 			return (ARCHIVE_FATAL);
 		}
 		mine->filename_type = FNT_MBS;
 		strcpy(mine->filename.m, fn.s);
-		archive_string_free(&fn);
+		tk_archive_string_free(&fn);
 #endif
 	}
-	if (archive_read_append_callback_data(a, mine) != (ARCHIVE_OK))
+	if (tk_archive_read_append_callback_data(a, mine) != (ARCHIVE_OK))
 		return (ARCHIVE_FATAL);
-	archive_read_set_open_callback(a, file_open);
-	archive_read_set_read_callback(a, file_read);
-	archive_read_set_skip_callback(a, file_skip);
-	archive_read_set_close_callback(a, file_close);
-	archive_read_set_switch_callback(a, file_switch);
-	archive_read_set_seek_callback(a, file_seek);
+	tk_archive_read_set_open_callback(a, file_open);
+	tk_archive_read_set_read_callback(a, file_read);
+	tk_archive_read_set_skip_callback(a, file_skip);
+	tk_archive_read_set_close_callback(a, file_close);
+	tk_archive_read_set_switch_callback(a, file_switch);
+	tk_archive_read_set_seek_callback(a, file_seek);
 
-	return (archive_read_open1(a));
+	return (tk_archive_read_open1(a));
 }
 
 static int
@@ -230,7 +230,7 @@ file_open(struct archive *a, void *client_data)
 	struct partinfo pi;
 #endif
 
-	archive_clear_error(a);
+	tk_archive_clear_error(a);
 	if (mine->filename_type == FNT_STDIN) {
 		/* We used to delegate stdin support by
 		 * directly calling archive_read_open_fd(a,0,block_size)
@@ -249,9 +249,9 @@ file_open(struct archive *a, void *client_data)
 	} else if (mine->filename_type == FNT_MBS) {
 		filename = mine->filename.m;
 		fd = open(filename, O_RDONLY | O_BINARY | O_CLOEXEC);
-		__archive_ensure_cloexec_flag(fd);
+		__tk_archive_ensure_cloexec_flag(fd);
 		if (fd < 0) {
-			archive_set_error(a, errno,
+			tk_archive_set_error(a, errno,
 			    "Failed to open '%s'", filename);
 			return (ARCHIVE_FATAL);
 		}
@@ -268,22 +268,22 @@ file_open(struct archive *a, void *client_data)
 			}
 		}
 		if (fd < 0) {
-			archive_set_error(a, errno,
+			tk_archive_set_error(a, errno,
 			    "Failed to open '%S'", wfilename);
 			return (ARCHIVE_FATAL);
 		}
 #else
-		archive_set_error(a, ARCHIVE_ERRNO_MISC,
+		tk_archive_set_error(a, ARCHIVE_ERRNO_MISC,
 		    "Unexpedted operation in archive_read_open_filename");
 		return (ARCHIVE_FATAL);
 #endif
 	}
 	if (fstat(fd, &st) != 0) {
 		if (mine->filename_type == FNT_WCS)
-			archive_set_error(a, errno, "Can't stat '%S'",
+			tk_archive_set_error(a, errno, "Can't stat '%S'",
 			    wfilename);
 		else
-			archive_set_error(a, errno, "Can't stat '%s'",
+			tk_archive_set_error(a, errno, "Can't stat '%s'",
 			    filename);
 		return (ARCHIVE_FATAL);
 	}
@@ -307,7 +307,7 @@ file_open(struct archive *a, void *client_data)
 	 */
 	if (S_ISREG(st.st_mode)) {
 		/* Safety:  Tell the extractor not to overwrite the input. */
-		archive_read_extract_set_skip_file(a, st.st_dev, st.st_ino);
+		tk_archive_read_extract_set_skip_file(a, st.st_dev, st.st_ino);
 		/* Regular files act like disks. */
 		is_disk_like = 1;
 	}
@@ -355,7 +355,7 @@ file_open(struct archive *a, void *client_data)
 	}
 	buffer = malloc(mine->block_size);
 	if (mine == NULL || buffer == NULL) {
-		archive_set_error(a, ENOMEM, "No memory");
+		tk_archive_set_error(a, ENOMEM, "No memory");
 		free(mine);
 		free(buffer);
 		return (ARCHIVE_FATAL);
@@ -398,13 +398,13 @@ file_read(struct archive *a, void *client_data, const void **buff)
 			if (errno == EINTR)
 				continue;
 			else if (mine->filename_type == FNT_STDIN)
-				archive_set_error(a, errno,
+				tk_archive_set_error(a, errno,
 				    "Error reading stdin");
 			else if (mine->filename_type == FNT_MBS)
-				archive_set_error(a, errno,
+				tk_archive_set_error(a, errno,
 				    "Error reading '%s'", mine->filename.m);
 			else
-				archive_set_error(a, errno,
+				tk_archive_set_error(a, errno,
 				    "Error reading '%S'", mine->filename.w);
 		}
 		return (bytes_read);
@@ -462,12 +462,12 @@ file_skip_lseek(struct archive *a, void *client_data, int64_t request)
 
 	/* If the input is corrupted or truncated, fail. */
 	if (mine->filename_type == FNT_STDIN)
-		archive_set_error(a, errno, "Error seeking in stdin");
+		tk_archive_set_error(a, errno, "Error seeking in stdin");
 	else if (mine->filename_type == FNT_MBS)
-		archive_set_error(a, errno, "Error seeking in '%s'",
+		tk_archive_set_error(a, errno, "Error seeking in '%s'",
 		    mine->filename.m);
 	else
-		archive_set_error(a, errno, "Error seeking in '%S'",
+		tk_archive_set_error(a, errno, "Error seeking in '%S'",
 		    mine->filename.w);
 	return (-1);
 }
@@ -508,12 +508,12 @@ file_seek(struct archive *a, void *client_data, int64_t request, int whence)
 
 	/* If the input is corrupted or truncated, fail. */
 	if (mine->filename_type == FNT_STDIN)
-		archive_set_error(a, errno, "Error seeking in stdin");
+		tk_archive_set_error(a, errno, "Error seeking in stdin");
 	else if (mine->filename_type == FNT_MBS)
-		archive_set_error(a, errno, "Error seeking in '%s'",
+		tk_archive_set_error(a, errno, "Error seeking in '%s'",
 		    mine->filename.m);
 	else
-		archive_set_error(a, errno, "Error seeking in '%S'",
+		tk_archive_set_error(a, errno, "Error seeking in '%S'",
 		    mine->filename.w);
 	return (ARCHIVE_FATAL);
 }

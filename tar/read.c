@@ -71,11 +71,11 @@ __FBSDID("$FreeBSD: src/usr.bin/tar/read.c,v 1.40 2008/08/21 06:41:14 kientzle E
 struct progress_data {
 	struct bsdtar *bsdtar;
 	struct archive *archive;
-	struct archive_entry *entry;
+	struct tk_archive_entry *entry;
 };
 
 static void	list_item_verbose(struct bsdtar *, FILE *,
-		    struct archive_entry *);
+		    struct tk_archive_entry *);
 static void	read_archive(struct bsdtar *bsdtar, char mode, struct archive *);
 static int unmatched_inclusions_warn(struct archive *matching, const char *);
 
@@ -94,19 +94,19 @@ tar_mode_x(struct bsdtar *bsdtar)
 {
 	struct archive *writer;
 
-	writer = archive_write_disk_new();
+	writer = tk_archive_write_disk_new();
 	if (writer == NULL)
 		lafe_errc(1, ENOMEM, "Cannot allocate disk writer object");
 	if (!bsdtar->option_numeric_owner)
-		archive_write_disk_set_standard_lookup(writer);
-	archive_write_disk_set_options(writer, bsdtar->extract_flags);
+		tk_archive_write_disk_set_standard_lookup(writer);
+	tk_archive_write_disk_set_options(writer, bsdtar->extract_flags);
 
 	read_archive(bsdtar, 'x', writer);
 
 	if (unmatched_inclusions_warn(bsdtar->matching,
 	    "Not found in archive") != 0)
 		bsdtar->return_value = 1;
-	archive_write_free(writer);
+	tk_archive_write_free(writer);
 }
 
 static void
@@ -115,7 +115,7 @@ progress_func(void *cookie)
 	struct progress_data *progress_data = cookie;
 	struct bsdtar *bsdtar = progress_data->bsdtar;
 	struct archive *a = progress_data->archive;
-	struct archive_entry *entry = progress_data->entry;
+	struct tk_archive_entry *entry = progress_data->entry;
 	uint64_t comp, uncomp;
 	int compression;
 
@@ -125,8 +125,8 @@ progress_func(void *cookie)
 	if (bsdtar->verbose)
 		fprintf(stderr, "\n");
 	if (a != NULL) {
-		comp = archive_filter_bytes(a, -1);
-		uncomp = archive_filter_bytes(a, 0);
+		comp = tk_archive_filter_bytes(a, -1);
+		uncomp = tk_archive_filter_bytes(a, 0);
 		if (comp > uncomp)
 			compression = 0;
 		else
@@ -135,13 +135,13 @@ progress_func(void *cookie)
 		    "In: %s bytes, compression %d%%;",
 		    tar_i64toa(comp), compression);
 		fprintf(stderr, "  Out: %d files, %s bytes\n",
-		    archive_file_count(a), tar_i64toa(uncomp));
+		    tk_archive_file_count(a), tar_i64toa(uncomp));
 	}
 	if (entry != NULL) {
 		safe_fprintf(stderr, "Current: %s",
-		    archive_entry_pathname(entry));
+		    tk_archive_entry_pathname(entry));
 		fprintf(stderr, " (%s bytes)\n",
-		    tar_i64toa(archive_entry_size(entry)));
+		    tar_i64toa(tk_archive_entry_size(entry)));
 	}
 }
 
@@ -154,29 +154,29 @@ read_archive(struct bsdtar *bsdtar, char mode, struct archive *writer)
 	struct progress_data	progress_data;
 	FILE			 *out;
 	struct archive		 *a;
-	struct archive_entry	 *entry;
+	struct tk_archive_entry	 *entry;
 	const char		 *reader_options;
 	int			  r;
 
 	while (*bsdtar->argv) {
-		if (archive_match_include_pattern(bsdtar->matching,
+		if (tk_archive_match_include_pattern(bsdtar->matching,
 		    *bsdtar->argv) != ARCHIVE_OK)
 			lafe_errc(1, 0, "Error inclusion pattern: %s",
-			    archive_error_string(bsdtar->matching));
+			    tk_archive_error_string(bsdtar->matching));
 		bsdtar->argv++;
 	}
 
 	if (bsdtar->names_from_file != NULL)
-		if (archive_match_include_pattern_from_file(
+		if (tk_archive_match_include_pattern_from_file(
 		    bsdtar->matching, bsdtar->names_from_file,
 		    bsdtar->option_null) != ARCHIVE_OK)
 			lafe_errc(1, 0, "Error inclusion pattern: %s",
-			    archive_error_string(bsdtar->matching));
+			    tk_archive_error_string(bsdtar->matching));
 
-	a = archive_read_new();
+	a = tk_archive_read_new();
 	if (cset_read_support_filter_program(bsdtar->cset, a) == 0)
-		archive_read_support_filter_all(a);
-	archive_read_support_format_all(a);
+		tk_archive_read_support_filter_all(a);
+	tk_archive_read_support_format_all(a);
 
 	reader_options = getenv(ENV_READER_OPTIONS);
 	if (reader_options != NULL) {
@@ -192,19 +192,19 @@ read_archive(struct bsdtar *bsdtar, char mode, struct archive *writer)
 		strncpy(p, IGNORE_WRONG_MODULE_NAME,
 		    sizeof(IGNORE_WRONG_MODULE_NAME) -1);
 		strcpy(p + sizeof(IGNORE_WRONG_MODULE_NAME) -1, reader_options);
-		r = archive_read_set_options(a, p);
+		r = tk_archive_read_set_options(a, p);
 		free(p);
 		if (r == ARCHIVE_FATAL)
-			lafe_errc(1, 0, "%s", archive_error_string(a));
+			lafe_errc(1, 0, "%s", tk_archive_error_string(a));
 		else
-			archive_clear_error(a);
+			tk_archive_clear_error(a);
 	}
-	if (ARCHIVE_OK != archive_read_set_options(a, bsdtar->option_options))
-		lafe_errc(1, 0, "%s", archive_error_string(a));
-	if (archive_read_open_filename(a, bsdtar->filename,
+	if (ARCHIVE_OK != tk_archive_read_set_options(a, bsdtar->option_options))
+		lafe_errc(1, 0, "%s", tk_archive_error_string(a));
+	if (tk_archive_read_open_filename(a, bsdtar->filename,
 					bsdtar->bytes_per_block))
 		lafe_errc(1, 0, "Error opening archive: %s",
-		    archive_error_string(a));
+		    tk_archive_error_string(a));
 
 	do_chdir(bsdtar);
 
@@ -212,7 +212,7 @@ read_archive(struct bsdtar *bsdtar, char mode, struct archive *writer)
 		/* Set an extract callback so that we can handle SIGINFO. */
 		progress_data.bsdtar = bsdtar;
 		progress_data.archive = a;
-		archive_read_extract_set_progress_callback(a, progress_func,
+		tk_archive_read_extract_set_progress_callback(a, progress_func,
 		    &progress_data);
 	}
 
@@ -229,15 +229,15 @@ read_archive(struct bsdtar *bsdtar, char mode, struct archive *writer)
 	for (;;) {
 		/* Support --fast-read option */
 		if (bsdtar->option_fast_read &&
-		    archive_match_path_unmatched_inclusions(bsdtar->matching) == 0)
+		    tk_archive_match_path_unmatched_inclusions(bsdtar->matching) == 0)
 			break;
 
-		r = archive_read_next_header(a, &entry);
+		r = tk_archive_read_next_header(a, &entry);
 		progress_data.entry = entry;
 		if (r == ARCHIVE_EOF)
 			break;
 		if (r < ARCHIVE_OK)
-			lafe_warnc(0, "%s", archive_error_string(a));
+			lafe_warnc(0, "%s", tk_archive_error_string(a));
 		if (r <= ARCHIVE_WARN)
 			bsdtar->return_value = 1;
 		if (r == ARCHIVE_RETRY) {
@@ -249,17 +249,17 @@ read_archive(struct bsdtar *bsdtar, char mode, struct archive *writer)
 			break;
 
 		if (bsdtar->uid >= 0) {
-			archive_entry_set_uid(entry, bsdtar->uid);
-			archive_entry_set_uname(entry, NULL);
+			tk_archive_entry_set_uid(entry, bsdtar->uid);
+			tk_archive_entry_set_uname(entry, NULL);
 		}
 		if (bsdtar->gid >= 0) {
-			archive_entry_set_gid(entry, bsdtar->gid);
-			archive_entry_set_gname(entry, NULL);
+			tk_archive_entry_set_gid(entry, bsdtar->gid);
+			tk_archive_entry_set_gname(entry, NULL);
 		}
 		if (bsdtar->uname)
-			archive_entry_set_uname(entry, bsdtar->uname);
+			tk_archive_entry_set_uname(entry, bsdtar->uname);
 		if (bsdtar->gname)
-			archive_entry_set_gname(entry, bsdtar->gname);
+			tk_archive_entry_set_gname(entry, bsdtar->gname);
 
 		/*
 		 * Note that pattern exclusions are checked before
@@ -270,7 +270,7 @@ read_archive(struct bsdtar *bsdtar, char mode, struct archive *writer)
 		 * rewrite, there would be no way to exclude foo1/bar
 		 * while allowing foo2/bar.)
 		 */
-		if (archive_match_excluded(bsdtar->matching, entry))
+		if (tk_archive_match_excluded(bsdtar->matching, entry))
 			continue; /* Excluded by a pattern test. */
 
 		if (mode == 't') {
@@ -286,25 +286,25 @@ read_archive(struct bsdtar *bsdtar, char mode, struct archive *writer)
 			 */
 			if (bsdtar->verbose < 2)
 				safe_fprintf(out, "%s",
-				    archive_entry_pathname(entry));
+				    tk_archive_entry_pathname(entry));
 			else
 				list_item_verbose(bsdtar, out, entry);
 			fflush(out);
-			r = archive_read_data_skip(a);
+			r = tk_archive_read_data_skip(a);
 			if (r == ARCHIVE_WARN) {
 				fprintf(out, "\n");
 				lafe_warnc(0, "%s",
-				    archive_error_string(a));
+				    tk_archive_error_string(a));
 			}
 			if (r == ARCHIVE_RETRY) {
 				fprintf(out, "\n");
 				lafe_warnc(0, "%s",
-				    archive_error_string(a));
+				    tk_archive_error_string(a));
 			}
 			if (r == ARCHIVE_FATAL) {
 				fprintf(out, "\n");
 				lafe_warnc(0, "%s",
-				    archive_error_string(a));
+				    tk_archive_error_string(a));
 				bsdtar->return_value = 1;
 				break;
 			}
@@ -315,7 +315,7 @@ read_archive(struct bsdtar *bsdtar, char mode, struct archive *writer)
 				continue; /* Excluded by a rewrite failure. */
 
 			if (bsdtar->option_interactive &&
-			    !yes("extract '%s'", archive_entry_pathname(entry)))
+			    !yes("extract '%s'", tk_archive_entry_pathname(entry)))
 				continue;
 
 			/*
@@ -324,22 +324,22 @@ read_archive(struct bsdtar *bsdtar, char mode, struct archive *writer)
 			 */
 			if (bsdtar->verbose) {
 				safe_fprintf(stderr, "x %s",
-				    archive_entry_pathname(entry));
+				    tk_archive_entry_pathname(entry));
 				fflush(stderr);
 			}
 
 			/* TODO siginfo_printinfo(bsdtar, 0); */
 
 			if (bsdtar->option_stdout)
-				r = archive_read_data_into_fd(a, 1);
+				r = tk_archive_read_data_into_fd(a, 1);
 			else
-				r = archive_read_extract2(a, entry, writer);
+				r = tk_archive_read_extract2(a, entry, writer);
 			if (r != ARCHIVE_OK) {
 				if (!bsdtar->verbose)
 					safe_fprintf(stderr, "%s",
-					    archive_entry_pathname(entry));
+					    tk_archive_entry_pathname(entry));
 				safe_fprintf(stderr, ": %s",
-				    archive_error_string(a));
+				    tk_archive_error_string(a));
 				if (!bsdtar->verbose)
 					fprintf(stderr, "\n");
 				bsdtar->return_value = 1;
@@ -352,17 +352,17 @@ read_archive(struct bsdtar *bsdtar, char mode, struct archive *writer)
 	}
 
 
-	r = archive_read_close(a);
+	r = tk_archive_read_close(a);
 	if (r != ARCHIVE_OK)
-		lafe_warnc(0, "%s", archive_error_string(a));
+		lafe_warnc(0, "%s", tk_archive_error_string(a));
 	if (r <= ARCHIVE_WARN)
 		bsdtar->return_value = 1;
 
 	if (bsdtar->verbose > 2)
 		fprintf(stdout, "Archive Format: %s,  Compression: %s\n",
-		    archive_format_name(a), archive_filter_name(a, 0));
+		    tk_archive_format_name(a), tk_archive_filter_name(a, 0));
 
-	archive_read_free(a);
+	tk_archive_read_free(a);
 }
 
 
@@ -375,7 +375,7 @@ read_archive(struct bsdtar *bsdtar, char mode, struct archive *writer)
  * and 'pax -l' is documented as using the same format as 'ls -l'.
  */
 static void
-list_item_verbose(struct bsdtar *bsdtar, FILE *out, struct archive_entry *entry)
+list_item_verbose(struct bsdtar *bsdtar, FILE *out, struct tk_archive_entry *entry)
 {
 	char			 tmp[100];
 	size_t			 w;
@@ -398,14 +398,14 @@ list_item_verbose(struct bsdtar *bsdtar, FILE *out, struct archive_entry *entry)
 	if (!now)
 		time(&now);
 	fprintf(out, "%s %d ",
-	    archive_entry_strmode(entry),
-	    archive_entry_nlink(entry));
+	    tk_archive_entry_strmode(entry),
+	    tk_archive_entry_nlink(entry));
 
 	/* Use uname if it's present, else uid. */
-	p = archive_entry_uname(entry);
+	p = tk_archive_entry_uname(entry);
 	if ((p == NULL) || (*p == '\0')) {
 		sprintf(tmp, "%lu ",
-		    (unsigned long)archive_entry_uid(entry));
+		    (unsigned long)tk_archive_entry_uid(entry));
 		p = tmp;
 	}
 	w = strlen(p);
@@ -414,13 +414,13 @@ list_item_verbose(struct bsdtar *bsdtar, FILE *out, struct archive_entry *entry)
 	fprintf(out, "%-*s ", (int)bsdtar->u_width, p);
 
 	/* Use gname if it's present, else gid. */
-	p = archive_entry_gname(entry);
+	p = tk_archive_entry_gname(entry);
 	if (p != NULL && p[0] != '\0') {
 		fprintf(out, "%s", p);
 		w = strlen(p);
 	} else {
 		sprintf(tmp, "%lu",
-		    (unsigned long)archive_entry_gid(entry));
+		    (unsigned long)tk_archive_entry_gid(entry));
 		w = strlen(tmp);
 		fprintf(out, "%s", tmp);
 	}
@@ -430,20 +430,20 @@ list_item_verbose(struct bsdtar *bsdtar, FILE *out, struct archive_entry *entry)
 	 * total width of group and devnum/filesize fields be gs_width.
 	 * If gs_width is too small, grow it.
 	 */
-	if (archive_entry_filetype(entry) == AE_IFCHR
-	    || archive_entry_filetype(entry) == AE_IFBLK) {
+	if (tk_archive_entry_filetype(entry) == AE_IFCHR
+	    || tk_archive_entry_filetype(entry) == AE_IFBLK) {
 		sprintf(tmp, "%lu,%lu",
-		    (unsigned long)archive_entry_rdevmajor(entry),
-		    (unsigned long)archive_entry_rdevminor(entry));
+		    (unsigned long)tk_archive_entry_rdevmajor(entry),
+		    (unsigned long)tk_archive_entry_rdevminor(entry));
 	} else {
-		strcpy(tmp, tar_i64toa(archive_entry_size(entry)));
+		strcpy(tmp, tar_i64toa(tk_archive_entry_size(entry)));
 	}
 	if (w + strlen(tmp) >= bsdtar->gs_width)
 		bsdtar->gs_width = w+strlen(tmp)+1;
 	fprintf(out, "%*s", (int)(bsdtar->gs_width - w), tmp);
 
 	/* Format the time using 'ls -l' conventions. */
-	tim = archive_entry_mtime(entry);
+	tim = tk_archive_entry_mtime(entry);
 #define	HALF_YEAR (time_t)365 * 86400 / 2
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #define	DAY_FMT  "%d"  /* Windows' strftime function does not support %e format. */
@@ -456,14 +456,14 @@ list_item_verbose(struct bsdtar *bsdtar, FILE *out, struct archive_entry *entry)
 		fmt = bsdtar->day_first ? DAY_FMT " %b %H:%M" : "%b " DAY_FMT " %H:%M";
 	strftime(tmp, sizeof(tmp), fmt, localtime(&tim));
 	fprintf(out, " %s ", tmp);
-	safe_fprintf(out, "%s", archive_entry_pathname(entry));
+	safe_fprintf(out, "%s", tk_archive_entry_pathname(entry));
 
 	/* Extra information for links. */
-	if (archive_entry_hardlink(entry)) /* Hard link */
+	if (tk_archive_entry_hardlink(entry)) /* Hard link */
 		safe_fprintf(out, " link to %s",
-		    archive_entry_hardlink(entry));
-	else if (archive_entry_symlink(entry)) /* Symbolic link */
-		safe_fprintf(out, " -> %s", archive_entry_symlink(entry));
+		    tk_archive_entry_hardlink(entry));
+	else if (tk_archive_entry_symlink(entry)) /* Symbolic link */
+		safe_fprintf(out, " -> %s", tk_archive_entry_symlink(entry));
 }
 
 static int
@@ -475,11 +475,11 @@ unmatched_inclusions_warn(struct archive *matching, const char *msg)
 	if (matching == NULL)
 		return (0);
 
-	while ((r = archive_match_path_unmatched_inclusions_next(
+	while ((r = tk_archive_match_path_unmatched_inclusions_next(
 	    matching, &p)) == ARCHIVE_OK)
 		lafe_warnc(0, "%s: %s", p, msg);
 	if (r == ARCHIVE_FATAL)
 		lafe_errc(1, errno, "Out of memory");
 
-	return (archive_match_path_unmatched_inclusions(matching));
+	return (tk_archive_match_path_unmatched_inclusions(matching));
 }

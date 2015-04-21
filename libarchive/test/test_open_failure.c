@@ -90,14 +90,14 @@ DEFINE_TEST(test_open_failure)
 	memset(&private, 0, sizeof(private));
 	private.magic = MAGIC;
 	private.open_return = ARCHIVE_FATAL;
-	a = archive_read_new();
+	a = tk_archive_read_new();
 	assert(a != NULL);
 	assertEqualInt(ARCHIVE_FATAL,
-	    archive_read_open(a, &private, my_open, my_read, my_close));
+	    tk_archive_read_open(a, &private, my_open, my_read, my_close));
 	assertEqualInt(1, private.open_called);
 	assertEqualInt(0, private.read_called);
 	assertEqualInt(1, private.close_called);
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 	assertEqualInt(1, private.open_called);
 	assertEqualInt(0, private.read_called);
 	assertEqualInt(1, private.close_called);
@@ -105,14 +105,14 @@ DEFINE_TEST(test_open_failure)
 	memset(&private, 0, sizeof(private));
 	private.magic = MAGIC;
 	private.open_return = ARCHIVE_FAILED;
-	a = archive_read_new();
+	a = tk_archive_read_new();
 	assert(a != NULL);
 	assertEqualInt(ARCHIVE_FAILED,
-	    archive_read_open(a, &private, my_open, my_read, my_close));
+	    tk_archive_read_open(a, &private, my_open, my_read, my_close));
 	assertEqualInt(1, private.open_called);
 	assertEqualInt(0, private.read_called);
 	assertEqualInt(1, private.close_called);
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 	assertEqualInt(1, private.open_called);
 	assertEqualInt(0, private.read_called);
 	assertEqualInt(1, private.close_called);
@@ -120,14 +120,14 @@ DEFINE_TEST(test_open_failure)
 	memset(&private, 0, sizeof(private));
 	private.magic = MAGIC;
 	private.open_return = ARCHIVE_WARN;
-	a = archive_read_new();
+	a = tk_archive_read_new();
 	assert(a != NULL);
 	assertEqualInt(ARCHIVE_WARN,
-	    archive_read_open(a, &private, my_open, my_read, my_close));
+	    tk_archive_read_open(a, &private, my_open, my_read, my_close));
 	assertEqualInt(1, private.open_called);
 	assertEqualInt(0, private.read_called);
 	assertEqualInt(1, private.close_called);
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 	assertEqualInt(1, private.open_called);
 	assertEqualInt(0, private.read_called);
 	assertEqualInt(1, private.close_called);
@@ -136,17 +136,17 @@ DEFINE_TEST(test_open_failure)
 	private.magic = MAGIC;
 	private.open_return = ARCHIVE_OK;
 	private.read_return = ARCHIVE_FATAL;
-	a = archive_read_new();
+	a = tk_archive_read_new();
 	assert(a != NULL);
 	assertEqualInt(ARCHIVE_OK,
-	    archive_read_support_filter_compress(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_support_format_tar(a));
+	    tk_archive_read_support_filter_compress(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_support_format_tar(a));
 	assertEqualInt(ARCHIVE_FATAL,
-	    archive_read_open(a, &private, my_open, my_read, my_close));
+	    tk_archive_read_open(a, &private, my_open, my_read, my_close));
 	assertEqualInt(1, private.open_called);
 	assertEqualInt(1, private.read_called);
 	assertEqualInt(1, private.close_called);
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 	assertEqualInt(1, private.open_called);
 	assertEqualInt(1, private.read_called);
 	assertEqualInt(1, private.close_called);
@@ -154,14 +154,14 @@ DEFINE_TEST(test_open_failure)
 	memset(&private, 0, sizeof(private));
 	private.magic = MAGIC;
 	private.open_return = ARCHIVE_FATAL;
-	a = archive_write_new();
+	a = tk_archive_write_new();
 	assert(a != NULL);
 	assertEqualInt(ARCHIVE_FATAL,
-	    archive_write_open(a, &private, my_open, my_write, my_close));
+	    tk_archive_write_open(a, &private, my_open, my_write, my_close));
 	assertEqualInt(1, private.open_called);
 	assertEqualInt(0, private.write_called);
 	assertEqualInt(1, private.close_called);
-	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 	assertEqualInt(1, private.open_called);
 	assertEqualInt(0, private.write_called);
 	assertEqualInt(1, private.close_called);
@@ -169,16 +169,16 @@ DEFINE_TEST(test_open_failure)
 	memset(&private, 0, sizeof(private));
 	private.magic = MAGIC;
 	private.open_return = ARCHIVE_FATAL;
-	a = archive_write_new();
+	a = tk_archive_write_new();
 	assert(a != NULL);
-	archive_write_add_filter_compress(a);
-	archive_write_set_format_ustar(a);
+	tk_archive_write_add_filter_compress(a);
+	tk_archive_write_set_format_ustar(a);
 	assertEqualInt(ARCHIVE_FATAL,
-	    archive_write_open(a, &private, my_open, my_write, my_close));
+	    tk_archive_write_open(a, &private, my_open, my_write, my_close));
 	assertEqualInt(1, private.open_called);
 	assertEqualInt(0, private.write_called);
 	assertEqualInt(1, private.close_called);
-	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 	assertEqualInt(1, private.open_called);
 	assertEqualInt(0, private.write_called);
 	assertEqualInt(1, private.close_called);
@@ -186,15 +186,15 @@ DEFINE_TEST(test_open_failure)
 	memset(&private, 0, sizeof(private));
 	private.magic = MAGIC;
 	private.open_return = ARCHIVE_FATAL;
-	a = archive_write_new();
+	a = tk_archive_write_new();
 	assert(a != NULL);
-	archive_write_set_format_zip(a);
+	tk_archive_write_set_format_zip(a);
 	assertEqualInt(ARCHIVE_FATAL,
-	    archive_write_open(a, &private, my_open, my_write, my_close));
+	    tk_archive_write_open(a, &private, my_open, my_write, my_close));
 	assertEqualInt(1, private.open_called);
 	assertEqualInt(0, private.write_called);
 	assertEqualInt(1, private.close_called);
-	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 	assertEqualInt(1, private.open_called);
 	assertEqualInt(0, private.write_called);
 	assertEqualInt(1, private.close_called);
@@ -202,15 +202,15 @@ DEFINE_TEST(test_open_failure)
 	memset(&private, 0, sizeof(private));
 	private.magic = MAGIC;
 	private.open_return = ARCHIVE_FATAL;
-	a = archive_write_new();
+	a = tk_archive_write_new();
 	assert(a != NULL);
-	archive_write_add_filter_gzip(a);
+	tk_archive_write_add_filter_gzip(a);
 	assertEqualInt(ARCHIVE_FATAL,
-	    archive_write_open(a, &private, my_open, my_write, my_close));
+	    tk_archive_write_open(a, &private, my_open, my_write, my_close));
 	assertEqualInt(1, private.open_called);
 	assertEqualInt(0, private.write_called);
 	assertEqualInt(1, private.close_called);
-	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 	assertEqualInt(1, private.open_called);
 	assertEqualInt(0, private.write_called);
 	assertEqualInt(1, private.close_called);

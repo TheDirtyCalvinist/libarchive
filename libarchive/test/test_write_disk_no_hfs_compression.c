@@ -78,7 +78,7 @@ DEFINE_TEST(test_write_disk_no_hfs_compression)
 #else
 	const char *refname = "test_write_disk_no_hfs_compression.tgz";
 	struct archive *ad, *a;
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	struct stat st;
 
 	extract_reference_file(refname);
@@ -87,41 +87,41 @@ DEFINE_TEST(test_write_disk_no_hfs_compression)
 	 * Extract an archive to disk with HFS+ Compression
 	 * the file was compressed.
 	 */
-	assert((ad = archive_write_disk_new()) != NULL);
+	assert((ad = tk_archive_write_disk_new()) != NULL);
 	assertEqualIntA(ad, ARCHIVE_OK,
-	    archive_write_disk_set_standard_lookup(ad));
+	    tk_archive_write_disk_set_standard_lookup(ad));
 	assertEqualIntA(ad, ARCHIVE_OK,
-	    archive_write_disk_set_options(ad,
+	    tk_archive_write_disk_set_options(ad,
 		ARCHIVE_EXTRACT_TIME |
 		ARCHIVE_EXTRACT_SECURE_SYMLINKS |
 		ARCHIVE_EXTRACT_SECURE_NODOTDOT));
 
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_open_filename(a,
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_open_filename(a,
 	    refname, 512 * 20));
 
 	assertMakeDir("hfscmp", 0755);
 	assertChdir("hfscmp");
 
 	/* Extract file1. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_extract2(a, ae, ad));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_extract2(a, ae, ad));
 	/* Extract README. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_extract2(a, ae, ad));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_extract2(a, ae, ad));
 	/* Extract NEWS. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_extract2(a, ae, ad));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_extract2(a, ae, ad));
 	/* Extract Makefile. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_extract2(a, ae, ad));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_extract2(a, ae, ad));
 
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
-	assertEqualIntA(ad, ARCHIVE_OK, archive_write_free(ad));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
+	assertEqualIntA(ad, ARCHIVE_OK, tk_archive_write_free(ad));
 
 	/* Test file1. */
 	assertEqualInt(0, stat("file1", &st));
@@ -156,42 +156,42 @@ DEFINE_TEST(test_write_disk_no_hfs_compression)
 	/*
 	 * Extract an archive to disk without HFS+ Compression.
 	 */
-	assert((ad = archive_write_disk_new()) != NULL);
+	assert((ad = tk_archive_write_disk_new()) != NULL);
 	assertEqualIntA(ad, ARCHIVE_OK,
-	    archive_write_disk_set_standard_lookup(ad));
+	    tk_archive_write_disk_set_standard_lookup(ad));
 	assertEqualIntA(ad, ARCHIVE_OK,
-	    archive_write_disk_set_options(ad,
+	    tk_archive_write_disk_set_options(ad,
 		ARCHIVE_EXTRACT_TIME |
 		ARCHIVE_EXTRACT_SECURE_SYMLINKS |
 		ARCHIVE_EXTRACT_SECURE_NODOTDOT |
 		ARCHIVE_EXTRACT_NO_HFS_COMPRESSION));
 
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_open_filename(a,
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_open_filename(a,
 	    refname, 512 * 20));
 
 	assertMakeDir("nocmp", 0755);
 	assertChdir("nocmp");
 
 	/* Extract file1. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_extract2(a, ae, ad));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_extract2(a, ae, ad));
 	/* Extract README. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_extract2(a, ae, ad));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_extract2(a, ae, ad));
 	/* Extract NEWS. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_extract2(a, ae, ad));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_extract2(a, ae, ad));
 	/* Extract Makefile. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_extract2(a, ae, ad));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_extract2(a, ae, ad));
 
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
-	assertEqualIntA(ad, ARCHIVE_OK, archive_write_free(ad));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
+	assertEqualIntA(ad, ARCHIVE_OK, tk_archive_write_free(ad));
 
 	/* Test file1. */
 	assertEqualInt(0, stat("file1", &st));

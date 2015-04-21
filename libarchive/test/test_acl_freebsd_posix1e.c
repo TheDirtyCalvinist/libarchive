@@ -57,13 +57,13 @@ static struct myacl_t acls2[] = {
 };
 
 static void
-set_acls(struct archive_entry *ae, struct myacl_t *acls)
+set_acls(struct tk_archive_entry *ae, struct myacl_t *acls)
 {
 	int i;
 
-	archive_entry_acl_clear(ae);
+	tk_archive_entry_acl_clear(ae);
 	for (i = 0; acls[i].name != NULL; i++) {
-		archive_entry_acl_add_entry(ae,
+		tk_archive_entry_acl_add_entry(ae,
 		    acls[i].type, acls[i].permset, acls[i].tag, acls[i].qual,
 		    acls[i].name);
 	}
@@ -199,7 +199,7 @@ DEFINE_TEST(test_acl_freebsd_posix1e)
 #else
 	struct stat st;
 	struct archive *a;
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	int n, fd;
 	acl_t acl;
 
@@ -236,23 +236,23 @@ DEFINE_TEST(test_acl_freebsd_posix1e)
 	close(fd);
 
 	/* Create a write-to-disk object. */
-	assert(NULL != (a = archive_write_disk_new()));
-	archive_write_disk_set_options(a,
+	assert(NULL != (a = tk_archive_write_disk_new()));
+	tk_archive_write_disk_set_options(a,
 	    ARCHIVE_EXTRACT_TIME | ARCHIVE_EXTRACT_PERM | ARCHIVE_EXTRACT_ACL);
 
 	/* Populate an archive entry with some metadata, including ACL info */
-	ae = archive_entry_new();
+	ae = tk_archive_entry_new();
 	assert(ae != NULL);
-	archive_entry_set_pathname(ae, "test0");
-	archive_entry_set_mtime(ae, 123456, 7890);
-	archive_entry_set_size(ae, 0);
+	tk_archive_entry_set_pathname(ae, "test0");
+	tk_archive_entry_set_mtime(ae, 123456, 7890);
+	tk_archive_entry_set_size(ae, 0);
 	set_acls(ae, acls2);
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
-	archive_entry_free(ae);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_header(a, ae));
+	tk_archive_entry_free(ae);
 
 	/* Close the archive. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 
 	/* Verify the data on disk. */
 	assertEqualInt(0, stat("test0", &st));

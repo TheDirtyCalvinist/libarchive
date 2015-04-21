@@ -103,10 +103,10 @@ struct name_cache {
 static int	extract_data(struct archive *, struct archive *);
 const char *	cpio_i64toa(int64_t);
 static const char *cpio_rename(const char *name);
-static int	entry_to_archive(struct cpio *, struct archive_entry *);
+static int	entry_to_archive(struct cpio *, struct tk_archive_entry *);
 static int	file_to_archive(struct cpio *, const char *);
 static void	free_cache(struct name_cache *cache);
-static void	list_item_verbose(struct cpio *, struct archive_entry *);
+static void	list_item_verbose(struct cpio *, struct tk_archive_entry *);
 static void	long_help(void);
 static const char *lookup_gname(struct cpio *, gid_t gid);
 static int	lookup_gname_helper(struct cpio *,
@@ -119,7 +119,7 @@ static void	mode_list(struct cpio *);
 static void	mode_out(struct cpio *);
 static void	mode_pass(struct cpio *, const char *);
 static const char *remove_leading_slash(const char *);
-static int	restore_time(struct cpio *, struct archive_entry *,
+static int	restore_time(struct cpio *, struct tk_archive_entry *,
 		    const char *, int fd);
 static void	usage(void);
 static void	version(void);
@@ -189,7 +189,7 @@ main(int argc, char *argv[])
 	cpio->bytes_per_block = 512;
 	cpio->filename = NULL;
 
-	cpio->matching = archive_match_new();
+	cpio->matching = tk_archive_match_new();
 	if (cpio->matching == NULL)
 		lafe_errc(1, 0, "Out of memory");
 
@@ -222,20 +222,20 @@ main(int argc, char *argv[])
 			cpio->extract_flags &= ~ARCHIVE_EXTRACT_NO_AUTODIR;
 			break;
 		case 'E': /* NetBSD/OpenBSD */
-			if (archive_match_include_pattern_from_file(
+			if (tk_archive_match_include_pattern_from_file(
 			    cpio->matching, cpio->argument,
 			    cpio->option_null) != ARCHIVE_OK)
 				lafe_errc(1, 0, "Error : %s",
-				    archive_error_string(cpio->matching));
+				    tk_archive_error_string(cpio->matching));
 			break;
 		case 'F': /* NetBSD/OpenBSD/GNU cpio */
 			cpio->filename = cpio->argument;
 			break;
 		case 'f': /* POSIX 1997 */
-			if (archive_match_exclude_pattern(cpio->matching,
+			if (tk_archive_match_exclude_pattern(cpio->matching,
 			    cpio->argument) != ARCHIVE_OK)
 				lafe_errc(1, 0, "Error : %s",
-				    archive_error_string(cpio->matching));
+				    tk_archive_error_string(cpio->matching));
 			break;
 		case OPTION_GRZIP:
 			cpio->compress = opt;
@@ -402,10 +402,10 @@ main(int argc, char *argv[])
 		break;
 	case 'i':
 		while (*cpio->argv != NULL) {
-			if (archive_match_include_pattern(cpio->matching,
+			if (tk_archive_match_include_pattern(cpio->matching,
 			    *cpio->argv) != ARCHIVE_OK)
 				lafe_errc(1, 0, "Error : %s",
-				    archive_error_string(cpio->matching));
+				    tk_archive_error_string(cpio->matching));
 			--cpio->argc;
 			++cpio->argv;
 		}
@@ -425,7 +425,7 @@ main(int argc, char *argv[])
 		    "Must specify at least one of -i, -o, or -p");
 	}
 
-	archive_match_free(cpio->matching);
+	tk_archive_match_free(cpio->matching);
 	free_cache(cpio->gname_cache);
 	free_cache(cpio->uname_cache);
 	free(cpio->destdir);
@@ -500,14 +500,14 @@ version(void)
 {
 	fprintf(stdout,"bsdcpio %s -- %s\n",
 	    BSDCPIO_VERSION_STRING,
-	    archive_version_string());
+	    tk_archive_version_string());
 	exit(0);
 }
 
 static void
 mode_out(struct cpio *cpio)
 {
-	struct archive_entry *entry, *spare;
+	struct tk_archive_entry *entry, *spare;
 	struct lafe_line_reader *lr;
 	const char *p;
 	int r;
@@ -515,45 +515,45 @@ mode_out(struct cpio *cpio)
 	if (cpio->option_append)
 		lafe_errc(1, 0, "Append mode not yet supported.");
 
-	cpio->archive_read_disk = archive_read_disk_new();
-	if (cpio->archive_read_disk == NULL)
+	cpio->tk_archive_read_disk = tk_archive_read_disk_new();
+	if (cpio->tk_archive_read_disk == NULL)
 		lafe_errc(1, 0, "Failed to allocate archive object");
 	if (cpio->option_follow_links)
-		archive_read_disk_set_symlink_logical(cpio->archive_read_disk);
+		tk_archive_read_disk_set_symlink_logical(cpio->tk_archive_read_disk);
 	else
-		archive_read_disk_set_symlink_physical(cpio->archive_read_disk);
-	archive_read_disk_set_standard_lookup(cpio->archive_read_disk);
+		tk_archive_read_disk_set_symlink_physical(cpio->tk_archive_read_disk);
+	tk_archive_read_disk_set_standard_lookup(cpio->tk_archive_read_disk);
 
-	cpio->archive = archive_write_new();
+	cpio->archive = tk_archive_write_new();
 	if (cpio->archive == NULL)
 		lafe_errc(1, 0, "Failed to allocate archive object");
 	switch (cpio->compress) {
 	case OPTION_GRZIP:
-		r = archive_write_add_filter_grzip(cpio->archive);
+		r = tk_archive_write_add_filter_grzip(cpio->archive);
 		break;
 	case 'J':
-		r = archive_write_add_filter_xz(cpio->archive);
+		r = tk_archive_write_add_filter_xz(cpio->archive);
 		break;
 	case OPTION_LRZIP:
-		r = archive_write_add_filter_lrzip(cpio->archive);
+		r = tk_archive_write_add_filter_lrzip(cpio->archive);
 		break;
 	case OPTION_LZMA:
-		r = archive_write_add_filter_lzma(cpio->archive);
+		r = tk_archive_write_add_filter_lzma(cpio->archive);
 		break;
 	case OPTION_LZOP:
-		r = archive_write_add_filter_lzop(cpio->archive);
+		r = tk_archive_write_add_filter_lzop(cpio->archive);
 		break;
 	case 'j': case 'y':
-		r = archive_write_add_filter_bzip2(cpio->archive);
+		r = tk_archive_write_add_filter_bzip2(cpio->archive);
 		break;
 	case 'z':
-		r = archive_write_add_filter_gzip(cpio->archive);
+		r = tk_archive_write_add_filter_gzip(cpio->archive);
 		break;
 	case 'Z':
-		r = archive_write_add_filter_compress(cpio->archive);
+		r = tk_archive_write_add_filter_compress(cpio->archive);
 		break;
 	default:
-		r = archive_write_add_filter_none(cpio->archive);
+		r = tk_archive_write_add_filter_none(cpio->archive);
 		break;
 	}
 	if (r < ARCHIVE_WARN)
@@ -563,28 +563,28 @@ mode_out(struct cpio *cpio)
 		r = ARCHIVE_OK;
 		break;
 	case OPTION_B64ENCODE:
-		r = archive_write_add_filter_b64encode(cpio->archive);
+		r = tk_archive_write_add_filter_b64encode(cpio->archive);
 		break;
 	case OPTION_UUENCODE:
-		r = archive_write_add_filter_uuencode(cpio->archive);
+		r = tk_archive_write_add_filter_uuencode(cpio->archive);
 		break;
 	}
 	if (r < ARCHIVE_WARN)
 		lafe_errc(1, 0, "Requested filter not available");
-	r = archive_write_set_format_by_name(cpio->archive, cpio->format);
+	r = tk_archive_write_set_format_by_name(cpio->archive, cpio->format);
 	if (r != ARCHIVE_OK)
-		lafe_errc(1, 0, "%s", archive_error_string(cpio->archive));
-	archive_write_set_bytes_per_block(cpio->archive, cpio->bytes_per_block);
-	cpio->linkresolver = archive_entry_linkresolver_new();
-	archive_entry_linkresolver_set_strategy(cpio->linkresolver,
-	    archive_format(cpio->archive));
+		lafe_errc(1, 0, "%s", tk_archive_error_string(cpio->archive));
+	tk_archive_write_set_bytes_per_block(cpio->archive, cpio->bytes_per_block);
+	cpio->linkresolver = tk_archive_entry_linkresolver_new();
+	tk_archive_entry_linkresolver_set_strategy(cpio->linkresolver,
+	    tk_archive_format(cpio->archive));
 
 	/*
 	 * The main loop:  Copy each file into the output archive.
 	 */
-	r = archive_write_open_filename(cpio->archive, cpio->filename);
+	r = tk_archive_write_open_filename(cpio->archive, cpio->filename);
 	if (r != ARCHIVE_OK)
-		lafe_errc(1, 0, "%s", archive_error_string(cpio->archive));
+		lafe_errc(1, 0, "%s", tk_archive_error_string(cpio->archive));
 	lr = lafe_line_reader("-", cpio->option_null);
 	while ((p = lafe_line_reader_next(lr)) != NULL)
 		file_to_archive(cpio, p);
@@ -595,28 +595,28 @@ mode_out(struct cpio *cpio)
 	 * that can now be flushed.
 	 */
 	entry = NULL;
-	archive_entry_linkify(cpio->linkresolver, &entry, &spare);
+	tk_archive_entry_linkify(cpio->linkresolver, &entry, &spare);
 	while (entry != NULL) {
 		entry_to_archive(cpio, entry);
-		archive_entry_free(entry);
+		tk_archive_entry_free(entry);
 		entry = NULL;
-		archive_entry_linkify(cpio->linkresolver, &entry, &spare);
+		tk_archive_entry_linkify(cpio->linkresolver, &entry, &spare);
 	}
 
-	r = archive_write_close(cpio->archive);
+	r = tk_archive_write_close(cpio->archive);
 	if (cpio->dot)
 		fprintf(stderr, "\n");
 	if (r != ARCHIVE_OK)
-		lafe_errc(1, 0, "%s", archive_error_string(cpio->archive));
+		lafe_errc(1, 0, "%s", tk_archive_error_string(cpio->archive));
 
 	if (!cpio->quiet) {
 		int64_t blocks =
-			(archive_filter_bytes(cpio->archive, 0) + 511)
+			(tk_archive_filter_bytes(cpio->archive, 0) + 511)
 			/ 512;
 		fprintf(stderr, "%lu %s\n", (unsigned long)blocks,
 		    blocks == 1 ? "block" : "blocks");
 	}
-	archive_write_free(cpio->archive);
+	tk_archive_write_free(cpio->archive);
 }
 
 static const char *
@@ -671,7 +671,7 @@ static int
 file_to_archive(struct cpio *cpio, const char *srcpath)
 {
 	const char *destpath;
-	struct archive_entry *entry, *spare;
+	struct tk_archive_entry *entry, *spare;
 	size_t len;
 	int r;
 
@@ -679,30 +679,30 @@ file_to_archive(struct cpio *cpio, const char *srcpath)
 	 * Create an archive_entry describing the source file.
 	 *
 	 */
-	entry = archive_entry_new();
+	entry = tk_archive_entry_new();
 	if (entry == NULL)
 		lafe_errc(1, 0, "Couldn't allocate entry");
-	archive_entry_copy_sourcepath(entry, srcpath);
-	r = archive_read_disk_entry_from_file(cpio->archive_read_disk,
+	tk_archive_entry_copy_sourcepath(entry, srcpath);
+	r = tk_archive_read_disk_entry_from_file(cpio->tk_archive_read_disk,
 	    entry, -1, NULL);
 	if (r < ARCHIVE_FAILED)
 		lafe_errc(1, 0, "%s",
-		    archive_error_string(cpio->archive_read_disk));
+		    tk_archive_error_string(cpio->tk_archive_read_disk));
 	if (r < ARCHIVE_OK)
 		lafe_warnc(0, "%s",
-		    archive_error_string(cpio->archive_read_disk));
+		    tk_archive_error_string(cpio->tk_archive_read_disk));
 	if (r <= ARCHIVE_FAILED) {
 		cpio->return_value = 1;
 		return (r);
 	}
 
 	if (cpio->uid_override >= 0) {
-		archive_entry_set_uid(entry, cpio->uid_override);
-		archive_entry_set_uname(entry, cpio->uname_override);
+		tk_archive_entry_set_uid(entry, cpio->uid_override);
+		tk_archive_entry_set_uname(entry, cpio->uname_override);
 	}
 	if (cpio->gid_override >= 0) {
-		archive_entry_set_gid(entry, cpio->gid_override);
-		archive_entry_set_gname(entry, cpio->gname_override);
+		tk_archive_entry_set_gid(entry, cpio->gid_override);
+		tk_archive_entry_set_gname(entry, cpio->gname_override);
 	}
 
 	/*
@@ -733,34 +733,34 @@ file_to_archive(struct cpio *cpio, const char *srcpath)
 		destpath = cpio_rename(destpath);
 	if (destpath == NULL)
 		return (0);
-	archive_entry_copy_pathname(entry, destpath);
+	tk_archive_entry_copy_pathname(entry, destpath);
 
 	/*
 	 * If we're trying to preserve hardlinks, match them here.
 	 */
 	spare = NULL;
 	if (cpio->linkresolver != NULL
-	    && archive_entry_filetype(entry) != AE_IFDIR) {
-		archive_entry_linkify(cpio->linkresolver, &entry, &spare);
+	    && tk_archive_entry_filetype(entry) != AE_IFDIR) {
+		tk_archive_entry_linkify(cpio->linkresolver, &entry, &spare);
 	}
 
 	if (entry != NULL) {
 		r = entry_to_archive(cpio, entry);
-		archive_entry_free(entry);
+		tk_archive_entry_free(entry);
 		if (spare != NULL) {
 			if (r == 0)
 				r = entry_to_archive(cpio, spare);
-			archive_entry_free(spare);
+			tk_archive_entry_free(spare);
 		}
 	}
 	return (r);
 }
 
 static int
-entry_to_archive(struct cpio *cpio, struct archive_entry *entry)
+entry_to_archive(struct cpio *cpio, struct tk_archive_entry *entry)
 {
-	const char *destpath = archive_entry_pathname(entry);
-	const char *srcpath = archive_entry_sourcepath(entry);
+	const char *destpath = tk_archive_entry_pathname(entry);
+	const char *srcpath = tk_archive_entry_sourcepath(entry);
 	int fd = -1;
 	ssize_t bytes_read;
 	int r;
@@ -781,28 +781,28 @@ entry_to_archive(struct cpio *cpio, struct archive_entry *entry)
 	 * hard-link anything other than regular files here.
 	 */
 	if (cpio->option_link
-	    && archive_entry_filetype(entry) == AE_IFREG)
+	    && tk_archive_entry_filetype(entry) == AE_IFREG)
 	{
-		struct archive_entry *t;
+		struct tk_archive_entry *t;
 		/* Save the original entry in case we need it later. */
-		t = archive_entry_clone(entry);
+		t = tk_archive_entry_clone(entry);
 		if (t == NULL)
 			lafe_errc(1, ENOMEM, "Can't create link");
 		/* Note: link(2) doesn't create parent directories,
 		 * so we use archive_write_header() instead as a
 		 * convenience. */
-		archive_entry_set_hardlink(t, srcpath);
+		tk_archive_entry_set_hardlink(t, srcpath);
 		/* This is a straight link that carries no data. */
-		archive_entry_set_size(t, 0);
-		r = archive_write_header(cpio->archive, t);
-		archive_entry_free(t);
+		tk_archive_entry_set_size(t, 0);
+		r = tk_archive_write_header(cpio->archive, t);
+		tk_archive_entry_free(t);
 		if (r != ARCHIVE_OK)
-			lafe_warnc(archive_errno(cpio->archive),
-			    "%s", archive_error_string(cpio->archive));
+			lafe_warnc(tk_archive_errno(cpio->archive),
+			    "%s", tk_archive_error_string(cpio->archive));
 		if (r == ARCHIVE_FATAL)
 			exit(1);
 #ifdef EXDEV
-		if (r != ARCHIVE_OK && archive_errno(cpio->archive) == EXDEV) {
+		if (r != ARCHIVE_OK && tk_archive_errno(cpio->archive) == EXDEV) {
 			/* Cross-device link:  Just fall through and use
 			 * the original entry to copy the file over. */
 			lafe_warnc(0, "Copying file instead");
@@ -815,8 +815,8 @@ entry_to_archive(struct cpio *cpio, struct archive_entry *entry)
 	 * Make sure we can open the file (if necessary) before
 	 * trying to write the header.
 	 */
-	if (archive_entry_filetype(entry) == AE_IFREG) {
-		if (archive_entry_size(entry) > 0) {
+	if (tk_archive_entry_filetype(entry) == AE_IFREG) {
+		if (tk_archive_entry_size(entry) > 0) {
 			fd = open(srcpath, O_RDONLY | O_BINARY);
 			if (fd < 0) {
 				lafe_warnc(errno,
@@ -825,29 +825,29 @@ entry_to_archive(struct cpio *cpio, struct archive_entry *entry)
 			}
 		}
 	} else {
-		archive_entry_set_size(entry, 0);
+		tk_archive_entry_set_size(entry, 0);
 	}
 
-	r = archive_write_header(cpio->archive, entry);
+	r = tk_archive_write_header(cpio->archive, entry);
 
 	if (r != ARCHIVE_OK)
-		lafe_warnc(archive_errno(cpio->archive),
+		lafe_warnc(tk_archive_errno(cpio->archive),
 		    "%s: %s",
 		    srcpath,
-		    archive_error_string(cpio->archive));
+		    tk_archive_error_string(cpio->archive));
 
 	if (r == ARCHIVE_FATAL)
 		exit(1);
 
-	if (r >= ARCHIVE_WARN && archive_entry_size(entry) > 0 && fd >= 0) {
+	if (r >= ARCHIVE_WARN && tk_archive_entry_size(entry) > 0 && fd >= 0) {
 		bytes_read = read(fd, cpio->buff, (unsigned)cpio->buff_size);
 		while (bytes_read > 0) {
 			ssize_t bytes_write;
-			bytes_write = archive_write_data(cpio->archive,
+			bytes_write = tk_archive_write_data(cpio->archive,
 			    cpio->buff, bytes_read);
 			if (bytes_write < 0)
-				lafe_errc(1, archive_errno(cpio->archive),
-				    "%s", archive_error_string(cpio->archive));
+				lafe_errc(1, tk_archive_errno(cpio->archive),
+				    "%s", tk_archive_error_string(cpio->archive));
 			if (bytes_write < bytes_read) {
 				lafe_warnc(0,
 				    "Truncated write; file may have "
@@ -869,7 +869,7 @@ cleanup:
 }
 
 static int
-restore_time(struct cpio *cpio, struct archive_entry *entry,
+restore_time(struct cpio *cpio, struct tk_archive_entry *entry,
     const char *name, int fd)
 {
 #ifndef HAVE_UTIMES
@@ -893,11 +893,11 @@ restore_time(struct cpio *cpio, struct archive_entry *entry,
 	if (!cpio->option_atime_restore)
 		return (fd);
 
-        times[1].tv_sec = archive_entry_mtime(entry);
-        times[1].tv_usec = archive_entry_mtime_nsec(entry) / 1000;
+        times[1].tv_sec = tk_archive_entry_mtime(entry);
+        times[1].tv_usec = tk_archive_entry_mtime_nsec(entry) / 1000;
 
-        times[0].tv_sec = archive_entry_atime(entry);
-        times[0].tv_usec = archive_entry_atime_nsec(entry) / 1000;
+        times[0].tv_sec = tk_archive_entry_atime(entry);
+        times[0].tv_usec = tk_archive_entry_atime_nsec(entry) / 1000;
 
 #if defined(HAVE_FUTIMES) && !defined(__CYGWIN__)
         if (fd >= 0 && futimes(fd, times) == 0)
@@ -915,7 +915,7 @@ restore_time(struct cpio *cpio, struct archive_entry *entry,
 #ifdef HAVE_LUTIMES
         if (lutimes(name, times) != 0)
 #else
-        if ((AE_IFLNK != archive_entry_filetype(entry))
+        if ((AE_IFLNK != tk_archive_entry_filetype(entry))
 			&& utimes(name, times) != 0)
 #endif
                 lafe_warnc(errno, "Can't update time for %s", name);
@@ -928,42 +928,42 @@ static void
 mode_in(struct cpio *cpio)
 {
 	struct archive *a;
-	struct archive_entry *entry;
+	struct tk_archive_entry *entry;
 	struct archive *ext;
 	const char *destpath;
 	int r;
 
-	ext = archive_write_disk_new();
+	ext = tk_archive_write_disk_new();
 	if (ext == NULL)
 		lafe_errc(1, 0, "Couldn't allocate restore object");
-	r = archive_write_disk_set_options(ext, cpio->extract_flags);
+	r = tk_archive_write_disk_set_options(ext, cpio->extract_flags);
 	if (r != ARCHIVE_OK)
-		lafe_errc(1, 0, "%s", archive_error_string(ext));
-	a = archive_read_new();
+		lafe_errc(1, 0, "%s", tk_archive_error_string(ext));
+	a = tk_archive_read_new();
 	if (a == NULL)
 		lafe_errc(1, 0, "Couldn't allocate archive object");
-	archive_read_support_filter_all(a);
-	archive_read_support_format_all(a);
+	tk_archive_read_support_filter_all(a);
+	tk_archive_read_support_format_all(a);
 
-	if (archive_read_open_filename(a, cpio->filename,
+	if (tk_archive_read_open_filename(a, cpio->filename,
 					cpio->bytes_per_block))
-		lafe_errc(1, archive_errno(a),
-		    "%s", archive_error_string(a));
+		lafe_errc(1, tk_archive_errno(a),
+		    "%s", tk_archive_error_string(a));
 	for (;;) {
-		r = archive_read_next_header(a, &entry);
+		r = tk_archive_read_next_header(a, &entry);
 		if (r == ARCHIVE_EOF)
 			break;
 		if (r != ARCHIVE_OK) {
-			lafe_errc(1, archive_errno(a),
-			    "%s", archive_error_string(a));
+			lafe_errc(1, tk_archive_errno(a),
+			    "%s", tk_archive_error_string(a));
 		}
-		if (archive_match_path_excluded(cpio->matching, entry))
+		if (tk_archive_match_path_excluded(cpio->matching, entry))
 			continue;
 		if (cpio->option_rename) {
-			destpath = cpio_rename(archive_entry_pathname(entry));
-			archive_entry_set_pathname(entry, destpath);
+			destpath = cpio_rename(tk_archive_entry_pathname(entry));
+			tk_archive_entry_set_pathname(entry, destpath);
 		} else
-			destpath = archive_entry_pathname(entry);
+			destpath = tk_archive_entry_pathname(entry);
 		if (destpath == NULL)
 			continue;
 		if (cpio->verbose)
@@ -971,37 +971,37 @@ mode_in(struct cpio *cpio)
 		if (cpio->dot)
 			fprintf(stderr, ".");
 		if (cpio->uid_override >= 0)
-			archive_entry_set_uid(entry, cpio->uid_override);
+			tk_archive_entry_set_uid(entry, cpio->uid_override);
 		if (cpio->gid_override >= 0)
-			archive_entry_set_gid(entry, cpio->gid_override);
-		r = archive_write_header(ext, entry);
+			tk_archive_entry_set_gid(entry, cpio->gid_override);
+		r = tk_archive_write_header(ext, entry);
 		if (r != ARCHIVE_OK) {
 			fprintf(stderr, "%s: %s\n",
-			    archive_entry_pathname(entry),
-			    archive_error_string(ext));
-		} else if (!archive_entry_size_is_set(entry)
-		    || archive_entry_size(entry) > 0) {
+			    tk_archive_entry_pathname(entry),
+			    tk_archive_error_string(ext));
+		} else if (!tk_archive_entry_size_is_set(entry)
+		    || tk_archive_entry_size(entry) > 0) {
 			r = extract_data(a, ext);
 			if (r != ARCHIVE_OK)
 				cpio->return_value = 1;
 		}
 	}
-	r = archive_read_close(a);
+	r = tk_archive_read_close(a);
 	if (cpio->dot)
 		fprintf(stderr, "\n");
 	if (r != ARCHIVE_OK)
-		lafe_errc(1, 0, "%s", archive_error_string(a));
-	r = archive_write_close(ext);
+		lafe_errc(1, 0, "%s", tk_archive_error_string(a));
+	r = tk_archive_write_close(ext);
 	if (r != ARCHIVE_OK)
-		lafe_errc(1, 0, "%s", archive_error_string(ext));
+		lafe_errc(1, 0, "%s", tk_archive_error_string(ext));
 	if (!cpio->quiet) {
-		int64_t blocks = (archive_filter_bytes(a, 0) + 511)
+		int64_t blocks = (tk_archive_filter_bytes(a, 0) + 511)
 			      / 512;
 		fprintf(stderr, "%lu %s\n", (unsigned long)blocks,
 		    blocks == 1 ? "block" : "blocks");
 	}
-	archive_read_free(a);
-	archive_write_free(ext);
+	tk_archive_read_free(a);
+	tk_archive_write_free(ext);
 	exit(cpio->return_value);
 }
 
@@ -1018,18 +1018,18 @@ extract_data(struct archive *ar, struct archive *aw)
 	int64_t offset;
 
 	for (;;) {
-		r = archive_read_data_block(ar, &block, &size, &offset);
+		r = tk_archive_read_data_block(ar, &block, &size, &offset);
 		if (r == ARCHIVE_EOF)
 			return (ARCHIVE_OK);
 		if (r != ARCHIVE_OK) {
-			lafe_warnc(archive_errno(ar),
-			    "%s", archive_error_string(ar));
+			lafe_warnc(tk_archive_errno(ar),
+			    "%s", tk_archive_error_string(ar));
 			exit(1);
 		}
-		r = (int)archive_write_data_block(aw, block, size, offset);
+		r = (int)tk_archive_write_data_block(aw, block, size, offset);
 		if (r != ARCHIVE_OK) {
-			lafe_warnc(archive_errno(aw),
-			    "%s", archive_error_string(aw));
+			lafe_warnc(tk_archive_errno(aw),
+			    "%s", tk_archive_error_string(aw));
 			return (r);
 		}
 	}
@@ -1039,44 +1039,44 @@ static void
 mode_list(struct cpio *cpio)
 {
 	struct archive *a;
-	struct archive_entry *entry;
+	struct tk_archive_entry *entry;
 	int r;
 
-	a = archive_read_new();
+	a = tk_archive_read_new();
 	if (a == NULL)
 		lafe_errc(1, 0, "Couldn't allocate archive object");
-	archive_read_support_filter_all(a);
-	archive_read_support_format_all(a);
+	tk_archive_read_support_filter_all(a);
+	tk_archive_read_support_format_all(a);
 
-	if (archive_read_open_filename(a, cpio->filename,
+	if (tk_archive_read_open_filename(a, cpio->filename,
 					cpio->bytes_per_block))
-		lafe_errc(1, archive_errno(a),
-		    "%s", archive_error_string(a));
+		lafe_errc(1, tk_archive_errno(a),
+		    "%s", tk_archive_error_string(a));
 	for (;;) {
-		r = archive_read_next_header(a, &entry);
+		r = tk_archive_read_next_header(a, &entry);
 		if (r == ARCHIVE_EOF)
 			break;
 		if (r != ARCHIVE_OK) {
-			lafe_errc(1, archive_errno(a),
-			    "%s", archive_error_string(a));
+			lafe_errc(1, tk_archive_errno(a),
+			    "%s", tk_archive_error_string(a));
 		}
-		if (archive_match_path_excluded(cpio->matching, entry))
+		if (tk_archive_match_path_excluded(cpio->matching, entry))
 			continue;
 		if (cpio->verbose)
 			list_item_verbose(cpio, entry);
 		else
-			fprintf(stdout, "%s\n", archive_entry_pathname(entry));
+			fprintf(stdout, "%s\n", tk_archive_entry_pathname(entry));
 	}
-	r = archive_read_close(a);
+	r = tk_archive_read_close(a);
 	if (r != ARCHIVE_OK)
-		lafe_errc(1, 0, "%s", archive_error_string(a));
+		lafe_errc(1, 0, "%s", tk_archive_error_string(a));
 	if (!cpio->quiet) {
-		int64_t blocks = (archive_filter_bytes(a, 0) + 511)
+		int64_t blocks = (tk_archive_filter_bytes(a, 0) + 511)
 			      / 512;
 		fprintf(stderr, "%lu %s\n", (unsigned long)blocks,
 		    blocks == 1 ? "block" : "blocks");
 	}
-	archive_read_free(a);
+	tk_archive_read_free(a);
 	exit(0);
 }
 
@@ -1089,7 +1089,7 @@ mode_list(struct cpio *cpio)
  * and 'pax -l' is documented as using the same format as 'ls -l'.
  */
 static void
-list_item_verbose(struct cpio *cpio, struct archive_entry *entry)
+list_item_verbose(struct cpio *cpio, struct tk_archive_entry *entry)
 {
 	char			 size[32];
 	char			 date[32];
@@ -1105,33 +1105,33 @@ list_item_verbose(struct cpio *cpio, struct archive_entry *entry)
 
 	if (cpio->option_numeric_uid_gid) {
 		/* Format numeric uid/gid for display. */
-		strcpy(uids, cpio_i64toa(archive_entry_uid(entry)));
+		strcpy(uids, cpio_i64toa(tk_archive_entry_uid(entry)));
 		uname = uids;
-		strcpy(gids, cpio_i64toa(archive_entry_gid(entry)));
+		strcpy(gids, cpio_i64toa(tk_archive_entry_gid(entry)));
 		gname = gids;
 	} else {
 		/* Use uname if it's present, else lookup name from uid. */
-		uname = archive_entry_uname(entry);
+		uname = tk_archive_entry_uname(entry);
 		if (uname == NULL)
-			uname = lookup_uname(cpio, (uid_t)archive_entry_uid(entry));
+			uname = lookup_uname(cpio, (uid_t)tk_archive_entry_uid(entry));
 		/* Use gname if it's present, else lookup name from gid. */
-		gname = archive_entry_gname(entry);
+		gname = tk_archive_entry_gname(entry);
 		if (gname == NULL)
-			gname = lookup_gname(cpio, (uid_t)archive_entry_gid(entry));
+			gname = lookup_gname(cpio, (uid_t)tk_archive_entry_gid(entry));
 	}
 
 	/* Print device number or file size. */
-	if (archive_entry_filetype(entry) == AE_IFCHR
-	    || archive_entry_filetype(entry) == AE_IFBLK) {
+	if (tk_archive_entry_filetype(entry) == AE_IFCHR
+	    || tk_archive_entry_filetype(entry) == AE_IFBLK) {
 		snprintf(size, sizeof(size), "%lu,%lu",
-		    (unsigned long)archive_entry_rdevmajor(entry),
-		    (unsigned long)archive_entry_rdevminor(entry));
+		    (unsigned long)tk_archive_entry_rdevmajor(entry),
+		    (unsigned long)tk_archive_entry_rdevminor(entry));
 	} else {
-		strcpy(size, cpio_i64toa(archive_entry_size(entry)));
+		strcpy(size, cpio_i64toa(tk_archive_entry_size(entry)));
 	}
 
 	/* Format the time using 'ls -l' conventions. */
-	mtime = archive_entry_mtime(entry);
+	mtime = tk_archive_entry_mtime(entry);
 #if defined(_WIN32) && !defined(__CYGWIN__)
 	/* Windows' strftime function does not support %e format. */
 	if (mtime - now > 365*86400/2
@@ -1148,16 +1148,16 @@ list_item_verbose(struct cpio *cpio, struct archive_entry *entry)
 	strftime(date, sizeof(date), fmt, localtime(&mtime));
 
 	fprintf(out, "%s%3d %-8s %-8s %8s %12s %s",
-	    archive_entry_strmode(entry),
-	    archive_entry_nlink(entry),
+	    tk_archive_entry_strmode(entry),
+	    tk_archive_entry_nlink(entry),
 	    uname, gname, size, date,
-	    archive_entry_pathname(entry));
+	    tk_archive_entry_pathname(entry));
 
 	/* Extra information for links. */
-	if (archive_entry_hardlink(entry)) /* Hard link */
-		fprintf(out, " link to %s", archive_entry_hardlink(entry));
-	else if (archive_entry_symlink(entry)) /* Symbolic link */
-		fprintf(out, " -> %s", archive_entry_symlink(entry));
+	if (tk_archive_entry_hardlink(entry)) /* Hard link */
+		fprintf(out, " link to %s", tk_archive_entry_hardlink(entry));
+	else if (tk_archive_entry_symlink(entry)) /* Symbolic link */
+		fprintf(out, " -> %s", tk_archive_entry_symlink(entry));
 	fprintf(out, "\n");
 }
 
@@ -1174,45 +1174,45 @@ mode_pass(struct cpio *cpio, const char *destdir)
 	if (destdir[strlen(destdir) - 1] != '/')
 		strcat(cpio->destdir, "/");
 
-	cpio->archive = archive_write_disk_new();
+	cpio->archive = tk_archive_write_disk_new();
 	if (cpio->archive == NULL)
 		lafe_errc(1, 0, "Failed to allocate archive object");
-	r = archive_write_disk_set_options(cpio->archive, cpio->extract_flags);
+	r = tk_archive_write_disk_set_options(cpio->archive, cpio->extract_flags);
 	if (r != ARCHIVE_OK)
-		lafe_errc(1, 0, "%s", archive_error_string(cpio->archive));
-	cpio->linkresolver = archive_entry_linkresolver_new();
-	archive_write_disk_set_standard_lookup(cpio->archive);
+		lafe_errc(1, 0, "%s", tk_archive_error_string(cpio->archive));
+	cpio->linkresolver = tk_archive_entry_linkresolver_new();
+	tk_archive_write_disk_set_standard_lookup(cpio->archive);
 
-	cpio->archive_read_disk = archive_read_disk_new();
-	if (cpio->archive_read_disk == NULL)
+	cpio->tk_archive_read_disk = tk_archive_read_disk_new();
+	if (cpio->tk_archive_read_disk == NULL)
 		lafe_errc(1, 0, "Failed to allocate archive object");
 	if (cpio->option_follow_links)
-		archive_read_disk_set_symlink_logical(cpio->archive_read_disk);
+		tk_archive_read_disk_set_symlink_logical(cpio->tk_archive_read_disk);
 	else
-		archive_read_disk_set_symlink_physical(cpio->archive_read_disk);
-	archive_read_disk_set_standard_lookup(cpio->archive_read_disk);
+		tk_archive_read_disk_set_symlink_physical(cpio->tk_archive_read_disk);
+	tk_archive_read_disk_set_standard_lookup(cpio->tk_archive_read_disk);
 
 	lr = lafe_line_reader("-", cpio->option_null);
 	while ((p = lafe_line_reader_next(lr)) != NULL)
 		file_to_archive(cpio, p);
 	lafe_line_reader_free(lr);
 
-	archive_entry_linkresolver_free(cpio->linkresolver);
-	r = archive_write_close(cpio->archive);
+	tk_archive_entry_linkresolver_free(cpio->linkresolver);
+	r = tk_archive_write_close(cpio->archive);
 	if (cpio->dot)
 		fprintf(stderr, "\n");
 	if (r != ARCHIVE_OK)
-		lafe_errc(1, 0, "%s", archive_error_string(cpio->archive));
+		lafe_errc(1, 0, "%s", tk_archive_error_string(cpio->archive));
 
 	if (!cpio->quiet) {
 		int64_t blocks =
-			(archive_filter_bytes(cpio->archive, 0) + 511)
+			(tk_archive_filter_bytes(cpio->archive, 0) + 511)
 			/ 512;
 		fprintf(stderr, "%lu %s\n", (unsigned long)blocks,
 		    blocks == 1 ? "block" : "blocks");
 	}
 
-	archive_write_free(cpio->archive);
+	tk_archive_write_free(cpio->archive);
 }
 
 /*

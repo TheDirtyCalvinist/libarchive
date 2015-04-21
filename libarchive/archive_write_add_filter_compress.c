@@ -108,18 +108,18 @@ struct private_data {
 	size_t		 compressed_offset;
 };
 
-static int archive_compressor_compress_open(struct archive_write_filter *);
-static int archive_compressor_compress_write(struct archive_write_filter *,
+static int tk_archive_compressor_compress_open(struct tk_archive_write_filter *);
+static int tk_archive_compressor_compress_write(struct tk_archive_write_filter *,
 		    const void *, size_t);
-static int archive_compressor_compress_close(struct archive_write_filter *);
-static int archive_compressor_compress_free(struct archive_write_filter *);
+static int tk_archive_compressor_compress_close(struct tk_archive_write_filter *);
+static int tk_archive_compressor_compress_free(struct tk_archive_write_filter *);
 
 #if ARCHIVE_VERSION_NUMBER < 4000000
 int
-archive_write_set_compression_compress(struct archive *a)
+tk_archive_write_set_compression_compress(struct archive *a)
 {
-	__archive_write_filters_free(a);
-	return (archive_write_add_filter_compress(a));
+	__tk_archive_write_filters_free(a);
+	return (tk_archive_write_add_filter_compress(a));
 }
 #endif
 
@@ -127,14 +127,14 @@ archive_write_set_compression_compress(struct archive *a)
  * Add a compress filter to this write handle.
  */
 int
-archive_write_add_filter_compress(struct archive *_a)
+tk_archive_write_add_filter_compress(struct archive *_a)
 {
-	struct archive_write *a = (struct archive_write *)_a;
-	struct archive_write_filter *f = __archive_write_allocate_filter(_a);
+	struct tk_archive_write *a = (struct tk_archive_write *)_a;
+	struct tk_archive_write_filter *f = __tk_archive_write_allocate_filter(_a);
 
-	archive_check_magic(&a->archive, ARCHIVE_WRITE_MAGIC,
-	    ARCHIVE_STATE_NEW, "archive_write_add_filter_compress");
-	f->open = &archive_compressor_compress_open;
+	tk_archive_check_magic(&a->archive, ARCHIVE_WRITE_MAGIC,
+	    ARCHIVE_STATE_NEW, "tk_archive_write_add_filter_compress");
+	f->open = &tk_archive_compressor_compress_open;
 	f->code = ARCHIVE_FILTER_COMPRESS;
 	f->name = "compress";
 	return (ARCHIVE_OK);
@@ -144,7 +144,7 @@ archive_write_add_filter_compress(struct archive *_a)
  * Setup callback.
  */
 static int
-archive_compressor_compress_open(struct archive_write_filter *f)
+tk_archive_compressor_compress_open(struct tk_archive_write_filter *f)
 {
 	int ret;
 	struct private_data *state;
@@ -153,13 +153,13 @@ archive_compressor_compress_open(struct archive_write_filter *f)
 	f->code = ARCHIVE_FILTER_COMPRESS;
 	f->name = "compress";
 
-	ret = __archive_write_open_filter(f->next_filter);
+	ret = __tk_archive_write_open_filter(f->next_filter);
 	if (ret != ARCHIVE_OK)
 		return (ret);
 
 	state = (struct private_data *)calloc(1, sizeof(*state));
 	if (state == NULL) {
-		archive_set_error(f->archive, ENOMEM,
+		tk_archive_set_error(f->archive, ENOMEM,
 		    "Can't allocate data for compression");
 		return (ARCHIVE_FATAL);
 	}
@@ -167,7 +167,7 @@ archive_compressor_compress_open(struct archive_write_filter *f)
 	if (f->archive->magic == ARCHIVE_WRITE_MAGIC) {
 		/* Buffer size should be a multiple number of the of bytes
 		 * per block for performance. */
-		bpb = archive_write_get_bytes_per_block(f->archive);
+		bpb = tk_archive_write_get_bytes_per_block(f->archive);
 		if (bpb > bs)
 			bs = bpb;
 		else if (bpb != 0)
@@ -177,15 +177,15 @@ archive_compressor_compress_open(struct archive_write_filter *f)
 	state->compressed = malloc(state->compressed_buffer_size);
 
 	if (state->compressed == NULL) {
-		archive_set_error(f->archive, ENOMEM,
+		tk_archive_set_error(f->archive, ENOMEM,
 		    "Can't allocate data for compression buffer");
 		free(state);
 		return (ARCHIVE_FATAL);
 	}
 
-	f->write = archive_compressor_compress_write;
-	f->close = archive_compressor_compress_close;
-	f->free = archive_compressor_compress_free;
+	f->write = tk_archive_compressor_compress_write;
+	f->close = tk_archive_compressor_compress_close;
+	f->free = tk_archive_compressor_compress_free;
 
 	state->max_maxcode = 0x10000;	/* Should NEVER generate this code. */
 	state->in_count = 0;		/* Length of input. */
@@ -229,7 +229,7 @@ static const unsigned char rmask[9] =
 	{0x00, 0x01, 0x03, 0x07, 0x0f, 0x1f, 0x3f, 0x7f, 0xff};
 
 static int
-output_byte(struct archive_write_filter *f, unsigned char c)
+output_byte(struct tk_archive_write_filter *f, unsigned char c)
 {
 	struct private_data *state = f->data;
 
@@ -237,7 +237,7 @@ output_byte(struct archive_write_filter *f, unsigned char c)
 	++state->out_count;
 
 	if (state->compressed_buffer_size == state->compressed_offset) {
-		int ret = __archive_write_filter(f->next_filter,
+		int ret = __tk_archive_write_filter(f->next_filter,
 		    state->compressed, state->compressed_buffer_size);
 		if (ret != ARCHIVE_OK)
 			return ARCHIVE_FATAL;
@@ -248,7 +248,7 @@ output_byte(struct archive_write_filter *f, unsigned char c)
 }
 
 static int
-output_code(struct archive_write_filter *f, int ocode)
+output_code(struct tk_archive_write_filter *f, int ocode)
 {
 	struct private_data *state = f->data;
 	int bits, ret, clear_flg, bit_offset;
@@ -314,7 +314,7 @@ output_code(struct archive_write_filter *f, int ocode)
 }
 
 static int
-output_flush(struct archive_write_filter *f)
+output_flush(struct tk_archive_write_filter *f)
 {
 	struct private_data *state = f->data;
 	int ret;
@@ -334,7 +334,7 @@ output_flush(struct archive_write_filter *f)
  * Write data to the compressed stream.
  */
 static int
-archive_compressor_compress_write(struct archive_write_filter *f,
+tk_archive_compressor_compress_write(struct tk_archive_write_filter *f,
     const void *buff, size_t length)
 {
 	struct private_data *state = (struct private_data *)f->data;
@@ -423,7 +423,7 @@ archive_compressor_compress_write(struct archive_write_filter *f,
  * Finish the compression...
  */
 static int
-archive_compressor_compress_close(struct archive_write_filter *f)
+tk_archive_compressor_compress_close(struct tk_archive_write_filter *f)
 {
 	struct private_data *state = (struct private_data *)f->data;
 	int ret, ret2;
@@ -436,10 +436,10 @@ archive_compressor_compress_close(struct archive_write_filter *f)
 		goto cleanup;
 
 	/* Write the last block */
-	ret = __archive_write_filter(f->next_filter,
+	ret = __tk_archive_write_filter(f->next_filter,
 	    state->compressed, state->compressed_offset);
 cleanup:
-	ret2 = __archive_write_close_filter(f->next_filter);
+	ret2 = __tk_archive_write_close_filter(f->next_filter);
 	if (ret > ret2)
 		ret = ret2;
 	free(state->compressed);
@@ -448,7 +448,7 @@ cleanup:
 }
 
 static int
-archive_compressor_compress_free(struct archive_write_filter *f)
+tk_archive_compressor_compress_free(struct tk_archive_write_filter *f)
 {
 	(void)f; /* UNUSED */
 	return (ARCHIVE_OK);

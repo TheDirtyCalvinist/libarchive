@@ -37,7 +37,7 @@ __FBSDID("$FreeBSD$");
  */
 
 void
-archive_entry_sparse_clear(struct archive_entry *entry)
+tk_archive_entry_sparse_clear(struct tk_archive_entry *entry)
 {
 	struct ae_sparse *sp;
 
@@ -50,7 +50,7 @@ archive_entry_sparse_clear(struct archive_entry *entry)
 }
 
 void
-archive_entry_sparse_add_entry(struct archive_entry *entry,
+tk_archive_entry_sparse_add_entry(struct tk_archive_entry *entry,
 	int64_t offset, int64_t length)
 {
 	struct ae_sparse *sp;
@@ -59,7 +59,7 @@ archive_entry_sparse_add_entry(struct archive_entry *entry,
 		/* Invalid value */
 		return;
 	if (offset + length < 0 ||
-	    offset + length > archive_entry_size(entry))
+	    offset + length > tk_archive_entry_size(entry))
 		/* A value of "length" parameter is too large. */
 		return;
 	if ((sp = entry->sparse_tail) != NULL) {
@@ -100,7 +100,7 @@ archive_entry_sparse_add_entry(struct archive_entry *entry,
  * returns number of the sparse entries
  */
 int
-archive_entry_sparse_count(struct archive_entry *entry)
+tk_archive_entry_sparse_count(struct tk_archive_entry *entry)
 {
 	struct ae_sparse *sp;
 	int count = 0;
@@ -116,9 +116,9 @@ archive_entry_sparse_count(struct archive_entry *entry)
 	if (count == 1) {
 		sp = entry->sparse_head;
 		if (sp->offset == 0 &&
-		    sp->length >= archive_entry_size(entry)) {
+		    sp->length >= tk_archive_entry_size(entry)) {
 			count = 0;
-			archive_entry_sparse_clear(entry);
+			tk_archive_entry_sparse_clear(entry);
 		}
 	}
 
@@ -126,15 +126,15 @@ archive_entry_sparse_count(struct archive_entry *entry)
 }
 
 int
-archive_entry_sparse_reset(struct archive_entry * entry)
+tk_archive_entry_sparse_reset(struct tk_archive_entry * entry)
 {
 	entry->sparse_p = entry->sparse_head;
 
-	return archive_entry_sparse_count(entry);
+	return tk_archive_entry_sparse_count(entry);
 }
 
 int
-archive_entry_sparse_next(struct archive_entry * entry,
+tk_archive_entry_sparse_next(struct tk_archive_entry * entry,
 	int64_t *offset, int64_t *length)
 {
 	if (entry->sparse_p) {

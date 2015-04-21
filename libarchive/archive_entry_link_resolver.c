@@ -70,13 +70,13 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_entry_link_resolver.c 201100 200
 struct links_entry {
 	struct links_entry	*next;
 	struct links_entry	*previous;
-	struct archive_entry	*canonical;
-	struct archive_entry	*entry;
+	struct tk_archive_entry	*canonical;
+	struct tk_archive_entry	*entry;
 	size_t			 hash;
 	unsigned int		 links; /* # links not yet seen */
 };
 
-struct archive_entry_linkresolver {
+struct tk_archive_entry_linkresolver {
 	struct links_entry	**buckets;
 	struct links_entry	 *spare;
 	unsigned long		  number_entries;
@@ -88,25 +88,25 @@ struct archive_entry_linkresolver {
 #define	NEXT_ENTRY_PARTIAL	2
 #define	NEXT_ENTRY_ALL		(NEXT_ENTRY_DEFERRED | NEXT_ENTRY_PARTIAL)
 
-static struct links_entry *find_entry(struct archive_entry_linkresolver *,
-		    struct archive_entry *);
-static void grow_hash(struct archive_entry_linkresolver *);
-static struct links_entry *insert_entry(struct archive_entry_linkresolver *,
-		    struct archive_entry *);
-static struct links_entry *next_entry(struct archive_entry_linkresolver *,
+static struct links_entry *find_entry(struct tk_archive_entry_linkresolver *,
+		    struct tk_archive_entry *);
+static void grow_hash(struct tk_archive_entry_linkresolver *);
+static struct links_entry *insert_entry(struct tk_archive_entry_linkresolver *,
+		    struct tk_archive_entry *);
+static struct links_entry *next_entry(struct tk_archive_entry_linkresolver *,
     int);
 
-struct archive_entry_linkresolver *
-archive_entry_linkresolver_new(void)
+struct tk_archive_entry_linkresolver *
+tk_archive_entry_linkresolver_new(void)
 {
-	struct archive_entry_linkresolver *res;
+	struct tk_archive_entry_linkresolver *res;
 
 	/* Check for positive power-of-two */
 	if (links_cache_initial_size == 0 ||
 	    (links_cache_initial_size & (links_cache_initial_size - 1)) != 0)
 		return (NULL);
 
-	res = calloc(1, sizeof(struct archive_entry_linkresolver));
+	res = calloc(1, sizeof(struct tk_archive_entry_linkresolver));
 	if (res == NULL)
 		return (NULL);
 	res->number_buckets = links_cache_initial_size;
@@ -119,7 +119,7 @@ archive_entry_linkresolver_new(void)
 }
 
 void
-archive_entry_linkresolver_set_strategy(struct archive_entry_linkresolver *res,
+tk_archive_entry_linkresolver_set_strategy(struct tk_archive_entry_linkresolver *res,
     int fmt)
 {
 	int fmtbase = fmt & ARCHIVE_FORMAT_BASE_MASK;
@@ -157,7 +157,7 @@ archive_entry_linkresolver_set_strategy(struct archive_entry_linkresolver *res,
 }
 
 void
-archive_entry_linkresolver_free(struct archive_entry_linkresolver *res)
+tk_archive_entry_linkresolver_free(struct tk_archive_entry_linkresolver *res)
 {
 	struct links_entry *le;
 
@@ -165,17 +165,17 @@ archive_entry_linkresolver_free(struct archive_entry_linkresolver *res)
 		return;
 
 	while ((le = next_entry(res, NEXT_ENTRY_ALL)) != NULL)
-		archive_entry_free(le->entry);
+		tk_archive_entry_free(le->entry);
 	free(res->buckets);
 	free(res);
 }
 
 void
-archive_entry_linkify(struct archive_entry_linkresolver *res,
-    struct archive_entry **e, struct archive_entry **f)
+tk_archive_entry_linkify(struct tk_archive_entry_linkresolver *res,
+    struct tk_archive_entry **e, struct tk_archive_entry **f)
 {
 	struct links_entry *le;
-	struct archive_entry *t;
+	struct tk_archive_entry *t;
 
 	*f = NULL; /* Default: Don't return a second entry. */
 
@@ -189,29 +189,29 @@ archive_entry_linkify(struct archive_entry_linkresolver *res,
 	}
 
 	/* If it has only one link, then we're done. */
-	if (archive_entry_nlink(*e) == 1)
+	if (tk_archive_entry_nlink(*e) == 1)
 		return;
 	/* Directories, devices never have hardlinks. */
-	if (archive_entry_filetype(*e) == AE_IFDIR
-	    || archive_entry_filetype(*e) == AE_IFBLK
-	    || archive_entry_filetype(*e) == AE_IFCHR)
+	if (tk_archive_entry_filetype(*e) == AE_IFDIR
+	    || tk_archive_entry_filetype(*e) == AE_IFBLK
+	    || tk_archive_entry_filetype(*e) == AE_IFCHR)
 		return;
 
 	switch (res->strategy) {
 	case ARCHIVE_ENTRY_LINKIFY_LIKE_TAR:
 		le = find_entry(res, *e);
 		if (le != NULL) {
-			archive_entry_unset_size(*e);
-			archive_entry_copy_hardlink(*e,
-			    archive_entry_pathname(le->canonical));
+			tk_archive_entry_unset_size(*e);
+			tk_archive_entry_copy_hardlink(*e,
+			    tk_archive_entry_pathname(le->canonical));
 		} else
 			insert_entry(res, *e);
 		return;
 	case ARCHIVE_ENTRY_LINKIFY_LIKE_MTREE:
 		le = find_entry(res, *e);
 		if (le != NULL) {
-			archive_entry_copy_hardlink(*e,
-			    archive_entry_pathname(le->canonical));
+			tk_archive_entry_copy_hardlink(*e,
+			    tk_archive_entry_pathname(le->canonical));
 		} else
 			insert_entry(res, *e);
 		return;
@@ -229,9 +229,9 @@ archive_entry_linkify(struct archive_entry_linkresolver *res,
 			*e = le->entry;
 			le->entry = t;
 			/* Make the old entry into a hardlink. */
-			archive_entry_unset_size(*e);
-			archive_entry_copy_hardlink(*e,
-			    archive_entry_pathname(le->canonical));
+			tk_archive_entry_unset_size(*e);
+			tk_archive_entry_copy_hardlink(*e,
+			    tk_archive_entry_pathname(le->canonical));
 			/* If we ran out of links, return the
 			 * final entry as well. */
 			if (le->links == 0) {
@@ -258,8 +258,8 @@ archive_entry_linkify(struct archive_entry_linkresolver *res,
 }
 
 static struct links_entry *
-find_entry(struct archive_entry_linkresolver *res,
-    struct archive_entry *entry)
+find_entry(struct tk_archive_entry_linkresolver *res,
+    struct tk_archive_entry *entry)
 {
 	struct links_entry	*le;
 	size_t			 hash, bucket;
@@ -268,22 +268,22 @@ find_entry(struct archive_entry_linkresolver *res,
 
 	/* Free a held entry. */
 	if (res->spare != NULL) {
-		archive_entry_free(res->spare->canonical);
-		archive_entry_free(res->spare->entry);
+		tk_archive_entry_free(res->spare->canonical);
+		tk_archive_entry_free(res->spare->entry);
 		free(res->spare);
 		res->spare = NULL;
 	}
 
-	dev = archive_entry_dev(entry);
-	ino = archive_entry_ino64(entry);
+	dev = tk_archive_entry_dev(entry);
+	ino = tk_archive_entry_ino64(entry);
 	hash = (size_t)(dev ^ ino);
 
 	/* Try to locate this entry in the links cache. */
 	bucket = hash & (res->number_buckets - 1);
 	for (le = res->buckets[bucket]; le != NULL; le = le->next) {
 		if (le->hash == hash
-		    && dev == archive_entry_dev(le->canonical)
-		    && ino == archive_entry_ino64(le->canonical)) {
+		    && dev == tk_archive_entry_dev(le->canonical)
+		    && ino == tk_archive_entry_ino64(le->canonical)) {
 			/*
 			 * Decrement link count each time and release
 			 * the entry if it hits zero.  This saves
@@ -310,15 +310,15 @@ find_entry(struct archive_entry_linkresolver *res,
 }
 
 static struct links_entry *
-next_entry(struct archive_entry_linkresolver *res, int mode)
+next_entry(struct tk_archive_entry_linkresolver *res, int mode)
 {
 	struct links_entry	*le;
 	size_t			 bucket;
 
 	/* Free a held entry. */
 	if (res->spare != NULL) {
-		archive_entry_free(res->spare->canonical);
-		archive_entry_free(res->spare->entry);
+		tk_archive_entry_free(res->spare->canonical);
+		tk_archive_entry_free(res->spare->entry);
 		free(res->spare);
 		res->spare = NULL;
 	}
@@ -349,8 +349,8 @@ next_entry(struct archive_entry_linkresolver *res, int mode)
 }
 
 static struct links_entry *
-insert_entry(struct archive_entry_linkresolver *res,
-    struct archive_entry *entry)
+insert_entry(struct tk_archive_entry_linkresolver *res,
+    struct tk_archive_entry *entry)
 {
 	struct links_entry *le;
 	size_t hash, bucket;
@@ -359,13 +359,13 @@ insert_entry(struct archive_entry_linkresolver *res,
 	le = calloc(1, sizeof(struct links_entry));
 	if (le == NULL)
 		return (NULL);
-	le->canonical = archive_entry_clone(entry);
+	le->canonical = tk_archive_entry_clone(entry);
 
 	/* If the links cache is getting too full, enlarge the hash table. */
 	if (res->number_entries > res->number_buckets * 2)
 		grow_hash(res);
 
-	hash = (size_t)(archive_entry_dev(entry) ^ archive_entry_ino64(entry));
+	hash = (size_t)(tk_archive_entry_dev(entry) ^ tk_archive_entry_ino64(entry));
 	bucket = hash & (res->number_buckets - 1);
 
 	/* If we could allocate the entry, record it. */
@@ -376,12 +376,12 @@ insert_entry(struct archive_entry_linkresolver *res,
 	le->previous = NULL;
 	res->buckets[bucket] = le;
 	le->hash = hash;
-	le->links = archive_entry_nlink(entry) - 1;
+	le->links = tk_archive_entry_nlink(entry) - 1;
 	return (le);
 }
 
 static void
-grow_hash(struct archive_entry_linkresolver *res)
+grow_hash(struct tk_archive_entry_linkresolver *res)
 {
 	struct links_entry *le, **new_buckets;
 	size_t new_size;
@@ -417,17 +417,17 @@ grow_hash(struct archive_entry_linkresolver *res)
 	res->number_buckets = new_size;
 }
 
-struct archive_entry *
-archive_entry_partial_links(struct archive_entry_linkresolver *res,
+struct tk_archive_entry *
+tk_archive_entry_partial_links(struct tk_archive_entry_linkresolver *res,
     unsigned int *links)
 {
-	struct archive_entry	*e;
+	struct tk_archive_entry	*e;
 	struct links_entry	*le;
 
 	/* Free a held entry. */
 	if (res->spare != NULL) {
-		archive_entry_free(res->spare->canonical);
-		archive_entry_free(res->spare->entry);
+		tk_archive_entry_free(res->spare->canonical);
+		tk_archive_entry_free(res->spare->entry);
 		free(res->spare);
 		res->spare = NULL;
 	}

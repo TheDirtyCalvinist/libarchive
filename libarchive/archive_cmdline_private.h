@@ -34,14 +34,14 @@
 #ifndef ARCHIVE_CMDLINE_PRIVATE_H
 #define ARCHIVE_CMDLINE_PRIVATE_H
 
-struct archive_cmdline {
+struct tk_archive_cmdline {
         char            *path;
         char            **argv;
         int              argc;
 };
 
-struct archive_cmdline *__archive_cmdline_allocate(void);
-int __archive_cmdline_parse(struct archive_cmdline *, const char *);
-int __archive_cmdline_free(struct archive_cmdline *);
+struct tk_archive_cmdline *__tk_archive_cmdline_allocate(void);
+int __tk_archive_cmdline_parse(struct tk_archive_cmdline *, const char *);
+int __tk_archive_cmdline_free(struct tk_archive_cmdline *);
 
 #endif

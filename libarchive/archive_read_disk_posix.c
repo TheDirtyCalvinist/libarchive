@@ -148,7 +148,7 @@ struct tree_entry {
 	int			 depth;
 	struct tree_entry	*next;
 	struct tree_entry	*parent;
-	struct archive_string	 name;
+	struct tk_archive_string	 name;
 	size_t			 dirname_length;
 	int64_t			 dev;
 	int64_t			 ino;
@@ -210,7 +210,7 @@ struct tree {
 	int			 tree_errno;
 
 	/* Dynamically-sized buffer for holding path */
-	struct archive_string	 path;
+	struct tk_archive_string	 path;
 
 	/* Last path element */
 	const char		*basename;
@@ -346,49 +346,49 @@ static int	tree_current_is_symblic_link_target(struct tree *);
 static int tree_current_is_physical_dir(struct tree *);
 /* "is_dir" is equivalent to S_ISDIR(tree_current_stat()->st_mode) */
 static int tree_current_is_dir(struct tree *);
-static int update_current_filesystem(struct archive_read_disk *a,
+static int update_current_filesystem(struct tk_archive_read_disk *a,
 		    int64_t dev);
-static int setup_current_filesystem(struct archive_read_disk *);
+static int setup_current_filesystem(struct tk_archive_read_disk *);
 static int tree_target_is_same_as_parent(struct tree *, const struct stat *);
 
-static int	_archive_read_disk_open(struct archive *, const char *);
-static int	_archive_read_free(struct archive *);
-static int	_archive_read_close(struct archive *);
-static int	_archive_read_data_block(struct archive *,
+static int	_tk_archive_read_disk_open(struct archive *, const char *);
+static int	_tk_archive_read_free(struct archive *);
+static int	_tk_archive_read_close(struct archive *);
+static int	_tk_archive_read_data_block(struct archive *,
 		    const void **, size_t *, int64_t *);
-static int	_archive_read_next_header2(struct archive *,
-		    struct archive_entry *);
+static int	_tk_archive_read_next_header2(struct archive *,
+		    struct tk_archive_entry *);
 static const char *trivial_lookup_gname(void *, int64_t gid);
 static const char *trivial_lookup_uname(void *, int64_t uid);
-static int	setup_sparse(struct archive_read_disk *, struct archive_entry *);
+static int	setup_sparse(struct tk_archive_read_disk *, struct tk_archive_entry *);
 static int	close_and_restore_time(int fd, struct tree *,
 		    struct restore_time *);
 static int	open_on_current_dir(struct tree *, const char *, int);
 static int	tree_dup(int);
 
 
-static struct archive_vtable *
-archive_read_disk_vtable(void)
+static struct tk_archive_vtable *
+tk_archive_read_disk_vtable(void)
 {
-	static struct archive_vtable av;
+	static struct tk_archive_vtable av;
 	static int inited = 0;
 
 	if (!inited) {
-		av.archive_free = _archive_read_free;
-		av.archive_close = _archive_read_close;
-		av.archive_read_data_block = _archive_read_data_block;
-		av.archive_read_next_header2 = _archive_read_next_header2;
+		av.tk_archive_free = _tk_archive_read_free;
+		av.tk_archive_close = _tk_archive_read_close;
+		av.tk_archive_read_data_block = _tk_archive_read_data_block;
+		av.tk_archive_read_next_header2 = _tk_archive_read_next_header2;
 		inited = 1;
 	}
 	return (&av);
 }
 
 const char *
-archive_read_disk_gname(struct archive *_a, int64_t gid)
+tk_archive_read_disk_gname(struct archive *_a, int64_t gid)
 {
-	struct archive_read_disk *a = (struct archive_read_disk *)_a;
-	if (ARCHIVE_OK != __archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC,
-		ARCHIVE_STATE_ANY, "archive_read_disk_gname"))
+	struct tk_archive_read_disk *a = (struct tk_archive_read_disk *)_a;
+	if (ARCHIVE_OK != __tk_archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC,
+		ARCHIVE_STATE_ANY, "tk_archive_read_disk_gname"))
 		return (NULL);
 	if (a->lookup_gname == NULL)
 		return (NULL);
@@ -396,11 +396,11 @@ archive_read_disk_gname(struct archive *_a, int64_t gid)
 }
 
 const char *
-archive_read_disk_uname(struct archive *_a, int64_t uid)
+tk_archive_read_disk_uname(struct archive *_a, int64_t uid)
 {
-	struct archive_read_disk *a = (struct archive_read_disk *)_a;
-	if (ARCHIVE_OK != __archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC,
-		ARCHIVE_STATE_ANY, "archive_read_disk_uname"))
+	struct tk_archive_read_disk *a = (struct tk_archive_read_disk *)_a;
+	if (ARCHIVE_OK != __tk_archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC,
+		ARCHIVE_STATE_ANY, "tk_archive_read_disk_uname"))
 		return (NULL);
 	if (a->lookup_uname == NULL)
 		return (NULL);
@@ -408,14 +408,14 @@ archive_read_disk_uname(struct archive *_a, int64_t uid)
 }
 
 int
-archive_read_disk_set_gname_lookup(struct archive *_a,
+tk_archive_read_disk_set_gname_lookup(struct archive *_a,
     void *private_data,
     const char * (*lookup_gname)(void *private, int64_t gid),
     void (*cleanup_gname)(void *private))
 {
-	struct archive_read_disk *a = (struct archive_read_disk *)_a;
-	archive_check_magic(&a->archive, ARCHIVE_READ_DISK_MAGIC,
-	    ARCHIVE_STATE_ANY, "archive_read_disk_set_gname_lookup");
+	struct tk_archive_read_disk *a = (struct tk_archive_read_disk *)_a;
+	tk_archive_check_magic(&a->archive, ARCHIVE_READ_DISK_MAGIC,
+	    ARCHIVE_STATE_ANY, "tk_archive_read_disk_set_gname_lookup");
 
 	if (a->cleanup_gname != NULL && a->lookup_gname_data != NULL)
 		(a->cleanup_gname)(a->lookup_gname_data);
@@ -427,14 +427,14 @@ archive_read_disk_set_gname_lookup(struct archive *_a,
 }
 
 int
-archive_read_disk_set_uname_lookup(struct archive *_a,
+tk_archive_read_disk_set_uname_lookup(struct archive *_a,
     void *private_data,
     const char * (*lookup_uname)(void *private, int64_t uid),
     void (*cleanup_uname)(void *private))
 {
-	struct archive_read_disk *a = (struct archive_read_disk *)_a;
-	archive_check_magic(&a->archive, ARCHIVE_READ_DISK_MAGIC,
-	    ARCHIVE_STATE_ANY, "archive_read_disk_set_uname_lookup");
+	struct tk_archive_read_disk *a = (struct tk_archive_read_disk *)_a;
+	tk_archive_check_magic(&a->archive, ARCHIVE_READ_DISK_MAGIC,
+	    ARCHIVE_STATE_ANY, "tk_archive_read_disk_set_uname_lookup");
 
 	if (a->cleanup_uname != NULL && a->lookup_uname_data != NULL)
 		(a->cleanup_uname)(a->lookup_uname_data);
@@ -449,16 +449,16 @@ archive_read_disk_set_uname_lookup(struct archive *_a,
  * Create a new archive_read_disk object and initialize it with global state.
  */
 struct archive *
-archive_read_disk_new(void)
+tk_archive_read_disk_new(void)
 {
-	struct archive_read_disk *a;
+	struct tk_archive_read_disk *a;
 
-	a = (struct archive_read_disk *)calloc(1, sizeof(*a));
+	a = (struct tk_archive_read_disk *)calloc(1, sizeof(*a));
 	if (a == NULL)
 		return (NULL);
 	a->archive.magic = ARCHIVE_READ_DISK_MAGIC;
 	a->archive.state = ARCHIVE_STATE_NEW;
-	a->archive.vtable = archive_read_disk_vtable();
+	a->archive.vtable = tk_archive_read_disk_vtable();
 	a->lookup_uname = trivial_lookup_uname;
 	a->lookup_gname = trivial_lookup_gname;
 	a->enable_copyfile = 1;
@@ -470,18 +470,18 @@ archive_read_disk_new(void)
 }
 
 static int
-_archive_read_free(struct archive *_a)
+_tk_archive_read_free(struct archive *_a)
 {
-	struct archive_read_disk *a = (struct archive_read_disk *)_a;
+	struct tk_archive_read_disk *a = (struct tk_archive_read_disk *)_a;
 	int r;
 
 	if (_a == NULL)
 		return (ARCHIVE_OK);
-	archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC,
-	    ARCHIVE_STATE_ANY | ARCHIVE_STATE_FATAL, "archive_read_free");
+	tk_archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC,
+	    ARCHIVE_STATE_ANY | ARCHIVE_STATE_FATAL, "tk_archive_read_free");
 
 	if (a->archive.state != ARCHIVE_STATE_CLOSED)
-		r = _archive_read_close(&a->archive);
+		r = _tk_archive_read_close(&a->archive);
 	else
 		r = ARCHIVE_OK;
 
@@ -490,20 +490,20 @@ _archive_read_free(struct archive *_a)
 		(a->cleanup_gname)(a->lookup_gname_data);
 	if (a->cleanup_uname != NULL && a->lookup_uname_data != NULL)
 		(a->cleanup_uname)(a->lookup_uname_data);
-	archive_string_free(&a->archive.error_string);
+	tk_archive_string_free(&a->archive.error_string);
 	a->archive.magic = 0;
-	__archive_clean(&a->archive);
+	__tk_archive_clean(&a->archive);
 	free(a);
 	return (r);
 }
 
 static int
-_archive_read_close(struct archive *_a)
+_tk_archive_read_close(struct archive *_a)
 {
-	struct archive_read_disk *a = (struct archive_read_disk *)_a;
+	struct tk_archive_read_disk *a = (struct tk_archive_read_disk *)_a;
 
-	archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC,
-	    ARCHIVE_STATE_ANY | ARCHIVE_STATE_FATAL, "archive_read_close");
+	tk_archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC,
+	    ARCHIVE_STATE_ANY | ARCHIVE_STATE_FATAL, "tk_archive_read_close");
 
 	if (a->archive.state != ARCHIVE_STATE_FATAL)
 		a->archive.state = ARCHIVE_STATE_CLOSED;
@@ -514,7 +514,7 @@ _archive_read_close(struct archive *_a)
 }
 
 static void
-setup_symlink_mode(struct archive_read_disk *a, char symlink_mode,
+setup_symlink_mode(struct tk_archive_read_disk *a, char symlink_mode,
     int follow_symlinks)
 {
 	a->symlink_mode = symlink_mode;
@@ -526,44 +526,44 @@ setup_symlink_mode(struct archive_read_disk *a, char symlink_mode,
 }
 
 int
-archive_read_disk_set_symlink_logical(struct archive *_a)
+tk_archive_read_disk_set_symlink_logical(struct archive *_a)
 {
-	struct archive_read_disk *a = (struct archive_read_disk *)_a;
-	archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC,
-	    ARCHIVE_STATE_ANY, "archive_read_disk_set_symlink_logical");
+	struct tk_archive_read_disk *a = (struct tk_archive_read_disk *)_a;
+	tk_archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC,
+	    ARCHIVE_STATE_ANY, "tk_archive_read_disk_set_symlink_logical");
 	setup_symlink_mode(a, 'L', 1);
 	return (ARCHIVE_OK);
 }
 
 int
-archive_read_disk_set_symlink_physical(struct archive *_a)
+tk_archive_read_disk_set_symlink_physical(struct archive *_a)
 {
-	struct archive_read_disk *a = (struct archive_read_disk *)_a;
-	archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC,
-	    ARCHIVE_STATE_ANY, "archive_read_disk_set_symlink_physical");
+	struct tk_archive_read_disk *a = (struct tk_archive_read_disk *)_a;
+	tk_archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC,
+	    ARCHIVE_STATE_ANY, "tk_archive_read_disk_set_symlink_physical");
 	setup_symlink_mode(a, 'P', 0);
 	return (ARCHIVE_OK);
 }
 
 int
-archive_read_disk_set_symlink_hybrid(struct archive *_a)
+tk_archive_read_disk_set_symlink_hybrid(struct archive *_a)
 {
-	struct archive_read_disk *a = (struct archive_read_disk *)_a;
-	archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC,
-	    ARCHIVE_STATE_ANY, "archive_read_disk_set_symlink_hybrid");
+	struct tk_archive_read_disk *a = (struct tk_archive_read_disk *)_a;
+	tk_archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC,
+	    ARCHIVE_STATE_ANY, "tk_archive_read_disk_set_symlink_hybrid");
 	setup_symlink_mode(a, 'H', 1);/* Follow symlinks initially. */
 	return (ARCHIVE_OK);
 }
 
 int
-archive_read_disk_set_atime_restored(struct archive *_a)
+tk_archive_read_disk_set_atime_restored(struct archive *_a)
 {
 #ifndef HAVE_UTIMES
 	static int warning_done = 0;
 #endif
-	struct archive_read_disk *a = (struct archive_read_disk *)_a;
-	archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC,
-	    ARCHIVE_STATE_ANY, "archive_read_disk_restore_atime");
+	struct tk_archive_read_disk *a = (struct tk_archive_read_disk *)_a;
+	tk_archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC,
+	    ARCHIVE_STATE_ANY, "tk_archive_read_disk_restore_atime");
 #ifdef HAVE_UTIMES
 	a->restore_time = 1;
 	if (a->tree != NULL)
@@ -574,7 +574,7 @@ archive_read_disk_set_atime_restored(struct archive *_a)
 		/* Warning was already emitted; suppress further warnings. */
 		return (ARCHIVE_OK);
 
-	archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+	tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 	    "Cannot restore access time on this system");
 	warning_done = 1;
 	return (ARCHIVE_WARN);
@@ -582,16 +582,16 @@ archive_read_disk_set_atime_restored(struct archive *_a)
 }
 
 int
-archive_read_disk_set_behavior(struct archive *_a, int flags)
+tk_archive_read_disk_set_behavior(struct archive *_a, int flags)
 {
-	struct archive_read_disk *a = (struct archive_read_disk *)_a;
+	struct tk_archive_read_disk *a = (struct tk_archive_read_disk *)_a;
 	int r = ARCHIVE_OK;
 
-	archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC,
-	    ARCHIVE_STATE_ANY, "archive_read_disk_honor_nodump");
+	tk_archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC,
+	    ARCHIVE_STATE_ANY, "tk_archive_read_disk_honor_nodump");
 
 	if (flags & ARCHIVE_READDISK_RESTORE_ATIME)
-		r = archive_read_disk_set_atime_restored(_a);
+		r = tk_archive_read_disk_set_atime_restored(_a);
 	else {
 		a->restore_time = 0;
 		if (a->tree != NULL)
@@ -638,7 +638,7 @@ trivial_lookup_uname(void *private_data, int64_t uid)
  * alignment.
  */
 static int
-setup_suitable_read_buffer(struct archive_read_disk *a)
+setup_suitable_read_buffer(struct tk_archive_read_disk *a)
 {
 	struct tree *t = a->tree;
 	struct filesystem *cf = t->current_filesystem;
@@ -675,7 +675,7 @@ setup_suitable_read_buffer(struct archive_read_disk *a)
 		}
 		cf->allocation_ptr = malloc(asize);
 		if (cf->allocation_ptr == NULL) {
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "Couldn't allocate memory");
 			a->archive.state = ARCHIVE_STATE_FATAL;
 			return (ARCHIVE_FATAL);
@@ -700,17 +700,17 @@ setup_suitable_read_buffer(struct archive_read_disk *a)
 }
 
 static int
-_archive_read_data_block(struct archive *_a, const void **buff,
+_tk_archive_read_data_block(struct archive *_a, const void **buff,
     size_t *size, int64_t *offset)
 {
-	struct archive_read_disk *a = (struct archive_read_disk *)_a;
+	struct tk_archive_read_disk *a = (struct tk_archive_read_disk *)_a;
 	struct tree *t = a->tree;
 	int r;
 	ssize_t bytes;
 	size_t buffbytes;
 
-	archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC, ARCHIVE_STATE_DATA,
-	    "archive_read_data_block");
+	tk_archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC, ARCHIVE_STATE_DATA,
+	    "tk_archive_read_data_block");
 
 	if (t->entry_eof || t->entry_remaining_bytes <= 0) {
 		r = ARCHIVE_EOF;
@@ -744,7 +744,7 @@ _archive_read_data_block(struct archive *_a, const void **buff,
 #endif
 			t->entry_fd = open_on_current_dir(t,
 			    tree_current_access_path(t), flags);
-			__archive_ensure_cloexec_flag(t->entry_fd);
+			__tk_archive_ensure_cloexec_flag(t->entry_fd);
 #if defined(O_NOATIME)
 			/*
 			 * When we did open the file with O_NOATIME flag,
@@ -763,7 +763,7 @@ _archive_read_data_block(struct archive *_a, const void **buff,
 		} while (0);
 #endif
 		if (t->entry_fd < 0) {
-			archive_set_error(&a->archive, errno,
+			tk_archive_set_error(&a->archive, errno,
 			    "Couldn't open %s", tree_current_path(t));
 			r = ARCHIVE_FAILED;
 			tree_enter_initial_dir(t);
@@ -796,7 +796,7 @@ _archive_read_data_block(struct archive *_a, const void **buff,
 	if (t->current_sparse->offset > t->entry_total) {
 		if (lseek(t->entry_fd,
 		    (off_t)t->current_sparse->offset, SEEK_SET) < 0) {
-			archive_set_error(&a->archive, errno, "Seek error");
+			tk_archive_set_error(&a->archive, errno, "Seek error");
 			r = ARCHIVE_FATAL;
 			a->archive.state = ARCHIVE_STATE_FATAL;
 			goto abort_read_data;
@@ -812,7 +812,7 @@ _archive_read_data_block(struct archive *_a, const void **buff,
 	if (buffbytes > 0) {
 		bytes = read(t->entry_fd, t->entry_buff, buffbytes);
 		if (bytes < 0) {
-			archive_set_error(&a->archive, errno, "Read error");
+			tk_archive_set_error(&a->archive, errno, "Read error");
 			r = ARCHIVE_FATAL;
 			a->archive.state = ARCHIVE_STATE_FATAL;
 			goto abort_read_data;
@@ -855,8 +855,8 @@ abort_read_data:
 }
 
 static int
-next_entry(struct archive_read_disk *a, struct tree *t,
-    struct archive_entry *entry)
+next_entry(struct tk_archive_read_disk *a, struct tree *t,
+    struct tk_archive_entry *entry)
 {
 	const struct stat *st; /* info to use for this entry */
 	const struct stat *lst;/* lstat() information */
@@ -869,14 +869,14 @@ next_entry(struct archive_read_disk *a, struct tree *t,
 	do {
 		switch (tree_next(t)) {
 		case TREE_ERROR_FATAL:
-			archive_set_error(&a->archive, t->tree_errno,
+			tk_archive_set_error(&a->archive, t->tree_errno,
 			    "%s: Unable to continue traversing directory tree",
 			    tree_current_path(t));
 			a->archive.state = ARCHIVE_STATE_FATAL;
 			tree_enter_initial_dir(t);
 			return (ARCHIVE_FATAL);
 		case TREE_ERROR_DIR:
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "%s: Couldn't visit directory",
 			    tree_current_path(t));
 			tree_enter_initial_dir(t);
@@ -890,7 +890,7 @@ next_entry(struct archive_read_disk *a, struct tree *t,
 		case TREE_REGULAR:
 			lst = tree_current_lstat(t);
 			if (lst == NULL) {
-				archive_set_error(&a->archive, errno,
+				tk_archive_set_error(&a->archive, errno,
 				    "%s: Cannot stat",
 				    tree_current_path(t));
 				tree_enter_initial_dir(t);
@@ -913,15 +913,15 @@ next_entry(struct archive_read_disk *a, struct tree *t,
 	}
 #endif
 
-	archive_entry_copy_pathname(entry, tree_current_path(t));
+	tk_archive_entry_copy_pathname(entry, tree_current_path(t));
 	/*
 	 * Perform path matching.
 	 */
 	if (a->matching) {
-		r = archive_match_path_excluded(a->matching, entry);
+		r = tk_archive_match_path_excluded(a->matching, entry);
 		if (r < 0) {
-			archive_set_error(&(a->archive), errno,
-			    "Faild : %s", archive_error_string(a->matching));
+			tk_archive_set_error(&(a->archive), errno,
+			    "Faild : %s", tk_archive_error_string(a->matching));
 			return (r);
 		}
 		if (r) {
@@ -994,7 +994,7 @@ next_entry(struct archive_read_disk *a, struct tree *t,
 			t->entry_fd = open_on_current_dir(t,
 			    tree_current_access_path(t),
 			    O_RDONLY | O_NONBLOCK | O_CLOEXEC);
-			__archive_ensure_cloexec_flag(t->entry_fd);
+			__tk_archive_ensure_cloexec_flag(t->entry_fd);
 			if (t->entry_fd >= 0) {
 				r = ioctl(t->entry_fd, EXT2_IOC_GETFLAGS,
 					&stflags);
@@ -1005,26 +1005,26 @@ next_entry(struct archive_read_disk *a, struct tree *t,
 #endif
 	}
 
-	archive_entry_copy_stat(entry, st);
+	tk_archive_entry_copy_stat(entry, st);
 
 	/* Save the times to be restored. This must be in before
 	 * calling archive_read_disk_descend() or any chance of it,
 	 * especially, invokng a callback. */
-	t->restore_time.mtime = archive_entry_mtime(entry);
-	t->restore_time.mtime_nsec = archive_entry_mtime_nsec(entry);
-	t->restore_time.atime = archive_entry_atime(entry);
-	t->restore_time.atime_nsec = archive_entry_atime_nsec(entry);
-	t->restore_time.filetype = archive_entry_filetype(entry);
+	t->restore_time.mtime = tk_archive_entry_mtime(entry);
+	t->restore_time.mtime_nsec = tk_archive_entry_mtime_nsec(entry);
+	t->restore_time.atime = tk_archive_entry_atime(entry);
+	t->restore_time.atime_nsec = tk_archive_entry_atime_nsec(entry);
+	t->restore_time.filetype = tk_archive_entry_filetype(entry);
 	t->restore_time.noatime = t->current_filesystem->noatime;
 
 	/*
 	 * Perform time matching.
 	 */
 	if (a->matching) {
-		r = archive_match_time_excluded(a->matching, entry);
+		r = tk_archive_match_time_excluded(a->matching, entry);
 		if (r < 0) {
-			archive_set_error(&(a->archive), errno,
-			    "Faild : %s", archive_error_string(a->matching));
+			tk_archive_set_error(&(a->archive), errno,
+			    "Faild : %s", tk_archive_error_string(a->matching));
 			return (r);
 		}
 		if (r) {
@@ -1036,21 +1036,21 @@ next_entry(struct archive_read_disk *a, struct tree *t,
 	}
 
 	/* Lookup uname/gname */
-	name = archive_read_disk_uname(&(a->archive), archive_entry_uid(entry));
+	name = tk_archive_read_disk_uname(&(a->archive), tk_archive_entry_uid(entry));
 	if (name != NULL)
-		archive_entry_copy_uname(entry, name);
-	name = archive_read_disk_gname(&(a->archive), archive_entry_gid(entry));
+		tk_archive_entry_copy_uname(entry, name);
+	name = tk_archive_read_disk_gname(&(a->archive), tk_archive_entry_gid(entry));
 	if (name != NULL)
-		archive_entry_copy_gname(entry, name);
+		tk_archive_entry_copy_gname(entry, name);
 
 	/*
 	 * Perform owner matching.
 	 */
 	if (a->matching) {
-		r = archive_match_owner_excluded(a->matching, entry);
+		r = tk_archive_match_owner_excluded(a->matching, entry);
 		if (r < 0) {
-			archive_set_error(&(a->archive), errno,
-			    "Faild : %s", archive_error_string(a->matching));
+			tk_archive_set_error(&(a->archive), errno,
+			    "Faild : %s", tk_archive_error_string(a->matching));
 			return (r);
 		}
 		if (r) {
@@ -1073,23 +1073,23 @@ next_entry(struct archive_read_disk *a, struct tree *t,
 	/*
 	 * Populate the archive_entry with metadata from the disk.
 	 */
-	archive_entry_copy_sourcepath(entry, tree_current_access_path(t));
-	r = archive_read_disk_entry_from_file(&(a->archive), entry,
+	tk_archive_entry_copy_sourcepath(entry, tree_current_access_path(t));
+	r = tk_archive_read_disk_entry_from_file(&(a->archive), entry,
 		t->entry_fd, st);
 
 	return (r);
 }
 
 static int
-_archive_read_next_header2(struct archive *_a, struct archive_entry *entry)
+_tk_archive_read_next_header2(struct archive *_a, struct tk_archive_entry *entry)
 {
-	struct archive_read_disk *a = (struct archive_read_disk *)_a;
+	struct tk_archive_read_disk *a = (struct tk_archive_read_disk *)_a;
 	struct tree *t;
 	int r;
 
-	archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC,
+	tk_archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC,
 	    ARCHIVE_STATE_HEADER | ARCHIVE_STATE_DATA,
-	    "archive_read_next_header2");
+	    "tk_archive_read_next_header2");
 
 	t = a->tree;
 	if (t->entry_fd >= 0) {
@@ -1105,7 +1105,7 @@ _archive_read_next_header2(struct archive *_a, struct archive_entry *entry)
 		}
 
 		if (r == ARCHIVE_RETRY) {
-			archive_entry_clear(entry);
+			tk_archive_entry_clear(entry);
 			continue;
 		}
 		break;
@@ -1126,11 +1126,11 @@ _archive_read_next_header2(struct archive *_a, struct archive_entry *entry)
 	case ARCHIVE_OK:
 	case ARCHIVE_WARN:
 		/* Overwrite the sourcepath based on the initial directory. */
-		archive_entry_copy_sourcepath(entry, tree_current_path(t));
+		tk_archive_entry_copy_sourcepath(entry, tree_current_path(t));
 		t->entry_total = 0;
-		if (archive_entry_filetype(entry) == AE_IFREG) {
-			t->nlink = archive_entry_nlink(entry);
-			t->entry_remaining_bytes = archive_entry_size(entry);
+		if (tk_archive_entry_filetype(entry) == AE_IFREG) {
+			t->nlink = tk_archive_entry_nlink(entry);
+			t->entry_remaining_bytes = tk_archive_entry_size(entry);
 			t->entry_eof = (t->entry_remaining_bytes == 0)? 1: 0;
 			if (!t->entry_eof &&
 			    setup_sparse(a, entry) != ARCHIVE_OK)
@@ -1152,13 +1152,13 @@ _archive_read_next_header2(struct archive *_a, struct archive_entry *entry)
 }
 
 static int
-setup_sparse(struct archive_read_disk *a, struct archive_entry *entry)
+setup_sparse(struct tk_archive_read_disk *a, struct tk_archive_entry *entry)
 {
 	struct tree *t = a->tree;
 	int64_t length, offset;
 	int i;
 
-	t->sparse_count = archive_entry_sparse_reset(entry);
+	t->sparse_count = tk_archive_entry_sparse_reset(entry);
 	if (t->sparse_count+1 > t->sparse_list_size) {
 		free(t->sparse_list);
 		t->sparse_list_size = t->sparse_count + 1;
@@ -1166,22 +1166,22 @@ setup_sparse(struct archive_read_disk *a, struct archive_entry *entry)
 		    t->sparse_list_size);
 		if (t->sparse_list == NULL) {
 			t->sparse_list_size = 0;
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate data");
 			a->archive.state = ARCHIVE_STATE_FATAL;
 			return (ARCHIVE_FATAL);
 		}
 	}
 	for (i = 0; i < t->sparse_count; i++) {
-		archive_entry_sparse_next(entry, &offset, &length);
+		tk_archive_entry_sparse_next(entry, &offset, &length);
 		t->sparse_list[i].offset = offset;
 		t->sparse_list[i].length = length;
 	}
 	if (i == 0) {
 		t->sparse_list[i].offset = 0;
-		t->sparse_list[i].length = archive_entry_size(entry);
+		t->sparse_list[i].length = tk_archive_entry_size(entry);
 	} else {
-		t->sparse_list[i].offset = archive_entry_size(entry);
+		t->sparse_list[i].offset = tk_archive_entry_size(entry);
 		t->sparse_list[i].length = 0;
 	}
 	t->current_sparse = t->sparse_list;
@@ -1190,13 +1190,13 @@ setup_sparse(struct archive_read_disk *a, struct archive_entry *entry)
 }
 
 int
-archive_read_disk_set_matching(struct archive *_a, struct archive *_ma,
-    void (*_excluded_func)(struct archive *, void *, struct archive_entry *),
+tk_archive_read_disk_set_matching(struct archive *_a, struct archive *_ma,
+    void (*_excluded_func)(struct archive *, void *, struct tk_archive_entry *),
     void *_client_data)
 {
-	struct archive_read_disk *a = (struct archive_read_disk *)_a;
-	archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC,
-	    ARCHIVE_STATE_ANY, "archive_read_disk_set_matching");
+	struct tk_archive_read_disk *a = (struct tk_archive_read_disk *)_a;
+	tk_archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC,
+	    ARCHIVE_STATE_ANY, "tk_archive_read_disk_set_matching");
 	a->matching = _ma;
 	a->excluded_cb_func = _excluded_func;
 	a->excluded_cb_data = _client_data;
@@ -1204,14 +1204,14 @@ archive_read_disk_set_matching(struct archive *_a, struct archive *_ma,
 }
 
 int
-archive_read_disk_set_metadata_filter_callback(struct archive *_a,
+tk_archive_read_disk_set_metadata_filter_callback(struct archive *_a,
     int (*_metadata_filter_func)(struct archive *, void *,
-    struct archive_entry *), void *_client_data)
+    struct tk_archive_entry *), void *_client_data)
 {
-	struct archive_read_disk *a = (struct archive_read_disk *)_a;
+	struct tk_archive_read_disk *a = (struct tk_archive_read_disk *)_a;
 
-	archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC, ARCHIVE_STATE_ANY,
-	    "archive_read_disk_set_metadata_filter_callback");
+	tk_archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC, ARCHIVE_STATE_ANY,
+	    "tk_archive_read_disk_set_metadata_filter_callback");
 
 	a->metadata_filter_func = _metadata_filter_func;
 	a->metadata_filter_data = _client_data;
@@ -1219,14 +1219,14 @@ archive_read_disk_set_metadata_filter_callback(struct archive *_a,
 }
 
 int
-archive_read_disk_can_descend(struct archive *_a)
+tk_archive_read_disk_can_descend(struct archive *_a)
 {
-	struct archive_read_disk *a = (struct archive_read_disk *)_a;
+	struct tk_archive_read_disk *a = (struct tk_archive_read_disk *)_a;
 	struct tree *t = a->tree;
 
-	archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC,
+	tk_archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC,
 	    ARCHIVE_STATE_HEADER | ARCHIVE_STATE_DATA,
-	    "archive_read_disk_can_descend");
+	    "tk_archive_read_disk_can_descend");
 
 	return (t->visit_type == TREE_REGULAR && t->descend);
 }
@@ -1236,14 +1236,14 @@ archive_read_disk_can_descend(struct archive *_a)
  * tree_next() as needing to be visited.
  */
 int
-archive_read_disk_descend(struct archive *_a)
+tk_archive_read_disk_descend(struct archive *_a)
 {
-	struct archive_read_disk *a = (struct archive_read_disk *)_a;
+	struct tk_archive_read_disk *a = (struct tk_archive_read_disk *)_a;
 	struct tree *t = a->tree;
 
-	archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC,
+	tk_archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC,
 	    ARCHIVE_STATE_HEADER | ARCHIVE_STATE_DATA,
-	    "archive_read_disk_descend");
+	    "tk_archive_read_disk_descend");
 
 	if (t->visit_type != TREE_REGULAR || !t->descend)
 		return (ARCHIVE_OK);
@@ -1262,53 +1262,53 @@ archive_read_disk_descend(struct archive *_a)
 }
 
 int
-archive_read_disk_open(struct archive *_a, const char *pathname)
+tk_archive_read_disk_open(struct archive *_a, const char *pathname)
 {
-	struct archive_read_disk *a = (struct archive_read_disk *)_a;
+	struct tk_archive_read_disk *a = (struct tk_archive_read_disk *)_a;
 
-	archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC,
+	tk_archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC,
 	    ARCHIVE_STATE_NEW | ARCHIVE_STATE_CLOSED,
-	    "archive_read_disk_open");
-	archive_clear_error(&a->archive);
+	    "tk_archive_read_disk_open");
+	tk_archive_clear_error(&a->archive);
 
-	return (_archive_read_disk_open(_a, pathname));
+	return (_tk_archive_read_disk_open(_a, pathname));
 }
 
 int
-archive_read_disk_open_w(struct archive *_a, const wchar_t *pathname)
+tk_archive_read_disk_open_w(struct archive *_a, const wchar_t *pathname)
 {
-	struct archive_read_disk *a = (struct archive_read_disk *)_a;
-	struct archive_string path;
+	struct tk_archive_read_disk *a = (struct tk_archive_read_disk *)_a;
+	struct tk_archive_string path;
 	int ret;
 
-	archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC,
+	tk_archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC,
 	    ARCHIVE_STATE_NEW | ARCHIVE_STATE_CLOSED,
-	    "archive_read_disk_open_w");
-	archive_clear_error(&a->archive);
+	    "tk_archive_read_disk_open_w");
+	tk_archive_clear_error(&a->archive);
 
 	/* Make a char string from a wchar_t string. */
-	archive_string_init(&path);
-	if (archive_string_append_from_wcs(&path, pathname,
+	tk_archive_string_init(&path);
+	if (tk_archive_string_append_from_wcs(&path, pathname,
 	    wcslen(pathname)) != 0) {
 		if (errno == ENOMEM)
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate memory");
 		else
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "Can't convert a path to a char string");
 		a->archive.state = ARCHIVE_STATE_FATAL;
 		ret = ARCHIVE_FATAL;
 	} else
-		ret = _archive_read_disk_open(_a, path.s);
+		ret = _tk_archive_read_disk_open(_a, path.s);
 
-	archive_string_free(&path);
+	tk_archive_string_free(&path);
 	return (ret);
 }
 
 static int
-_archive_read_disk_open(struct archive *_a, const char *pathname)
+_tk_archive_read_disk_open(struct archive *_a, const char *pathname)
 {
-	struct archive_read_disk *a = (struct archive_read_disk *)_a;
+	struct tk_archive_read_disk *a = (struct tk_archive_read_disk *)_a;
 
 	if (a->tree != NULL)
 		a->tree = tree_reopen(a->tree, pathname, a->restore_time);
@@ -1316,7 +1316,7 @@ _archive_read_disk_open(struct archive *_a, const char *pathname)
 		a->tree = tree_open(pathname, a->symlink_mode,
 		    a->restore_time);
 	if (a->tree == NULL) {
-		archive_set_error(&a->archive, ENOMEM,
+		tk_archive_set_error(&a->archive, ENOMEM,
 		    "Can't allocate tar data");
 		a->archive.state = ARCHIVE_STATE_FATAL;
 		return (ARCHIVE_FATAL);
@@ -1331,18 +1331,18 @@ _archive_read_disk_open(struct archive *_a, const char *pathname)
  * you've visited through archive_read_disk.
  */
 int
-archive_read_disk_current_filesystem(struct archive *_a)
+tk_archive_read_disk_current_filesystem(struct archive *_a)
 {
-	struct archive_read_disk *a = (struct archive_read_disk *)_a;
+	struct tk_archive_read_disk *a = (struct tk_archive_read_disk *)_a;
 
-	archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC, ARCHIVE_STATE_DATA,
-	    "archive_read_disk_current_filesystem");
+	tk_archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC, ARCHIVE_STATE_DATA,
+	    "tk_archive_read_disk_current_filesystem");
 
 	return (a->tree->current_filesystem_id);
 }
 
 static int
-update_current_filesystem(struct archive_read_disk *a, int64_t dev)
+update_current_filesystem(struct tk_archive_read_disk *a, int64_t dev)
 {
 	struct tree *t = a->tree;
 	int i, fid;
@@ -1372,7 +1372,7 @@ update_current_filesystem(struct archive_read_disk *a, int64_t dev)
 		p = realloc(t->filesystem_table,
 		        s * sizeof(*t->filesystem_table));
 		if (p == NULL) {
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate tar data");
 			return (ARCHIVE_FATAL);
 		}
@@ -1395,12 +1395,12 @@ update_current_filesystem(struct archive_read_disk *a, int64_t dev)
  * or -1 if it is unknown.
  */
 int
-archive_read_disk_current_filesystem_is_synthetic(struct archive *_a)
+tk_archive_read_disk_current_filesystem_is_synthetic(struct archive *_a)
 {
-	struct archive_read_disk *a = (struct archive_read_disk *)_a;
+	struct tk_archive_read_disk *a = (struct tk_archive_read_disk *)_a;
 
-	archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC, ARCHIVE_STATE_DATA,
-	    "archive_read_disk_current_filesystem");
+	tk_archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC, ARCHIVE_STATE_DATA,
+	    "tk_archive_read_disk_current_filesystem");
 
 	return (a->tree->current_filesystem->synthetic);
 }
@@ -1410,12 +1410,12 @@ archive_read_disk_current_filesystem_is_synthetic(struct archive *_a)
  * or -1 if it is unknown.
  */
 int
-archive_read_disk_current_filesystem_is_remote(struct archive *_a)
+tk_archive_read_disk_current_filesystem_is_remote(struct archive *_a)
 {
-	struct archive_read_disk *a = (struct archive_read_disk *)_a;
+	struct tk_archive_read_disk *a = (struct tk_archive_read_disk *)_a;
 
-	archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC, ARCHIVE_STATE_DATA,
-	    "archive_read_disk_current_filesystem");
+	tk_archive_check_magic(_a, ARCHIVE_READ_DISK_MAGIC, ARCHIVE_STATE_DATA,
+	    "tk_archive_read_disk_current_filesystem");
 
 	return (a->tree->current_filesystem->remote);
 }
@@ -1470,7 +1470,7 @@ get_xfer_size(struct tree *t, int fd, const char *path)
  * Gather current filesystem properties on FreeBSD, OpenBSD and Mac OS X.
  */
 static int
-setup_current_filesystem(struct archive_read_disk *a)
+setup_current_filesystem(struct tk_archive_read_disk *a)
 {
 	struct tree *t = a->tree;
 	struct statfs sfs;
@@ -1492,9 +1492,9 @@ setup_current_filesystem(struct archive_read_disk *a)
 		 */
 		int fd = openat(tree_current_dir_fd(t),
 		    tree_current_access_path(t), O_RDONLY | O_CLOEXEC);
-		__archive_ensure_cloexec_flag(fd);
+		__tk_archive_ensure_cloexec_flag(fd);
 		if (fd < 0) {
-			archive_set_error(&a->archive, errno,
+			tk_archive_set_error(&a->archive, errno,
 			    "openat failed");
 			return (ARCHIVE_FAILED);
 		}
@@ -1504,7 +1504,7 @@ setup_current_filesystem(struct archive_read_disk *a)
 		close(fd);
 #else
 		if (tree_enter_working_dir(t) != 0) {
-			archive_set_error(&a->archive, errno, "fchdir failed");
+			tk_archive_set_error(&a->archive, errno, "fchdir failed");
 			return (ARCHIVE_FAILED);
 		}
 		r = statfs(tree_current_access_path(t), &sfs);
@@ -1517,7 +1517,7 @@ setup_current_filesystem(struct archive_read_disk *a)
 			xr = get_xfer_size(t, tree_current_dir_fd(t), NULL);
 	}
 	if (r == -1 || xr == -1) {
-		archive_set_error(&a->archive, errno, "statfs failed");
+		tk_archive_set_error(&a->archive, errno, "statfs failed");
 		return (ARCHIVE_FAILED);
 	} else if (xr == 1) {
 		/* pathconf(_PC_REX_*) operations are not supported. */
@@ -1534,7 +1534,7 @@ setup_current_filesystem(struct archive_read_disk *a)
 #if defined(HAVE_GETVFSBYNAME) && defined(VFCF_SYNTHETIC)
 	r = getvfsbyname(sfs.f_fstypename, &vfc);
 	if (r == -1) {
-		archive_set_error(&a->archive, errno, "getvfsbyname failed");
+		tk_archive_set_error(&a->archive, errno, "getvfsbyname failed");
 		return (ARCHIVE_FAILED);
 	}
 	if (vfc.vfc_flags & VFCF_SYNTHETIC)
@@ -1558,7 +1558,7 @@ setup_current_filesystem(struct archive_read_disk *a)
 	/* Mac OS X does not have f_namemax in struct statfs. */
 	if (tree_current_is_symblic_link_target(t)) {
 		if (tree_enter_working_dir(t) != 0) {
-			archive_set_error(&a->archive, errno, "fchdir failed");
+			tk_archive_set_error(&a->archive, errno, "fchdir failed");
 			return (ARCHIVE_FAILED);
 		}
 		nm = pathconf(tree_current_access_path(t), _PC_NAME_MAX);
@@ -1579,7 +1579,7 @@ setup_current_filesystem(struct archive_read_disk *a)
  * Gather current filesystem properties on NetBSD
  */
 static int
-setup_current_filesystem(struct archive_read_disk *a)
+setup_current_filesystem(struct tk_archive_read_disk *a)
 {
 	struct tree *t = a->tree;
 	struct statvfs sfs;
@@ -1587,7 +1587,7 @@ setup_current_filesystem(struct archive_read_disk *a)
 
 	t->current_filesystem->synthetic = -1;
 	if (tree_enter_working_dir(t) != 0) {
-		archive_set_error(&a->archive, errno, "fchdir failed");
+		tk_archive_set_error(&a->archive, errno, "fchdir failed");
 		return (ARCHIVE_FAILED);
 	}
 	if (tree_current_is_symblic_link_target(t)) {
@@ -1607,7 +1607,7 @@ setup_current_filesystem(struct archive_read_disk *a)
 	}
 	if (r == -1 || xr == -1) {
 		t->current_filesystem->remote = -1;
-		archive_set_error(&a->archive, errno, "statvfs failed");
+		tk_archive_set_error(&a->archive, errno, "statvfs failed");
 		return (ARCHIVE_FAILED);
 	} else if (xr == 1) {
 		/* Usuall come here unless NetBSD supports _PC_REC_XFER_ALIGN
@@ -1656,7 +1656,7 @@ setup_current_filesystem(struct archive_read_disk *a)
  * Gather current filesystem properties on Linux
  */
 static int
-setup_current_filesystem(struct archive_read_disk *a)
+setup_current_filesystem(struct tk_archive_read_disk *a)
 {
 	struct tree *t = a->tree;
 	struct statfs sfs;
@@ -1671,9 +1671,9 @@ setup_current_filesystem(struct archive_read_disk *a)
 		 */
 		int fd = openat(tree_current_dir_fd(t),
 		    tree_current_access_path(t), O_RDONLY | O_CLOEXEC);
-		__archive_ensure_cloexec_flag(fd);
+		__tk_archive_ensure_cloexec_flag(fd);
 		if (fd < 0) {
-			archive_set_error(&a->archive, errno,
+			tk_archive_set_error(&a->archive, errno,
 			    "openat failed");
 			return (ARCHIVE_FAILED);
 		}
@@ -1684,7 +1684,7 @@ setup_current_filesystem(struct archive_read_disk *a)
 		close(fd);
 #else
 		if (tree_enter_working_dir(t) != 0) {
-			archive_set_error(&a->archive, errno, "fchdir failed");
+			tk_archive_set_error(&a->archive, errno, "fchdir failed");
 			return (ARCHIVE_FAILED);
 		}
 		vr = statvfs(tree_current_access_path(t), &svfs);
@@ -1700,7 +1700,7 @@ setup_current_filesystem(struct archive_read_disk *a)
 			xr = get_xfer_size(t, tree_current_dir_fd(t), NULL);
 #else
 		if (tree_enter_working_dir(t) != 0) {
-			archive_set_error(&a->archive, errno, "fchdir failed");
+			tk_archive_set_error(&a->archive, errno, "fchdir failed");
 			return (ARCHIVE_FAILED);
 		}
 		vr = statvfs(".", &svfs);
@@ -1712,7 +1712,7 @@ setup_current_filesystem(struct archive_read_disk *a)
 	if (r == -1 || xr == -1 || vr == -1) {
 		t->current_filesystem->synthetic = -1;
 		t->current_filesystem->remote = -1;
-		archive_set_error(&a->archive, errno, "statfs failed");
+		tk_archive_set_error(&a->archive, errno, "statfs failed");
 		return (ARCHIVE_FAILED);
 	} else if (xr == 1) {
 		/* pathconf(_PC_REX_*) operations are not supported. */
@@ -1764,7 +1764,7 @@ setup_current_filesystem(struct archive_read_disk *a)
  * Gather current filesystem properties on other posix platform.
  */
 static int
-setup_current_filesystem(struct archive_read_disk *a)
+setup_current_filesystem(struct tk_archive_read_disk *a)
 {
 	struct tree *t = a->tree;
 	struct statvfs sfs;
@@ -1780,9 +1780,9 @@ setup_current_filesystem(struct archive_read_disk *a)
 		 */
 		int fd = openat(tree_current_dir_fd(t),
 		    tree_current_access_path(t), O_RDONLY | O_CLOEXEC);
-		__archive_ensure_cloexec_flag(fd);
+		__tk_archive_ensure_cloexec_flag(fd);
 		if (fd < 0) {
-			archive_set_error(&a->archive, errno,
+			tk_archive_set_error(&a->archive, errno,
 			    "openat failed");
 			return (ARCHIVE_FAILED);
 		}
@@ -1792,7 +1792,7 @@ setup_current_filesystem(struct archive_read_disk *a)
 		close(fd);
 #else
 		if (tree_enter_working_dir(t) != 0) {
-			archive_set_error(&a->archive, errno, "fchdir failed");
+			tk_archive_set_error(&a->archive, errno, "fchdir failed");
 			return (ARCHIVE_FAILED);
 		}
 		r = statvfs(tree_current_access_path(t), &sfs);
@@ -1806,7 +1806,7 @@ setup_current_filesystem(struct archive_read_disk *a)
 			xr = get_xfer_size(t, tree_current_dir_fd(t), NULL);
 #else
 		if (tree_enter_working_dir(t) != 0) {
-			archive_set_error(&a->archive, errno, "fchdir failed");
+			tk_archive_set_error(&a->archive, errno, "fchdir failed");
 			return (ARCHIVE_FAILED);
 		}
 		r = statvfs(".", &sfs);
@@ -1817,7 +1817,7 @@ setup_current_filesystem(struct archive_read_disk *a)
 	if (r == -1 || xr == -1) {
 		t->current_filesystem->synthetic = -1;
 		t->current_filesystem->remote = -1;
-		archive_set_error(&a->archive, errno, "statvfs failed");
+		tk_archive_set_error(&a->archive, errno, "statvfs failed");
 		return (ARCHIVE_FAILED);
 	} else if (xr == 1) {
 		/* pathconf(_PC_REX_*) operations are not supported. */
@@ -1848,7 +1848,7 @@ setup_current_filesystem(struct archive_read_disk *a)
  * TODO: Is this generic function really needed?
  */
 static int
-setup_current_filesystem(struct archive_read_disk *a)
+setup_current_filesystem(struct tk_archive_read_disk *a)
 {
 	struct tree *t = a->tree;
 #if defined(_PC_NAME_MAX) && defined(HAVE_READDIR_R)
@@ -1868,7 +1868,7 @@ setup_current_filesystem(struct archive_read_disk *a)
 #  if defined(_PC_NAME_MAX)
 	if (tree_current_is_symblic_link_target(t)) {
 		if (tree_enter_working_dir(t) != 0) {
-			archive_set_error(&a->archive, errno, "fchdir failed");
+			tk_archive_set_error(&a->archive, errno, "fchdir failed");
 			return (ARCHIVE_FAILED);
 		}
 		nm = pathconf(tree_current_access_path(t), _PC_NAME_MAX);
@@ -1983,7 +1983,7 @@ tree_dup(int fd)
 	}
 #endif /* F_DUPFD_CLOEXEC */
 	new_fd = dup(fd);
-	__archive_ensure_cloexec_flag(new_fd);
+	__tk_archive_ensure_cloexec_flag(new_fd);
 	return (new_fd);
 }
 
@@ -2003,9 +2003,9 @@ tree_push(struct tree *t, const char *path, int filesystem_id,
 	if (te->parent)
 		te->depth = te->parent->depth + 1;
 	t->stack = te;
-	archive_string_init(&te->name);
+	tk_archive_string_init(&te->name);
 	te->symlink_parent_fd = -1;
-	archive_strcpy(&te->name, path);
+	tk_archive_strcpy(&te->name, path);
 	te->flags = needsDescent | needsOpen | needsAscent;
 	te->filesystem_id = filesystem_id;
 	te->dev = dev;
@@ -2038,12 +2038,12 @@ tree_append(struct tree *t, const char *name, size_t name_length)
 
 	/* Resize pathname buffer as needed. */
 	size_needed = name_length + t->dirname_length + 2;
-	archive_string_ensure(&t->path, size_needed);
+	tk_archive_string_ensure(&t->path, size_needed);
 	/* Add a separating '/' if it's needed. */
-	if (t->dirname_length > 0 && t->path.s[archive_strlen(&t->path)-1] != '/')
-		archive_strappend_char(&t->path, '/');
-	t->basename = t->path.s + archive_strlen(&t->path);
-	archive_strncat(&t->path, name, name_length);
+	if (t->dirname_length > 0 && t->path.s[tk_archive_strlen(&t->path)-1] != '/')
+		tk_archive_strappend_char(&t->path, '/');
+	t->basename = t->path.s + tk_archive_strlen(&t->path);
+	tk_archive_strncat(&t->path, name, name_length);
 	t->restore_time.name = t->basename;
 }
 
@@ -2058,8 +2058,8 @@ tree_open(const char *path, int symlink_mode, int restore_time)
 	if ((t = malloc(sizeof(*t))) == NULL)
 		return (NULL);
 	memset(t, 0, sizeof(*t));
-	archive_string_init(&t->path);
-	archive_string_ensure(&t->path, 31);
+	tk_archive_string_init(&t->path);
+	tk_archive_string_ensure(&t->path, 31);
 	t->initial_symlink_mode = symlink_mode;
 	return (tree_reopen(t, path, restore_time));
 }
@@ -2077,7 +2077,7 @@ tree_reopen(struct tree *t, const char *path, int restore_time)
 	t->current = NULL;
 	t->d = INVALID_DIR_HANDLE;
 	t->symlink_mode = t->initial_symlink_mode;
-	archive_string_empty(&t->path);
+	tk_archive_string_empty(&t->path);
 	t->entry_fd = -1;
 	t->entry_eof = 0;
 	t->entry_remaining_bytes = 0;
@@ -2088,7 +2088,7 @@ tree_reopen(struct tree *t, const char *path, int restore_time)
 	t->stack->flags = needsFirstVisit;
 	t->maxOpenCount = t->openCount = 1;
 	t->initial_dir_fd = open(".", O_RDONLY | O_CLOEXEC);
-	__archive_ensure_cloexec_flag(t->initial_dir_fd);
+	__tk_archive_ensure_cloexec_flag(t->initial_dir_fd);
 	t->working_dir_fd = tree_dup(t->initial_dir_fd);
 	return (t);
 }
@@ -2098,13 +2098,13 @@ tree_descent(struct tree *t)
 {
 	int flag, new_fd, r = 0;
 
-	t->dirname_length = archive_strlen(&t->path);
+	t->dirname_length = tk_archive_strlen(&t->path);
 	flag = O_RDONLY | O_CLOEXEC;
 #if defined(O_DIRECTORY)
 	flag |= O_DIRECTORY;
 #endif
 	new_fd = open_on_current_dir(t, t->stack->name.s, flag);
-	__archive_ensure_cloexec_flag(new_fd);
+	__tk_archive_ensure_cloexec_flag(new_fd);
 	if (new_fd < 0) {
 		t->tree_errno = errno;
 		r = TREE_ERROR_DIR;
@@ -2140,7 +2140,7 @@ tree_ascend(struct tree *t)
 		new_fd = te->symlink_parent_fd;
 	else {
 		new_fd = open_on_current_dir(t, "..", O_RDONLY | O_CLOEXEC);
-		__archive_ensure_cloexec_flag(new_fd);
+		__tk_archive_ensure_cloexec_flag(new_fd);
 	}
 	if (new_fd < 0) {
 		t->tree_errno = errno;
@@ -2226,7 +2226,7 @@ tree_pop(struct tree *t)
 	t->basename = t->path.s + t->dirname_length;
 	while (t->basename[0] == '/')
 		t->basename++;
-	archive_string_free(&te->name);
+	tk_archive_string_free(&te->name);
 	free(te);
 }
 
@@ -2251,7 +2251,7 @@ tree_next(struct tree *t)
 			/* Top stack item needs a regular visit. */
 			t->current = t->stack;
 			tree_append(t, t->stack->name.s,
-			    archive_strlen(&(t->stack->name)));
+			    tk_archive_strlen(&(t->stack->name)));
 			/* t->dirname_length = t->path_length; */
 			/* tree_pop(t); */
 			t->stack->flags &= ~needsFirstVisit;
@@ -2260,7 +2260,7 @@ tree_next(struct tree *t)
 			/* Top stack item is dir to descend into. */
 			t->current = t->stack;
 			tree_append(t, t->stack->name.s,
-			    archive_strlen(&(t->stack->name)));
+			    tk_archive_strlen(&(t->stack->name)));
 			t->stack->flags &= ~needsDescent;
 			r = tree_descent(t);
 			if (r != 0) {
@@ -2309,7 +2309,7 @@ tree_dir_next_posix(struct tree *t)
 		if (tree_enter_working_dir(t) == 0) {
 			t->d = opendir(".");
 #if HAVE_DIRFD || defined(dirfd)
-			__archive_ensure_cloexec_flag(dirfd(t->d));
+			__tk_archive_ensure_cloexec_flag(dirfd(t->d));
 #endif
 		}
 #endif /* HAVE_FDOPENDIR */
@@ -2592,7 +2592,7 @@ tree_free(struct tree *t)
 
 	if (t == NULL)
 		return;
-	archive_string_free(&t->path);
+	tk_archive_string_free(&t->path);
 #if defined(HAVE_READDIR_R)
 	free(t->dirent);
 #endif

@@ -35,9 +35,9 @@
 
 #include "archive_acl_private.h"
 
-struct archive_write_disk;
+struct tk_archive_write_disk;
 
 int
-archive_write_disk_set_acls(struct archive *, int /* fd */, const char * /* pathname */, struct archive_acl *);
+tk_archive_write_disk_set_acls(struct archive *, int /* fd */, const char * /* pathname */, struct tk_archive_acl *);
 
 #endif

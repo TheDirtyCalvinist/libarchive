@@ -53,31 +53,31 @@ struct sparse_block {
 struct pax {
 	uint64_t	entry_bytes_remaining;
 	uint64_t	entry_padding;
-	struct archive_string	l_url_encoded_name;
-	struct archive_string	pax_header;
-	struct archive_string	sparse_map;
+	struct tk_archive_string	l_url_encoded_name;
+	struct tk_archive_string	pax_header;
+	struct tk_archive_string	sparse_map;
 	size_t			sparse_map_padding;
 	struct sparse_block	*sparse_list;
 	struct sparse_block	*sparse_tail;
-	struct archive_string_conv *sconv_utf8;
+	struct tk_archive_string_conv *sconv_utf8;
 	int			 opt_binary;
 };
 
-static void		 add_pax_attr(struct archive_string *, const char *key,
+static void		 add_pax_attr(struct tk_archive_string *, const char *key,
 			     const char *value);
-static void		 add_pax_attr_int(struct archive_string *,
+static void		 add_pax_attr_int(struct tk_archive_string *,
 			     const char *key, int64_t value);
-static void		 add_pax_attr_time(struct archive_string *,
+static void		 add_pax_attr_time(struct tk_archive_string *,
 			     const char *key, int64_t sec,
 			     unsigned long nanos);
-static ssize_t		 archive_write_pax_data(struct archive_write *,
+static ssize_t		 tk_archive_write_pax_data(struct tk_archive_write *,
 			     const void *, size_t);
-static int		 archive_write_pax_close(struct archive_write *);
-static int		 archive_write_pax_free(struct archive_write *);
-static int		 archive_write_pax_finish_entry(struct archive_write *);
-static int		 archive_write_pax_header(struct archive_write *,
-			     struct archive_entry *);
-static int		 archive_write_pax_options(struct archive_write *,
+static int		 tk_archive_write_pax_close(struct tk_archive_write *);
+static int		 tk_archive_write_pax_free(struct tk_archive_write *);
+static int		 tk_archive_write_pax_finish_entry(struct tk_archive_write *);
+static int		 tk_archive_write_pax_header(struct tk_archive_write *,
+			     struct tk_archive_entry *);
+static int		 tk_archive_write_pax_options(struct tk_archive_write *,
 			     const char *, const char *);
 static char		*base64_encode(const char *src, size_t len);
 static char		*build_gnu_sparse_name(char *dest, const char *src);
@@ -98,17 +98,17 @@ static char		*url_encode(const char *in);
  * bsdtar, for instance.
  */
 int
-archive_write_set_format_pax_restricted(struct archive *_a)
+tk_archive_write_set_format_pax_restricted(struct archive *_a)
 {
-	struct archive_write *a = (struct archive_write *)_a;
+	struct tk_archive_write *a = (struct tk_archive_write *)_a;
 	int r;
 
-	archive_check_magic(_a, ARCHIVE_WRITE_MAGIC,
-	    ARCHIVE_STATE_NEW, "archive_write_set_format_pax_restricted");
+	tk_archive_check_magic(_a, ARCHIVE_WRITE_MAGIC,
+	    ARCHIVE_STATE_NEW, "tk_archive_write_set_format_pax_restricted");
 
-	r = archive_write_set_format_pax(&a->archive);
-	a->archive.archive_format = ARCHIVE_FORMAT_TAR_PAX_RESTRICTED;
-	a->archive.archive_format_name = "restricted POSIX pax interchange";
+	r = tk_archive_write_set_format_pax(&a->archive);
+	a->archive.tk_archive_format = ARCHIVE_FORMAT_TAR_PAX_RESTRICTED;
+	a->archive.tk_archive_format_name = "restricted POSIX pax interchange";
 	return (r);
 }
 
@@ -116,39 +116,39 @@ archive_write_set_format_pax_restricted(struct archive *_a)
  * Set output format to 'pax' format.
  */
 int
-archive_write_set_format_pax(struct archive *_a)
+tk_archive_write_set_format_pax(struct archive *_a)
 {
-	struct archive_write *a = (struct archive_write *)_a;
+	struct tk_archive_write *a = (struct tk_archive_write *)_a;
 	struct pax *pax;
 
-	archive_check_magic(_a, ARCHIVE_WRITE_MAGIC,
-	    ARCHIVE_STATE_NEW, "archive_write_set_format_pax");
+	tk_archive_check_magic(_a, ARCHIVE_WRITE_MAGIC,
+	    ARCHIVE_STATE_NEW, "tk_archive_write_set_format_pax");
 
 	if (a->format_free != NULL)
 		(a->format_free)(a);
 
 	pax = (struct pax *)malloc(sizeof(*pax));
 	if (pax == NULL) {
-		archive_set_error(&a->archive, ENOMEM,
+		tk_archive_set_error(&a->archive, ENOMEM,
 		    "Can't allocate pax data");
 		return (ARCHIVE_FATAL);
 	}
 	memset(pax, 0, sizeof(*pax));
 	a->format_data = pax;
 	a->format_name = "pax";
-	a->format_options = archive_write_pax_options;
-	a->format_write_header = archive_write_pax_header;
-	a->format_write_data = archive_write_pax_data;
-	a->format_close = archive_write_pax_close;
-	a->format_free = archive_write_pax_free;
-	a->format_finish_entry = archive_write_pax_finish_entry;
-	a->archive.archive_format = ARCHIVE_FORMAT_TAR_PAX_INTERCHANGE;
-	a->archive.archive_format_name = "POSIX pax interchange";
+	a->format_options = tk_archive_write_pax_options;
+	a->format_write_header = tk_archive_write_pax_header;
+	a->format_write_data = tk_archive_write_pax_data;
+	a->format_close = tk_archive_write_pax_close;
+	a->format_free = tk_archive_write_pax_free;
+	a->format_finish_entry = tk_archive_write_pax_finish_entry;
+	a->archive.tk_archive_format = ARCHIVE_FORMAT_TAR_PAX_INTERCHANGE;
+	a->archive.tk_archive_format_name = "POSIX pax interchange";
 	return (ARCHIVE_OK);
 }
 
 static int
-archive_write_pax_options(struct archive_write *a, const char *key,
+tk_archive_write_pax_options(struct tk_archive_write *a, const char *key,
     const char *val)
 {
 	struct pax *pax = (struct pax *)a->format_data;
@@ -160,7 +160,7 @@ archive_write_pax_options(struct archive_write *a, const char *key,
 		 * IEEE Std 1003.1-2001
 		 */
 		if (val == NULL || val[0] == 0)
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "pax: hdrcharset option needs a character-set name");
 		else if (strcmp(val, "BINARY") == 0 ||
 		    strcmp(val, "binary") == 0) {
@@ -178,14 +178,14 @@ archive_write_pax_options(struct archive_write *a, const char *key,
 			 * Especially libarchive_test needs this trick for
 			 * its test.
 			 */
-			pax->sconv_utf8 = archive_string_conversion_to_charset(
+			pax->sconv_utf8 = tk_archive_string_conversion_to_charset(
 			    &(a->archive), "UTF-8", 0);
 			if (pax->sconv_utf8 == NULL)
 				ret = ARCHIVE_FATAL;
 			else
 				ret = ARCHIVE_OK;
 		} else
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "pax: invalid charset name");
 		return (ret);
 	}
@@ -204,7 +204,7 @@ archive_write_pax_options(struct archive_write *a, const char *key,
  * much less ones with timestamps recorded to sub-second resolution.
  */
 static void
-add_pax_attr_time(struct archive_string *as, const char *key,
+add_pax_attr_time(struct tk_archive_string *as, const char *key,
     int64_t sec, unsigned long nanos)
 {
 	int digit, i;
@@ -258,7 +258,7 @@ format_int(char *t, int64_t i)
 }
 
 static void
-add_pax_attr_int(struct archive_string *as, const char *key, int64_t value)
+add_pax_attr_int(struct tk_archive_string *as, const char *key, int64_t value)
 {
 	char tmp[1 + 3 * sizeof(value)];
 
@@ -271,7 +271,7 @@ add_pax_attr_int(struct archive_string *as, const char *key, int64_t value)
  * the length field and various other syntactic requirements.
  */
 static void
-add_pax_attr(struct archive_string *as, const char *key, const char *value)
+add_pax_attr(struct tk_archive_string *as, const char *key, const char *value)
 {
 	int digits, i, len, next_ten;
 	char tmp[1 + 3 * sizeof(int)];	/* < 3 base-10 digits per byte */
@@ -307,20 +307,20 @@ add_pax_attr(struct archive_string *as, const char *key, const char *value)
 
 	/* Now, we have the right length so we can build the line. */
 	tmp[sizeof(tmp) - 1] = 0;	/* Null-terminate the work area. */
-	archive_strcat(as, format_int(tmp + sizeof(tmp) - 1, len + digits));
-	archive_strappend_char(as, ' ');
-	archive_strcat(as, key);
-	archive_strappend_char(as, '=');
-	archive_strcat(as, value);
-	archive_strappend_char(as, '\n');
+	tk_archive_strcat(as, format_int(tmp + sizeof(tmp) - 1, len + digits));
+	tk_archive_strappend_char(as, ' ');
+	tk_archive_strcat(as, key);
+	tk_archive_strappend_char(as, '=');
+	tk_archive_strcat(as, value);
+	tk_archive_strappend_char(as, '\n');
 }
 
 static int
-archive_write_pax_header_xattrs(struct archive_write *a,
-    struct pax *pax, struct archive_entry *entry)
+tk_archive_write_pax_header_xattrs(struct tk_archive_write *a,
+    struct pax *pax, struct tk_archive_entry *entry)
 {
-	struct archive_string s;
-	int i = archive_entry_xattr_reset(entry);
+	struct tk_archive_string s;
+	int i = tk_archive_entry_xattr_reset(entry);
 
 	while (i--) {
 		const char *name;
@@ -330,17 +330,17 @@ archive_write_pax_header_xattrs(struct archive_write *a,
 		size_t size;
 		int r;
 
-		archive_entry_xattr_next(entry, &name, &value, &size);
+		tk_archive_entry_xattr_next(entry, &name, &value, &size);
 		url_encoded_name = url_encode(name);
 		if (url_encoded_name != NULL) {
 			/* Convert narrow-character to UTF-8. */
-			r = archive_strcpy_l(&(pax->l_url_encoded_name),
+			r = tk_archive_strcpy_l(&(pax->l_url_encoded_name),
 			    url_encoded_name, pax->sconv_utf8);
 			free(url_encoded_name); /* Done with this. */
 			if (r == 0)
 				encoded_name = pax->l_url_encoded_name.s;
 			else if (errno == ENOMEM) {
-				archive_set_error(&a->archive, ENOMEM,
+				tk_archive_set_error(&a->archive, ENOMEM,
 				    "Can't allocate memory for Linkname");
 				return (ARCHIVE_FATAL);
 			}
@@ -349,11 +349,11 @@ archive_write_pax_header_xattrs(struct archive_write *a,
 		encoded_value = base64_encode((const char *)value, size);
 
 		if (encoded_name != NULL && encoded_value != NULL) {
-			archive_string_init(&s);
-			archive_strcpy(&s, "LIBARCHIVE.xattr.");
-			archive_strcat(&s, encoded_name);
+			tk_archive_string_init(&s);
+			tk_archive_strcpy(&s, "LIBARCHIVE.xattr.");
+			tk_archive_strcat(&s, encoded_name);
 			add_pax_attr(&(pax->pax_header), s.s, encoded_value);
-			archive_string_free(&s);
+			tk_archive_string_free(&s);
 		}
 		free(encoded_value);
 	}
@@ -361,15 +361,15 @@ archive_write_pax_header_xattrs(struct archive_write *a,
 }
 
 static int
-get_entry_hardlink(struct archive_write *a, struct archive_entry *entry,
-    const char **name, size_t *length, struct archive_string_conv *sc)
+get_entry_hardlink(struct tk_archive_write *a, struct tk_archive_entry *entry,
+    const char **name, size_t *length, struct tk_archive_string_conv *sc)
 {
 	int r;
 	
-	r = archive_entry_hardlink_l(entry, name, length, sc);
+	r = tk_archive_entry_hardlink_l(entry, name, length, sc);
 	if (r != 0) {
 		if (errno == ENOMEM) {
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate memory for Linkname");
 			return (ARCHIVE_FATAL);
 		}
@@ -379,15 +379,15 @@ get_entry_hardlink(struct archive_write *a, struct archive_entry *entry,
 }
 
 static int
-get_entry_pathname(struct archive_write *a, struct archive_entry *entry,
-    const char **name, size_t *length, struct archive_string_conv *sc)
+get_entry_pathname(struct tk_archive_write *a, struct tk_archive_entry *entry,
+    const char **name, size_t *length, struct tk_archive_string_conv *sc)
 {
 	int r;
 
-	r = archive_entry_pathname_l(entry, name, length, sc);
+	r = tk_archive_entry_pathname_l(entry, name, length, sc);
 	if (r != 0) {
 		if (errno == ENOMEM) {
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate memory for Pathname");
 			return (ARCHIVE_FATAL);
 		}
@@ -397,15 +397,15 @@ get_entry_pathname(struct archive_write *a, struct archive_entry *entry,
 }
 
 static int
-get_entry_uname(struct archive_write *a, struct archive_entry *entry,
-    const char **name, size_t *length, struct archive_string_conv *sc)
+get_entry_uname(struct tk_archive_write *a, struct tk_archive_entry *entry,
+    const char **name, size_t *length, struct tk_archive_string_conv *sc)
 {
 	int r;
 
-	r = archive_entry_uname_l(entry, name, length, sc);
+	r = tk_archive_entry_uname_l(entry, name, length, sc);
 	if (r != 0) {
 		if (errno == ENOMEM) {
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate memory for Uname");
 			return (ARCHIVE_FATAL);
 		}
@@ -415,15 +415,15 @@ get_entry_uname(struct archive_write *a, struct archive_entry *entry,
 }
 
 static int
-get_entry_gname(struct archive_write *a, struct archive_entry *entry,
-    const char **name, size_t *length, struct archive_string_conv *sc)
+get_entry_gname(struct tk_archive_write *a, struct tk_archive_entry *entry,
+    const char **name, size_t *length, struct tk_archive_string_conv *sc)
 {
 	int r;
 
-	r = archive_entry_gname_l(entry, name, length, sc);
+	r = tk_archive_entry_gname_l(entry, name, length, sc);
 	if (r != 0) {
 		if (errno == ENOMEM) {
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate memory for Gname");
 			return (ARCHIVE_FATAL);
 		}
@@ -433,15 +433,15 @@ get_entry_gname(struct archive_write *a, struct archive_entry *entry,
 }
 
 static int
-get_entry_symlink(struct archive_write *a, struct archive_entry *entry,
-    const char **name, size_t *length, struct archive_string_conv *sc)
+get_entry_symlink(struct tk_archive_write *a, struct tk_archive_entry *entry,
+    const char **name, size_t *length, struct tk_archive_string_conv *sc)
 {
 	int r;
 
-	r = archive_entry_symlink_l(entry, name, length, sc);
+	r = tk_archive_entry_symlink_l(entry, name, length, sc);
 	if (r != 0) {
 		if (errno == ENOMEM) {
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate memory for Linkname");
 			return (ARCHIVE_FATAL);
 		}
@@ -459,10 +459,10 @@ get_entry_symlink(struct archive_write *a, struct archive_entry *entry,
  * TODO: Break up this 700-line function!!!!  Yowza!
  */
 static int
-archive_write_pax_header(struct archive_write *a,
-    struct archive_entry *entry_original)
+tk_archive_write_pax_header(struct tk_archive_write *a,
+    struct tk_archive_entry *entry_original)
 {
-	struct archive_entry *entry_main;
+	struct tk_archive_entry *entry_main;
 	const char *p;
 	const char *suffix;
 	int need_extension, r, ret;
@@ -474,7 +474,7 @@ archive_write_pax_header(struct archive_write *a,
 	const char *uname = NULL, *gname = NULL;
 	const void *mac_metadata;
 	size_t mac_metadata_size;
-	struct archive_string_conv *sconv;
+	struct tk_archive_string_conv *sconv;
 	size_t hardlink_length, path_length, linkpath_length;
 	size_t uname_length, gname_length;
 
@@ -483,15 +483,15 @@ archive_write_pax_header(struct archive_write *a,
 	char ustar_entry_name[256];
 	char pax_entry_name[256];
 	char gnu_sparse_name[256];
-	struct archive_string entry_name;
+	struct tk_archive_string entry_name;
 
 	ret = ARCHIVE_OK;
 	need_extension = 0;
 	pax = (struct pax *)a->format_data;
 
 	/* Sanity check. */
-	if (archive_entry_pathname(entry_original) == NULL) {
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+	if (tk_archive_entry_pathname(entry_original) == NULL) {
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			  "Can't record entry in tar file without pathname");
 		return (ARCHIVE_FAILED);
 	}
@@ -506,7 +506,7 @@ archive_write_pax_header(struct archive_write *a,
 		if (pax->sconv_utf8 == NULL) {
 			/* Initialize the string conversion object
 			 * we must need */
-			pax->sconv_utf8 = archive_string_conversion_to_charset(
+			pax->sconv_utf8 = tk_archive_string_conversion_to_charset(
 			    &(a->archive), "UTF-8", 1);
 			if (pax->sconv_utf8 == NULL)
 				/* Couldn't allocate memory */
@@ -524,16 +524,16 @@ archive_write_pax_header(struct archive_write *a,
 		    &hardlink_length, NULL);
 		if (r == ARCHIVE_FATAL)
 			return (r);
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Can't translate linkname '%s' to %s", hardlink,
-		    archive_string_conversion_charset_name(sconv));
+		    tk_archive_string_conversion_charset_name(sconv));
 		ret = ARCHIVE_WARN;
 		sconv = NULL;/* The header charset switches to binary mode. */
 	}
 
 	/* Make sure this is a type of entry that we can handle here */
 	if (hardlink == NULL) {
-		switch (archive_entry_filetype(entry_original)) {
+		switch (tk_archive_entry_filetype(entry_original)) {
 		case AE_IFBLK:
 		case AE_IFCHR:
 		case AE_IFIFO:
@@ -549,46 +549,46 @@ archive_write_pax_header(struct archive_write *a,
 #if defined(_WIN32) && !defined(__CYGWIN__)
 			const wchar_t *wp;
 
-			wp = archive_entry_pathname_w(entry_original);
+			wp = tk_archive_entry_pathname_w(entry_original);
 			if (wp != NULL && wp[wcslen(wp) -1] != L'/') {
-				struct archive_wstring ws;
+				struct tk_archive_wstring ws;
 
-				archive_string_init(&ws);
+				tk_archive_string_init(&ws);
 				path_length = wcslen(wp);
-				if (archive_wstring_ensure(&ws,
+				if (tk_archive_wstring_ensure(&ws,
 				    path_length + 2) == NULL) {
-					archive_set_error(&a->archive, ENOMEM,
+					tk_archive_set_error(&a->archive, ENOMEM,
 					    "Can't allocate pax data");
-					archive_wstring_free(&ws);
+					tk_archive_wstring_free(&ws);
 					return(ARCHIVE_FATAL);
 				}
 				/* Should we keep '\' ? */
 				if (wp[path_length -1] == L'\\')
 					path_length--;
-				archive_wstrncpy(&ws, wp, path_length);
-				archive_wstrappend_wchar(&ws, L'/');
-				archive_entry_copy_pathname_w(
+				tk_archive_wstrncpy(&ws, wp, path_length);
+				tk_archive_wstrappend_wchar(&ws, L'/');
+				tk_archive_entry_copy_pathname_w(
 				    entry_original, ws.s);
-				archive_wstring_free(&ws);
+				tk_archive_wstring_free(&ws);
 				p = NULL;
 			} else
 #endif
-				p = archive_entry_pathname(entry_original);
+				p = tk_archive_entry_pathname(entry_original);
 			/*
 			 * On Windows, this is a backup operation just in
 			 * case getting WCS failed. On POSIX, this is a
 			 * normal operation.
 			 */
 			if (p != NULL && p[strlen(p) - 1] != '/') {
-				struct archive_string as;
+				struct tk_archive_string as;
 
-				archive_string_init(&as);
+				tk_archive_string_init(&as);
 				path_length = strlen(p);
-				if (archive_string_ensure(&as,
+				if (tk_archive_string_ensure(&as,
 				    path_length + 2) == NULL) {
-					archive_set_error(&a->archive, ENOMEM,
+					tk_archive_set_error(&a->archive, ENOMEM,
 					    "Can't allocate pax data");
-					archive_string_free(&as);
+					tk_archive_string_free(&as);
 					return(ARCHIVE_FATAL);
 				}
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -600,25 +600,25 @@ archive_write_pax_header(struct archive_write *a,
 					path_length--;
 				else
 #endif
-				archive_strncpy(&as, p, path_length);
-				archive_strappend_char(&as, '/');
-				archive_entry_copy_pathname(
+				tk_archive_strncpy(&as, p, path_length);
+				tk_archive_strappend_char(&as, '/');
+				tk_archive_entry_copy_pathname(
 				    entry_original, as.s);
-				archive_string_free(&as);
+				tk_archive_string_free(&as);
 			}
 			break;
 		}
 		case AE_IFSOCK:
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "tar format cannot archive socket");
 			return (ARCHIVE_FAILED);
 		default:
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "tar format cannot archive this (type=0%lo)",
 			    (unsigned long)
-			    archive_entry_filetype(entry_original));
+			    tk_archive_entry_filetype(entry_original));
 			return (ARCHIVE_FAILED);
 		}
 	}
@@ -637,19 +637,19 @@ archive_write_pax_header(struct archive_write *a,
 	 * can't store it.
 	 */
 	mac_metadata =
-	    archive_entry_mac_metadata(entry_original, &mac_metadata_size);
+	    tk_archive_entry_mac_metadata(entry_original, &mac_metadata_size);
 	if (mac_metadata != NULL) {
 		const char *oname;
 		char *name, *bname;
 		size_t name_length;
-		struct archive_entry *extra = archive_entry_new2(&a->archive);
+		struct tk_archive_entry *extra = tk_archive_entry_new2(&a->archive);
 
-		oname = archive_entry_pathname(entry_original);
+		oname = tk_archive_entry_pathname(entry_original);
 		name_length = strlen(oname);
 		name = malloc(name_length + 3);
 		if (name == NULL || extra == NULL) {
 			/* XXX error message */
-			archive_entry_free(extra);
+			tk_archive_entry_free(extra);
 			free(name);
 			return (ARCHIVE_FAILED);
 		}
@@ -668,39 +668,39 @@ archive_write_pax_header(struct archive_write *a,
 			memmove(bname + 2, bname, strlen(bname) + 1);
 			memmove(bname, "._", 2);
 		}
-		archive_entry_copy_pathname(extra, name);
+		tk_archive_entry_copy_pathname(extra, name);
 		free(name);
 
-		archive_entry_set_size(extra, mac_metadata_size);
-		archive_entry_set_filetype(extra, AE_IFREG);
-		archive_entry_set_perm(extra,
-		    archive_entry_perm(entry_original));
-		archive_entry_set_mtime(extra,
-		    archive_entry_mtime(entry_original),
-		    archive_entry_mtime_nsec(entry_original));
-		archive_entry_set_gid(extra,
-		    archive_entry_gid(entry_original));
-		archive_entry_set_gname(extra,
-		    archive_entry_gname(entry_original));
-		archive_entry_set_uid(extra,
-		    archive_entry_uid(entry_original));
-		archive_entry_set_uname(extra,
-		    archive_entry_uname(entry_original));
+		tk_archive_entry_set_size(extra, mac_metadata_size);
+		tk_archive_entry_set_filetype(extra, AE_IFREG);
+		tk_archive_entry_set_perm(extra,
+		    tk_archive_entry_perm(entry_original));
+		tk_archive_entry_set_mtime(extra,
+		    tk_archive_entry_mtime(entry_original),
+		    tk_archive_entry_mtime_nsec(entry_original));
+		tk_archive_entry_set_gid(extra,
+		    tk_archive_entry_gid(entry_original));
+		tk_archive_entry_set_gname(extra,
+		    tk_archive_entry_gname(entry_original));
+		tk_archive_entry_set_uid(extra,
+		    tk_archive_entry_uid(entry_original));
+		tk_archive_entry_set_uname(extra,
+		    tk_archive_entry_uname(entry_original));
 
 		/* Recurse to write the special copyfile entry. */
-		r = archive_write_pax_header(a, extra);
-		archive_entry_free(extra);
+		r = tk_archive_write_pax_header(a, extra);
+		tk_archive_entry_free(extra);
 		if (r < ARCHIVE_WARN)
 			return (r);
 		if (r < ret)
 			ret = r;
-		r = (int)archive_write_pax_data(a, mac_metadata,
+		r = (int)tk_archive_write_pax_data(a, mac_metadata,
 		    mac_metadata_size);
 		if (r < ARCHIVE_WARN)
 			return (r);
 		if (r < ret)
 			ret = r;
-		r = archive_write_pax_finish_entry(a);
+		r = tk_archive_write_pax_finish_entry(a);
 		if (r < ARCHIVE_WARN)
 			return (r);
 		if (r < ret)
@@ -713,39 +713,39 @@ archive_write_pax_header(struct archive_write *a,
 	 * are all slash '/', not the Windows path separator '\'. */
 	entry_main = __la_win_entry_in_posix_pathseparator(entry_original);
 	if (entry_main == entry_original)
-		entry_main = archive_entry_clone(entry_original);
+		entry_main = tk_archive_entry_clone(entry_original);
 #else
-	entry_main = archive_entry_clone(entry_original);
+	entry_main = tk_archive_entry_clone(entry_original);
 #endif
 	if (entry_main == NULL) {
-		archive_set_error(&a->archive, ENOMEM,
+		tk_archive_set_error(&a->archive, ENOMEM,
 		    "Can't allocate pax data");
 		return(ARCHIVE_FATAL);
 	}
-	archive_string_empty(&(pax->pax_header)); /* Blank our work area. */
-	archive_string_empty(&(pax->sparse_map));
+	tk_archive_string_empty(&(pax->pax_header)); /* Blank our work area. */
+	tk_archive_string_empty(&(pax->sparse_map));
 	sparse_total = 0;
 	sparse_list_clear(pax);
 
 	if (hardlink == NULL &&
-	    archive_entry_filetype(entry_main) == AE_IFREG)
-		sparse_count = archive_entry_sparse_reset(entry_main);
+	    tk_archive_entry_filetype(entry_main) == AE_IFREG)
+		sparse_count = tk_archive_entry_sparse_reset(entry_main);
 	else
 		sparse_count = 0;
 	if (sparse_count) {
 		int64_t offset, length, last_offset = 0;
 		/* Get the last entry of sparse block. */
-		while (archive_entry_sparse_next(
+		while (tk_archive_entry_sparse_next(
 		    entry_main, &offset, &length) == ARCHIVE_OK)
 			last_offset = offset + length;
 
 		/* If the last sparse block does not reach the end of file,
 		 * We have to add a empty sparse block as the last entry to
 		 * manage storing file data. */
-		if (last_offset < archive_entry_size(entry_main))
-			archive_entry_sparse_add_entry(entry_main,
-			    archive_entry_size(entry_main), 0);
-		sparse_count = archive_entry_sparse_reset(entry_main);
+		if (last_offset < tk_archive_entry_size(entry_main))
+			tk_archive_entry_sparse_add_entry(entry_main,
+			    tk_archive_entry_size(entry_main), 0);
+		sparse_count = tk_archive_entry_sparse_reset(entry_main);
 	}
 
 	/*
@@ -761,9 +761,9 @@ archive_write_pax_header(struct archive_write *a,
 		    &path_length, NULL);
 		if (r == ARCHIVE_FATAL)
 			return (r);
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Can't translate pathname '%s' to %s", path,
-		    archive_string_conversion_charset_name(sconv));
+		    tk_archive_string_conversion_charset_name(sconv));
 		ret = ARCHIVE_WARN;
 		sconv = NULL;/* The header charset switches to binary mode. */
 	}
@@ -774,9 +774,9 @@ archive_write_pax_header(struct archive_write *a,
 		r = get_entry_uname(a, entry_main, &uname, &uname_length, NULL);
 		if (r == ARCHIVE_FATAL)
 			return (r);
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Can't translate uname '%s' to %s", uname,
-		    archive_string_conversion_charset_name(sconv));
+		    tk_archive_string_conversion_charset_name(sconv));
 		ret = ARCHIVE_WARN;
 		sconv = NULL;/* The header charset switches to binary mode. */
 	}
@@ -787,9 +787,9 @@ archive_write_pax_header(struct archive_write *a,
 		r = get_entry_gname(a, entry_main, &gname, &gname_length, NULL);
 		if (r == ARCHIVE_FATAL)
 			return (r);
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Can't translate gname '%s' to %s", gname,
-		    archive_string_conversion_charset_name(sconv));
+		    tk_archive_string_conversion_charset_name(sconv));
 		ret = ARCHIVE_WARN;
 		sconv = NULL;/* The header charset switches to binary mode. */
 	}
@@ -805,10 +805,10 @@ archive_write_pax_header(struct archive_write *a,
 			    &linkpath_length, NULL);
 			if (r == ARCHIVE_FATAL)
 				return (r);
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "Can't translate linkname '%s' to %s", linkpath,
-			    archive_string_conversion_charset_name(sconv));
+			    tk_archive_string_conversion_charset_name(sconv));
 			ret = ARCHIVE_WARN;
 			sconv = NULL;
 		}
@@ -850,7 +850,7 @@ archive_write_pax_header(struct archive_write *a,
 	if (has_non_ASCII(path)) {
 		/* We have non-ASCII characters. */
 		add_pax_attr(&(pax->pax_header), "path", path);
-		archive_entry_set_pathname(entry_main,
+		tk_archive_entry_set_pathname(entry_main,
 		    build_ustar_entry_name(ustar_entry_name,
 			path, path_length, NULL));
 		need_extension = 1;
@@ -881,7 +881,7 @@ archive_write_pax_header(struct archive_write *a,
 			    || suffix - path > 155)  /* Prefix > 155 chars */
 			{
 				add_pax_attr(&(pax->pax_header), "path", path);
-				archive_entry_set_pathname(entry_main,
+				tk_archive_entry_set_pathname(entry_main,
 				    build_ustar_entry_name(ustar_entry_name,
 					path, path_length, NULL));
 				need_extension = 1;
@@ -896,10 +896,10 @@ archive_write_pax_header(struct archive_write *a,
 			add_pax_attr(&(pax->pax_header), "linkpath", linkpath);
 			if (linkpath_length > 100) {
 				if (hardlink != NULL)
-					archive_entry_set_hardlink(entry_main,
+					tk_archive_entry_set_hardlink(entry_main,
 					    "././@LongHardLink");
 				else
-					archive_entry_set_symlink(entry_main,
+					tk_archive_entry_set_symlink(entry_main,
 					    "././@LongSymLink");
 			}
 			need_extension = 1;
@@ -907,20 +907,20 @@ archive_write_pax_header(struct archive_write *a,
 	}
 	/* Save a pathname since it will be renamed if `entry_main` has
 	 * sparse blocks. */
-	archive_string_init(&entry_name);
-	archive_strcpy(&entry_name, archive_entry_pathname(entry_main));
+	tk_archive_string_init(&entry_name);
+	tk_archive_strcpy(&entry_name, tk_archive_entry_pathname(entry_main));
 
 	/* If file size is too large, add 'size' to pax extended attrs. */
-	if (archive_entry_size(entry_main) >= (((int64_t)1) << 33)) {
+	if (tk_archive_entry_size(entry_main) >= (((int64_t)1) << 33)) {
 		add_pax_attr_int(&(pax->pax_header), "size",
-		    archive_entry_size(entry_main));
+		    tk_archive_entry_size(entry_main));
 		need_extension = 1;
 	}
 
 	/* If numeric GID is too large, add 'gid' to pax extended attrs. */
-	if ((unsigned int)archive_entry_gid(entry_main) >= (1 << 18)) {
+	if ((unsigned int)tk_archive_entry_gid(entry_main) >= (1 << 18)) {
 		add_pax_attr_int(&(pax->pax_header), "gid",
-		    archive_entry_gid(entry_main));
+		    tk_archive_entry_gid(entry_main));
 		need_extension = 1;
 	}
 
@@ -934,9 +934,9 @@ archive_write_pax_header(struct archive_write *a,
 	}
 
 	/* If numeric UID is too large, add 'uid' to pax extended attrs. */
-	if ((unsigned int)archive_entry_uid(entry_main) >= (1 << 18)) {
+	if ((unsigned int)tk_archive_entry_uid(entry_main) >= (1 << 18)) {
 		add_pax_attr_int(&(pax->pax_header), "uid",
-		    archive_entry_uid(entry_main));
+		    tk_archive_entry_uid(entry_main));
 		need_extension = 1;
 	}
 
@@ -959,15 +959,15 @@ archive_write_pax_header(struct archive_write *a,
 	 *
 	 * Of course, this is only needed for block or char device entries.
 	 */
-	if (archive_entry_filetype(entry_main) == AE_IFBLK
-	    || archive_entry_filetype(entry_main) == AE_IFCHR) {
+	if (tk_archive_entry_filetype(entry_main) == AE_IFBLK
+	    || tk_archive_entry_filetype(entry_main) == AE_IFCHR) {
 		/*
 		 * If rdevmajor is too large, add 'SCHILY.devmajor' to
 		 * extended attributes.
 		 */
 		int rdevmajor, rdevminor;
-		rdevmajor = archive_entry_rdevmajor(entry_main);
-		rdevminor = archive_entry_rdevminor(entry_main);
+		rdevmajor = tk_archive_entry_rdevmajor(entry_main);
+		rdevminor = tk_archive_entry_rdevminor(entry_main);
 		if (rdevmajor >= (1 << 18)) {
 			add_pax_attr_int(&(pax->pax_header), "SCHILY.devmajor",
 			    rdevmajor);
@@ -1008,27 +1008,27 @@ archive_write_pax_header(struct archive_write *a,
 	 * high-resolution timestamp in "restricted pax" mode.
 	 */
 	if (!need_extension &&
-	    ((archive_entry_mtime(entry_main) < 0)
-		|| (archive_entry_mtime(entry_main) >= 0x7fffffff)))
+	    ((tk_archive_entry_mtime(entry_main) < 0)
+		|| (tk_archive_entry_mtime(entry_main) >= 0x7fffffff)))
 		need_extension = 1;
 
 	/* I use a star-compatible file flag attribute. */
-	p = archive_entry_fflags_text(entry_main);
+	p = tk_archive_entry_fflags_text(entry_main);
 	if (!need_extension && p != NULL  &&  *p != '\0')
 		need_extension = 1;
 
 	/* If there are non-trivial ACL entries, we need an extension. */
-	if (!need_extension && archive_entry_acl_count(entry_original,
+	if (!need_extension && tk_archive_entry_acl_count(entry_original,
 		ARCHIVE_ENTRY_ACL_TYPE_ACCESS) > 0)
 		need_extension = 1;
 
 	/* If there are non-trivial ACL entries, we need an extension. */
-	if (!need_extension && archive_entry_acl_count(entry_original,
+	if (!need_extension && tk_archive_entry_acl_count(entry_original,
 		ARCHIVE_ENTRY_ACL_TYPE_DEFAULT) > 0)
 		need_extension = 1;
 
 	/* If there are extended attributes, we need an extension */
-	if (!need_extension && archive_entry_xattr_count(entry_original) > 0)
+	if (!need_extension && tk_archive_entry_xattr_count(entry_original) > 0)
 		need_extension = 1;
 
 	/* If there are sparse info, we need an extension */
@@ -1042,55 +1042,55 @@ archive_write_pax_header(struct archive_write *a,
 	 * already set (we're already generating an extended header, so
 	 * may as well include these).
 	 */
-	if (a->archive.archive_format != ARCHIVE_FORMAT_TAR_PAX_RESTRICTED ||
+	if (a->archive.tk_archive_format != ARCHIVE_FORMAT_TAR_PAX_RESTRICTED ||
 	    need_extension) {
 
-		if (archive_entry_mtime(entry_main) < 0  ||
-		    archive_entry_mtime(entry_main) >= 0x7fffffff  ||
-		    archive_entry_mtime_nsec(entry_main) != 0)
+		if (tk_archive_entry_mtime(entry_main) < 0  ||
+		    tk_archive_entry_mtime(entry_main) >= 0x7fffffff  ||
+		    tk_archive_entry_mtime_nsec(entry_main) != 0)
 			add_pax_attr_time(&(pax->pax_header), "mtime",
-			    archive_entry_mtime(entry_main),
-			    archive_entry_mtime_nsec(entry_main));
+			    tk_archive_entry_mtime(entry_main),
+			    tk_archive_entry_mtime_nsec(entry_main));
 
-		if (archive_entry_ctime(entry_main) != 0  ||
-		    archive_entry_ctime_nsec(entry_main) != 0)
+		if (tk_archive_entry_ctime(entry_main) != 0  ||
+		    tk_archive_entry_ctime_nsec(entry_main) != 0)
 			add_pax_attr_time(&(pax->pax_header), "ctime",
-			    archive_entry_ctime(entry_main),
-			    archive_entry_ctime_nsec(entry_main));
+			    tk_archive_entry_ctime(entry_main),
+			    tk_archive_entry_ctime_nsec(entry_main));
 
-		if (archive_entry_atime(entry_main) != 0 ||
-		    archive_entry_atime_nsec(entry_main) != 0)
+		if (tk_archive_entry_atime(entry_main) != 0 ||
+		    tk_archive_entry_atime_nsec(entry_main) != 0)
 			add_pax_attr_time(&(pax->pax_header), "atime",
-			    archive_entry_atime(entry_main),
-			    archive_entry_atime_nsec(entry_main));
+			    tk_archive_entry_atime(entry_main),
+			    tk_archive_entry_atime_nsec(entry_main));
 
 		/* Store birth/creationtime only if it's earlier than mtime */
-		if (archive_entry_birthtime_is_set(entry_main) &&
-		    archive_entry_birthtime(entry_main)
-		    < archive_entry_mtime(entry_main))
+		if (tk_archive_entry_birthtime_is_set(entry_main) &&
+		    tk_archive_entry_birthtime(entry_main)
+		    < tk_archive_entry_mtime(entry_main))
 			add_pax_attr_time(&(pax->pax_header),
 			    "LIBARCHIVE.creationtime",
-			    archive_entry_birthtime(entry_main),
-			    archive_entry_birthtime_nsec(entry_main));
+			    tk_archive_entry_birthtime(entry_main),
+			    tk_archive_entry_birthtime_nsec(entry_main));
 
 		/* I use a star-compatible file flag attribute. */
-		p = archive_entry_fflags_text(entry_main);
+		p = tk_archive_entry_fflags_text(entry_main);
 		if (p != NULL  &&  *p != '\0')
 			add_pax_attr(&(pax->pax_header), "SCHILY.fflags", p);
 
 		/* I use star-compatible ACL attributes. */
-		r = archive_entry_acl_text_l(entry_original,
+		r = tk_archive_entry_acl_text_l(entry_original,
 		    ARCHIVE_ENTRY_ACL_TYPE_ACCESS |
 		    ARCHIVE_ENTRY_ACL_STYLE_EXTRA_ID,
 		    &p, NULL, pax->sconv_utf8);
 		if (r != 0) {
 			if (errno == ENOMEM) {
-				archive_set_error(&a->archive, ENOMEM,
+				tk_archive_set_error(&a->archive, ENOMEM,
 				    "Can't allocate memory for "
 				    "ACL.access");
 				return (ARCHIVE_FATAL);
 			}
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "Can't translate ACL.access to UTF-8");
 			ret = ARCHIVE_WARN;
@@ -1098,18 +1098,18 @@ archive_write_pax_header(struct archive_write *a,
 			add_pax_attr(&(pax->pax_header),
 			    "SCHILY.acl.access", p);
 		}
-		r = archive_entry_acl_text_l(entry_original,
+		r = tk_archive_entry_acl_text_l(entry_original,
 		    ARCHIVE_ENTRY_ACL_TYPE_DEFAULT |
 		    ARCHIVE_ENTRY_ACL_STYLE_EXTRA_ID,
 		    &p, NULL, pax->sconv_utf8);
 		if (r != 0) {
 			if (errno == ENOMEM) {
-				archive_set_error(&a->archive, ENOMEM,
+				tk_archive_set_error(&a->archive, ENOMEM,
 				    "Can't allocate memory for "
 				    "ACL.default");
 				return (ARCHIVE_FATAL);
 			}
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "Can't translate ACL.default to UTF-8");
 			ret = ARCHIVE_WARN;
@@ -1130,12 +1130,12 @@ archive_write_pax_header(struct archive_write *a,
 			    "GNU.sparse.name", entry_name.s);
 			add_pax_attr_int(&(pax->pax_header),
 			    "GNU.sparse.realsize",
-			    archive_entry_size(entry_main));
+			    tk_archive_entry_size(entry_main));
 
 			/* Rename the file name which will be used for
 			 * ustar header to a special name, which GNU
 			 * PAX Format 1.0 requires */
-			archive_entry_set_pathname(entry_main,
+			tk_archive_entry_set_pathname(entry_main,
 			    build_gnu_sparse_name(gnu_sparse_name,
 			        entry_name.s));
 
@@ -1143,47 +1143,47 @@ archive_write_pax_header(struct archive_write *a,
 			 * - Make a sparse map, which will precede a file data.
 			 * - Get the total size of available data of sparse.
 			 */
-			archive_string_sprintf(&(pax->sparse_map), "%d\n",
+			tk_archive_string_sprintf(&(pax->sparse_map), "%d\n",
 			    sparse_count);
-			while (archive_entry_sparse_next(entry_main,
+			while (tk_archive_entry_sparse_next(entry_main,
 			    &soffset, &slength) == ARCHIVE_OK) {
-				archive_string_sprintf(&(pax->sparse_map),
+				tk_archive_string_sprintf(&(pax->sparse_map),
 				    "%jd\n%jd\n",
 				    (intmax_t)soffset,
 				    (intmax_t)slength);
 				sparse_total += slength;
 				if (sparse_list_add(pax, soffset, slength)
 				    != ARCHIVE_OK) {
-					archive_set_error(&a->archive,
+					tk_archive_set_error(&a->archive,
 					    ENOMEM,
 					    "Can't allocate memory");
-					archive_entry_free(entry_main);
-					archive_string_free(&entry_name);
+					tk_archive_entry_free(entry_main);
+					tk_archive_string_free(&entry_name);
 					return (ARCHIVE_FATAL);
 				}
 			}
 		}
 
 		/* Store extended attributes */
-		if (archive_write_pax_header_xattrs(a, pax, entry_original)
+		if (tk_archive_write_pax_header_xattrs(a, pax, entry_original)
 		    == ARCHIVE_FATAL) {
-			archive_entry_free(entry_main);
-			archive_string_free(&entry_name);
+			tk_archive_entry_free(entry_main);
+			tk_archive_string_free(&entry_name);
 			return (ARCHIVE_FATAL);
 		}
 	}
 
 	/* Only regular files have data. */
-	if (archive_entry_filetype(entry_main) != AE_IFREG)
-		archive_entry_set_size(entry_main, 0);
+	if (tk_archive_entry_filetype(entry_main) != AE_IFREG)
+		tk_archive_entry_set_size(entry_main, 0);
 
 	/*
 	 * Pax-restricted does not store data for hardlinks, in order
 	 * to improve compatibility with ustar.
 	 */
-	if (a->archive.archive_format != ARCHIVE_FORMAT_TAR_PAX_INTERCHANGE &&
+	if (a->archive.tk_archive_format != ARCHIVE_FORMAT_TAR_PAX_INTERCHANGE &&
 	    hardlink != NULL)
-		archive_entry_set_size(entry_main, 0);
+		tk_archive_entry_set_size(entry_main, 0);
 
 	/*
 	 * XXX Full pax interchange format does permit a hardlink
@@ -1196,19 +1196,19 @@ archive_write_pax_header(struct archive_write *a,
 	 * will need to be revisited. XXX
 	 */
 	if (hardlink != NULL)
-		archive_entry_set_size(entry_main, 0);
+		tk_archive_entry_set_size(entry_main, 0);
 
 	/* Save a real file size. */
-	real_size = archive_entry_size(entry_main);
+	real_size = tk_archive_entry_size(entry_main);
 	/*
 	 * Overwrite a file size by the total size of sparse blocks and
 	 * the size of sparse map info. That file size is the length of
 	 * the data, which we will exactly store into an archive file.
 	 */
-	if (archive_strlen(&(pax->sparse_map))) {
-		size_t mapsize = archive_strlen(&(pax->sparse_map));
+	if (tk_archive_strlen(&(pax->sparse_map))) {
+		size_t mapsize = tk_archive_strlen(&(pax->sparse_map));
 		pax->sparse_map_padding = 0x1ff & (-(ssize_t)mapsize);
-		archive_entry_set_size(entry_main,
+		tk_archive_entry_set_size(entry_main,
 		    mapsize + pax->sparse_map_padding + sparse_total);
 	}
 
@@ -1238,34 +1238,34 @@ archive_write_pax_header(struct archive_write *a,
 	 * The non-strict formatter uses similar logic for other
 	 * numeric fields, though they're less critical.
 	 */
-	if (__archive_write_format_header_ustar(a, ustarbuff, entry_main, -1, 0,
+	if (__tk_archive_write_format_header_ustar(a, ustarbuff, entry_main, -1, 0,
 	    NULL) == ARCHIVE_FATAL)
 		return (ARCHIVE_FATAL);
 
 	/* If we built any extended attributes, write that entry first. */
-	if (archive_strlen(&(pax->pax_header)) > 0) {
-		struct archive_entry *pax_attr_entry;
+	if (tk_archive_strlen(&(pax->pax_header)) > 0) {
+		struct tk_archive_entry *pax_attr_entry;
 		time_t s;
 		int64_t uid, gid;
 		int mode;
 
-		pax_attr_entry = archive_entry_new2(&a->archive);
+		pax_attr_entry = tk_archive_entry_new2(&a->archive);
 		p = entry_name.s;
-		archive_entry_set_pathname(pax_attr_entry,
+		tk_archive_entry_set_pathname(pax_attr_entry,
 		    build_pax_attribute_name(pax_entry_name, p));
-		archive_entry_set_size(pax_attr_entry,
-		    archive_strlen(&(pax->pax_header)));
+		tk_archive_entry_set_size(pax_attr_entry,
+		    tk_archive_strlen(&(pax->pax_header)));
 		/* Copy uid/gid (but clip to ustar limits). */
-		uid = archive_entry_uid(entry_main);
+		uid = tk_archive_entry_uid(entry_main);
 		if (uid >= 1 << 18)
 			uid = (1 << 18) - 1;
-		archive_entry_set_uid(pax_attr_entry, uid);
-		gid = archive_entry_gid(entry_main);
+		tk_archive_entry_set_uid(pax_attr_entry, uid);
+		gid = tk_archive_entry_gid(entry_main);
 		if (gid >= 1 << 18)
 			gid = (1 << 18) - 1;
-		archive_entry_set_gid(pax_attr_entry, gid);
+		tk_archive_entry_set_gid(pax_attr_entry, gid);
 		/* Copy mode over (but not setuid/setgid bits) */
-		mode = archive_entry_mode(entry_main);
+		mode = tk_archive_entry_mode(entry_main);
 #ifdef S_ISUID
 		mode &= ~S_ISUID;
 #endif
@@ -1275,40 +1275,40 @@ archive_write_pax_header(struct archive_write *a,
 #ifdef S_ISVTX
 		mode &= ~S_ISVTX;
 #endif
-		archive_entry_set_mode(pax_attr_entry, mode);
+		tk_archive_entry_set_mode(pax_attr_entry, mode);
 
 		/* Copy uname/gname. */
-		archive_entry_set_uname(pax_attr_entry,
-		    archive_entry_uname(entry_main));
-		archive_entry_set_gname(pax_attr_entry,
-		    archive_entry_gname(entry_main));
+		tk_archive_entry_set_uname(pax_attr_entry,
+		    tk_archive_entry_uname(entry_main));
+		tk_archive_entry_set_gname(pax_attr_entry,
+		    tk_archive_entry_gname(entry_main));
 
 		/* Copy mtime, but clip to ustar limits. */
-		s = archive_entry_mtime(entry_main);
+		s = tk_archive_entry_mtime(entry_main);
 		if (s < 0) { s = 0; }
 		if (s >= 0x7fffffff) { s = 0x7fffffff; }
-		archive_entry_set_mtime(pax_attr_entry, s, 0);
+		tk_archive_entry_set_mtime(pax_attr_entry, s, 0);
 
 		/* Standard ustar doesn't support atime. */
-		archive_entry_set_atime(pax_attr_entry, 0, 0);
+		tk_archive_entry_set_atime(pax_attr_entry, 0, 0);
 
 		/* Standard ustar doesn't support ctime. */
-		archive_entry_set_ctime(pax_attr_entry, 0, 0);
+		tk_archive_entry_set_ctime(pax_attr_entry, 0, 0);
 
-		r = __archive_write_format_header_ustar(a, paxbuff,
+		r = __tk_archive_write_format_header_ustar(a, paxbuff,
 		    pax_attr_entry, 'x', 1, NULL);
 
-		archive_entry_free(pax_attr_entry);
+		tk_archive_entry_free(pax_attr_entry);
 
 		/* Note that the 'x' header shouldn't ever fail to format */
 		if (r < ARCHIVE_WARN) {
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
-			    "archive_write_pax_header: "
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			    "tk_archive_write_pax_header: "
 			    "'x' header failed?!  This can't happen.\n");
 			return (ARCHIVE_FATAL);
 		} else if (r < ret)
 			ret = r;
-		r = __archive_write_output(a, paxbuff, 512);
+		r = __tk_archive_write_output(a, paxbuff, 512);
 		if (r != ARCHIVE_OK) {
 			sparse_list_clear(pax);
 			pax->entry_bytes_remaining = 0;
@@ -1316,18 +1316,18 @@ archive_write_pax_header(struct archive_write *a,
 			return (ARCHIVE_FATAL);
 		}
 
-		pax->entry_bytes_remaining = archive_strlen(&(pax->pax_header));
+		pax->entry_bytes_remaining = tk_archive_strlen(&(pax->pax_header));
 		pax->entry_padding =
 		    0x1ff & (-(int64_t)pax->entry_bytes_remaining);
 
-		r = __archive_write_output(a, pax->pax_header.s,
-		    archive_strlen(&(pax->pax_header)));
+		r = __tk_archive_write_output(a, pax->pax_header.s,
+		    tk_archive_strlen(&(pax->pax_header)));
 		if (r != ARCHIVE_OK) {
 			/* If a write fails, we're pretty much toast. */
 			return (ARCHIVE_FATAL);
 		}
 		/* Pad out the end of the entry. */
-		r = __archive_write_nulls(a, (size_t)pax->entry_padding);
+		r = __tk_archive_write_nulls(a, (size_t)pax->entry_padding);
 		if (r != ARCHIVE_OK) {
 			/* If a write fails, we're pretty much toast. */
 			return (ARCHIVE_FATAL);
@@ -1336,7 +1336,7 @@ archive_write_pax_header(struct archive_write *a,
 	}
 
 	/* Write the header for main entry. */
-	r = __archive_write_output(a, ustarbuff, 512);
+	r = __tk_archive_write_output(a, ustarbuff, 512);
 	if (r != ARCHIVE_OK)
 		return (r);
 
@@ -1345,7 +1345,7 @@ archive_write_pax_header(struct archive_write *a,
 	 * they can avoid unnecessarily writing a body for something
 	 * that we're just going to ignore.
 	 */
-	archive_entry_set_size(entry_original, real_size);
+	tk_archive_entry_set_size(entry_original, real_size);
 	if (pax->sparse_list == NULL && real_size > 0) {
 		/* This is not a sparse file but we handle its data as
 		 * a sparse block. */
@@ -1353,8 +1353,8 @@ archive_write_pax_header(struct archive_write *a,
 		sparse_total = real_size;
 	}
 	pax->entry_padding = 0x1ff & (-(int64_t)sparse_total);
-	archive_entry_free(entry_main);
-	archive_string_free(&entry_name);
+	tk_archive_entry_free(entry_main);
+	tk_archive_string_free(&entry_name);
 
 	return (ret);
 }
@@ -1627,13 +1627,13 @@ build_gnu_sparse_name(char *dest, const char *src)
 
 /* Write two null blocks for the end of archive */
 static int
-archive_write_pax_close(struct archive_write *a)
+tk_archive_write_pax_close(struct tk_archive_write *a)
 {
-	return (__archive_write_nulls(a, 512 * 2));
+	return (__tk_archive_write_nulls(a, 512 * 2));
 }
 
 static int
-archive_write_pax_free(struct archive_write *a)
+tk_archive_write_pax_free(struct tk_archive_write *a)
 {
 	struct pax *pax;
 
@@ -1641,9 +1641,9 @@ archive_write_pax_free(struct archive_write *a)
 	if (pax == NULL)
 		return (ARCHIVE_OK);
 
-	archive_string_free(&pax->pax_header);
-	archive_string_free(&pax->sparse_map);
-	archive_string_free(&pax->l_url_encoded_name);
+	tk_archive_string_free(&pax->pax_header);
+	tk_archive_string_free(&pax->sparse_map);
+	tk_archive_string_free(&pax->l_url_encoded_name);
 	sparse_list_clear(pax);
 	free(pax);
 	a->format_data = NULL;
@@ -1651,7 +1651,7 @@ archive_write_pax_free(struct archive_write *a)
 }
 
 static int
-archive_write_pax_finish_entry(struct archive_write *a)
+tk_archive_write_pax_finish_entry(struct tk_archive_write *a)
 {
 	struct pax *pax;
 	uint64_t remaining;
@@ -1669,13 +1669,13 @@ archive_write_pax_finish_entry(struct archive_write *a)
 			pax->sparse_list = sb;
 		}
 	}
-	ret = __archive_write_nulls(a, (size_t)(remaining + pax->entry_padding));
+	ret = __tk_archive_write_nulls(a, (size_t)(remaining + pax->entry_padding));
 	pax->entry_bytes_remaining = pax->entry_padding = 0;
 	return (ret);
 }
 
 static ssize_t
-archive_write_pax_data(struct archive_write *a, const void *buff, size_t s)
+tk_archive_write_pax_data(struct tk_archive_write *a, const void *buff, size_t s)
 {
 	struct pax *pax;
 	size_t ws;
@@ -1688,15 +1688,15 @@ archive_write_pax_data(struct archive_write *a, const void *buff, size_t s)
 	 * According to GNU PAX format 1.0, write a sparse map
 	 * before the body.
 	 */
-	if (archive_strlen(&(pax->sparse_map))) {
-		ret = __archive_write_output(a, pax->sparse_map.s,
-		    archive_strlen(&(pax->sparse_map)));
+	if (tk_archive_strlen(&(pax->sparse_map))) {
+		ret = __tk_archive_write_output(a, pax->sparse_map.s,
+		    tk_archive_strlen(&(pax->sparse_map)));
 		if (ret != ARCHIVE_OK)
 			return (ret);
-		ret = __archive_write_nulls(a, pax->sparse_map_padding);
+		ret = __tk_archive_write_nulls(a, pax->sparse_map_padding);
 		if (ret != ARCHIVE_OK)
 			return (ret);
-		archive_string_empty(&(pax->sparse_map));
+		tk_archive_string_empty(&(pax->sparse_map));
 	}
 
 	total = 0;
@@ -1726,7 +1726,7 @@ archive_write_pax_data(struct archive_write *a, const void *buff, size_t s)
 			continue;
 		}
 
-		ret = __archive_write_output(a, p, ws);
+		ret = __tk_archive_write_output(a, p, ws);
 		pax->sparse_list->remaining -= ws;
 		total += ws;
 		if (ret != ARCHIVE_OK)

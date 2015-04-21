@@ -79,7 +79,7 @@ DEFINE_TEST(test_read_format_cpio_afio)
 {
 	unsigned char *p;
 	size_t size;
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	struct archive *a;
 
 	/* The default block size of afio is 5120. we simulate it */
@@ -89,28 +89,28 @@ DEFINE_TEST(test_read_format_cpio_afio)
 		return;
 	memset(p, 0, size);
 	memcpy(p, archive, sizeof(archive));
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_open_memory(a, p, size));
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_open_memory(a, p, size));
 	/*
 	 * First entry is odc format.
 	 */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt(17, archive_entry_size(ae));
-	assertA(archive_filter_code(a, 0) == ARCHIVE_FILTER_NONE);
-	assertA(archive_format(a) == ARCHIVE_FORMAT_CPIO_POSIX);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt(17, tk_archive_entry_size(ae));
+	assertA(tk_archive_filter_code(a, 0) == ARCHIVE_FILTER_NONE);
+	assertA(tk_archive_format(a) == ARCHIVE_FORMAT_CPIO_POSIX);
 	/*
 	 * Second entry is afio large ASCII format.
 	 */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualInt(17, archive_entry_size(ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualInt(17, tk_archive_entry_size(ae));
 	if (uid_size() > 4)
-		assertEqualInt(65536, archive_entry_uid(ae));
-	assertA(archive_filter_code(a, 0) == ARCHIVE_FILTER_NONE);
-	assertA(archive_format(a) == ARCHIVE_FORMAT_CPIO_AFIO_LARGE);
-	assertEqualInt(ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+		assertEqualInt(65536, tk_archive_entry_uid(ae));
+	assertA(tk_archive_filter_code(a, 0) == ARCHIVE_FILTER_NONE);
+	assertA(tk_archive_format(a) == ARCHIVE_FORMAT_CPIO_AFIO_LARGE);
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 
 	free(p);
 }

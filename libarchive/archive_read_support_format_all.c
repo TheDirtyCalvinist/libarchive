@@ -30,10 +30,10 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_read_support_format_all.c 174991
 #include "archive_private.h"
 
 int
-archive_read_support_format_all(struct archive *a)
+tk_archive_read_support_format_all(struct archive *a)
 {
-	archive_check_magic(a, ARCHIVE_READ_MAGIC,
-	    ARCHIVE_STATE_NEW, "archive_read_support_format_all");
+	tk_archive_check_magic(a, ARCHIVE_READ_MAGIC,
+	    ARCHIVE_STATE_NEW, "tk_archive_read_support_format_all");
 
 	/* TODO: It would be nice to compute the ordering
 	 * here automatically so that people who enable just
@@ -54,13 +54,13 @@ archive_read_support_format_all(struct archive *a)
 	 * high, we can maybe avoid running any of the more expensive
 	 * bidders below.
 	 */
-	archive_read_support_format_ar(a);
-	archive_read_support_format_cpio(a);
-	archive_read_support_format_empty(a);
-	archive_read_support_format_lha(a);
-	archive_read_support_format_mtree(a);
-	archive_read_support_format_tar(a);
-	archive_read_support_format_xar(a);
+	tk_archive_read_support_format_ar(a);
+	tk_archive_read_support_format_cpio(a);
+	tk_archive_read_support_format_empty(a);
+	tk_archive_read_support_format_lha(a);
+	tk_archive_read_support_format_mtree(a);
+	tk_archive_read_support_format_tar(a);
+	tk_archive_read_support_format_xar(a);
 
 	/*
 	 * Install expensive bidders last.  By doing them last, we
@@ -68,13 +68,13 @@ archive_read_support_format_all(struct archive *a)
 	 * make it unnecessary for these to do anything at all.
 	 */
 	/* These three have potentially large look-ahead. */
-	archive_read_support_format_7zip(a);
-	archive_read_support_format_cab(a);
-	archive_read_support_format_rar(a);
-	archive_read_support_format_iso9660(a);
+	tk_archive_read_support_format_7zip(a);
+	tk_archive_read_support_format_cab(a);
+	tk_archive_read_support_format_rar(a);
+	tk_archive_read_support_format_iso9660(a);
 	/* Seek is really bad, since it forces the read-ahead
 	 * logic to discard buffered data. */
-	archive_read_support_format_zip(a);
+	tk_archive_read_support_format_zip(a);
 
 	/* Note: We always return ARCHIVE_OK here, even if some of the
 	 * above return ARCHIVE_WARN.  The intent here is to enable
@@ -82,6 +82,6 @@ archive_read_support_format_all(struct archive *a)
 	 * compression should enable those individually so they can
 	 * verify the level of support. */
 	/* Clear any warning messages set by the above functions. */
-	archive_clear_error(a);
+	tk_archive_clear_error(a);
 	return (ARCHIVE_OK);
 }

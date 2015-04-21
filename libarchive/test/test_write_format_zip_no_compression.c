@@ -66,7 +66,7 @@ DEFINE_TEST(test_write_format_zip_no_compression)
 {
 	/* Buffer data */
 	struct archive *a;
-	struct archive_entry *entry;
+	struct tk_archive_entry *entry;
 	char buff[100000];
 	const char *buffend;
 	/* p is the pointer to walk over the central directory,
@@ -96,47 +96,47 @@ DEFINE_TEST(test_write_format_zip_no_compression)
 	unsigned long crc;
 
 	/* Create new ZIP archive in memory without padding. */
-	assert((a = archive_write_new()) != NULL);
-	assertA(0 == archive_write_set_format_zip(a));
-	assertA(0 == archive_write_set_options(a, "zip:compression=store"));
-	assertA(0 == archive_write_add_filter_none(a));
-	assertA(0 == archive_write_set_bytes_per_block(a, 1));
-	assertA(0 == archive_write_set_bytes_in_last_block(a, 1));
-	assertA(0 == archive_write_open_memory(a, buff, sizeof(buff), &used));
+	assert((a = tk_archive_write_new()) != NULL);
+	assertA(0 == tk_archive_write_set_format_zip(a));
+	assertA(0 == tk_archive_write_set_options(a, "zip:compression=store"));
+	assertA(0 == tk_archive_write_add_filter_none(a));
+	assertA(0 == tk_archive_write_set_bytes_per_block(a, 1));
+	assertA(0 == tk_archive_write_set_bytes_in_last_block(a, 1));
+	assertA(0 == tk_archive_write_open_memory(a, buff, sizeof(buff), &used));
 
 	/* Write entries. */
 
 	/* Regular file */
-	assert((entry = archive_entry_new()) != NULL);
-	archive_entry_set_pathname(entry, file_name);
-	archive_entry_set_mode(entry, S_IFREG | 0644);
-	archive_entry_set_size(entry, sizeof(file_data1) + sizeof(file_data2));
-	archive_entry_set_uid(entry, file_uid);
-	archive_entry_set_gid(entry, file_gid);
-	archive_entry_set_mtime(entry, t, 0);
-	archive_entry_set_atime(entry, t, 0);
-	archive_entry_set_ctime(entry, t, 0);
-	assertEqualIntA(a, 0, archive_write_header(a, entry));
-	assertEqualIntA(a, sizeof(file_data1), archive_write_data(a, file_data1, sizeof(file_data1)));
-	assertEqualIntA(a, sizeof(file_data2), archive_write_data(a, file_data2, sizeof(file_data2)));
-	archive_entry_free(entry);
+	assert((entry = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_pathname(entry, file_name);
+	tk_archive_entry_set_mode(entry, S_IFREG | 0644);
+	tk_archive_entry_set_size(entry, sizeof(file_data1) + sizeof(file_data2));
+	tk_archive_entry_set_uid(entry, file_uid);
+	tk_archive_entry_set_gid(entry, file_gid);
+	tk_archive_entry_set_mtime(entry, t, 0);
+	tk_archive_entry_set_atime(entry, t, 0);
+	tk_archive_entry_set_ctime(entry, t, 0);
+	assertEqualIntA(a, 0, tk_archive_write_header(a, entry));
+	assertEqualIntA(a, sizeof(file_data1), tk_archive_write_data(a, file_data1, sizeof(file_data1)));
+	assertEqualIntA(a, sizeof(file_data2), tk_archive_write_data(a, file_data2, sizeof(file_data2)));
+	tk_archive_entry_free(entry);
 
 	/* Folder */
-	assert((entry = archive_entry_new()) != NULL);
-	archive_entry_set_pathname(entry, folder_name);
-	archive_entry_set_mode(entry, S_IFDIR | folder_perm);
-	archive_entry_set_size(entry, 0);
-	archive_entry_set_uid(entry, folder_uid);
-	archive_entry_set_gid(entry, folder_gid);
-	archive_entry_set_mtime(entry, t, 0);
-	archive_entry_set_atime(entry, t, 0);
-	archive_entry_set_ctime(entry, t, 0);
-	assertEqualIntA(a, 0, archive_write_header(a, entry));
-	archive_entry_free(entry);
+	assert((entry = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_pathname(entry, folder_name);
+	tk_archive_entry_set_mode(entry, S_IFDIR | folder_perm);
+	tk_archive_entry_set_size(entry, 0);
+	tk_archive_entry_set_uid(entry, folder_uid);
+	tk_archive_entry_set_gid(entry, folder_gid);
+	tk_archive_entry_set_mtime(entry, t, 0);
+	tk_archive_entry_set_atime(entry, t, 0);
+	tk_archive_entry_set_ctime(entry, t, 0);
+	assertEqualIntA(a, 0, tk_archive_write_header(a, entry));
+	tk_archive_entry_free(entry);
 
 	/* Close the archive . */
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 
 	/* Remember the end of the archive in memory. */
 	buffend = buff + used;

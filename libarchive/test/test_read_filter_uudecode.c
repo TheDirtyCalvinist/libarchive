@@ -72,7 +72,7 @@ static const char extradata[] = {
 static void
 test_read_uu_sub(const char *uudata, size_t uusize, int no_nl)
 {
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	struct archive *a;
 	char *buff;
 	char extradata_no_nl[sizeof(extradata)];
@@ -116,27 +116,27 @@ test_read_uu_sub(const char *uudata, size_t uusize, int no_nl)
 		memcpy(p, uudata, uusize);
 		size = extra * 1024 + uusize;
 
-		assert((a = archive_read_new()) != NULL);
+		assert((a = tk_archive_read_new()) != NULL);
 		assertEqualIntA(a, ARCHIVE_OK,
-		    archive_read_support_filter_all(a));
+		    tk_archive_read_support_filter_all(a));
 		assertEqualIntA(a, ARCHIVE_OK,
-		    archive_read_support_format_all(a));
+		    tk_archive_read_support_format_all(a));
 		assertEqualIntA(a, ARCHIVE_OK,
 		    read_open_memory(a, buff, size, 2));
 		assertEqualIntA(a, ARCHIVE_OK,
-		    archive_read_next_header(a, &ae));
-		failure("archive_filter_name(a, 0)=\"%s\""
+		    tk_archive_read_next_header(a, &ae));
+		failure("tk_archive_filter_name(a, 0)=\"%s\""
 		    "extra %d, NL %d",
-		    archive_filter_name(a, 0), extra, !no_nl);
-		assertEqualInt(archive_filter_code(a, 0),
+		    tk_archive_filter_name(a, 0), extra, !no_nl);
+		assertEqualInt(tk_archive_filter_code(a, 0),
 		    ARCHIVE_FILTER_COMPRESS);
-		failure("archive_format_name(a)=\"%s\""
+		failure("tk_archive_format_name(a)=\"%s\""
 		    "extra %d, NL %d",
-		    archive_format_name(a), extra, !no_nl);
-		assertEqualInt(archive_format(a),
+		    tk_archive_format_name(a), extra, !no_nl);
+		assertEqualInt(tk_archive_format(a),
 		    ARCHIVE_FORMAT_TAR_USTAR);
-		assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
-		assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+		assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_close(a));
+		assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 	}
 
 	/* UUdecode bidder shouldn't scan too much data; make sure it
@@ -147,14 +147,14 @@ test_read_uu_sub(const char *uudata, size_t uusize, int no_nl)
 	buff[size - 1] = '\n';
 	memcpy(buff + size, uudata, uusize);
 	size += uusize;
-	assert((a = archive_read_new()) != NULL);
+	assert((a = tk_archive_read_new()) != NULL);
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_support_filter_all(a));
+	    tk_archive_read_support_filter_all(a));
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_support_format_all(a));
+	    tk_archive_read_support_format_all(a));
 	assertEqualIntA(a, ARCHIVE_FATAL,
 	    read_open_memory(a, buff, size, 2));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 
 	free(buff);
 }

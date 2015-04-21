@@ -70,7 +70,7 @@ struct ae_sparse {
  *
  * TODO: Design a good API for handling sparse files.
  */
-struct archive_entry {
+struct tk_archive_entry {
 	struct archive *archive;
 
 	/*
@@ -142,23 +142,23 @@ struct archive_entry {
 	/*
 	 * Use aes here so that we get transparent mbs<->wcs conversions.
 	 */
-	struct archive_mstring ae_fflags_text;	/* Text fflags per fflagstostr(3) */
+	struct tk_archive_mstring ae_fflags_text;	/* Text fflags per fflagstostr(3) */
 	unsigned long ae_fflags_set;		/* Bitmap fflags */
 	unsigned long ae_fflags_clear;
-	struct archive_mstring ae_gname;		/* Name of owning group */
-	struct archive_mstring ae_hardlink;	/* Name of target for hardlink */
-	struct archive_mstring ae_pathname;	/* Name of entry */
-	struct archive_mstring ae_symlink;		/* symlink contents */
-	struct archive_mstring ae_uname;		/* Name of owner */
+	struct tk_archive_mstring ae_gname;		/* Name of owning group */
+	struct tk_archive_mstring ae_hardlink;	/* Name of target for hardlink */
+	struct tk_archive_mstring ae_pathname;	/* Name of entry */
+	struct tk_archive_mstring ae_symlink;		/* symlink contents */
+	struct tk_archive_mstring ae_uname;		/* Name of owner */
 
 	/* Not used within libarchive; useful for some clients. */
-	struct archive_mstring ae_sourcepath;	/* Path this entry is sourced from. */
+	struct tk_archive_mstring ae_sourcepath;	/* Path this entry is sourced from. */
 
 	void *mac_metadata;
 	size_t mac_metadata_size;
 
 	/* ACL support. */
-	struct archive_acl    acl;
+	struct tk_archive_acl    acl;
 
 	/* extattr support. */
 	struct ae_xattr *xattr_head;

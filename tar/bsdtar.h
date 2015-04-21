@@ -98,8 +98,8 @@ struct bsdtar {
 	 * the file where they are used.
 	 */
 	struct archive		*diskreader;	/* for write.c */
-	struct archive_entry_linkresolver *resolver; /* for write.c */
-	struct archive_dir	*archive_dir;	/* for write.c */
+	struct tk_archive_entry_linkresolver *resolver; /* for write.c */
+	struct tk_archive_dir	*tk_archive_dir;	/* for write.c */
 	struct name_cache	*gname_cache;	/* for write.c */
 	char			*buff;		/* for write.c */
 	size_t			 buff_size;	/* for write.c */
@@ -159,7 +159,7 @@ enum {
 
 int	bsdtar_getopt(struct bsdtar *);
 void	do_chdir(struct bsdtar *);
-int	edit_pathname(struct bsdtar *, struct archive_entry *);
+int	edit_pathname(struct bsdtar *, struct tk_archive_entry *);
 int	need_report(void);
 int	pathcmp(const char *a, const char *b);
 void	safe_fprintf(FILE *, const char *fmt, ...);

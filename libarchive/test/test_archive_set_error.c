@@ -29,15 +29,15 @@ __FBSDID("$FreeBSD$");
 static void
 test(struct archive *a, int code, const char *msg)
 {
-	archive_set_error(a, code, "%s", msg);
+	tk_archive_set_error(a, code, "%s", msg);
 
-	assertEqualInt(code, archive_errno(a));
-	assertEqualString(msg, archive_error_string(a));
+	assertEqualInt(code, tk_archive_errno(a));
+	assertEqualString(msg, tk_archive_error_string(a));
 }
 
-DEFINE_TEST(test_archive_set_error)
+DEFINE_TEST(test_tk_archive_set_error)
 {
-	struct archive* a = archive_read_new();
+	struct archive* a = tk_archive_read_new();
 
 	/* unlike printf("%s", NULL),
 	 * archive_set_error(a, code, "%s", NULL)
@@ -47,5 +47,5 @@ DEFINE_TEST(test_archive_set_error)
 	test(a, -1, "tuvw");
 	test(a, 34, "XYZ");
 
-	archive_read_free(a);
+	tk_archive_read_free(a);
 }

@@ -58,8 +58,8 @@ struct gnutar {
 	size_t		uname_length;
 	const char *	gname;
 	size_t		gname_length;
-	struct archive_string_conv *opt_sconv;
-	struct archive_string_conv *sconv_default;
+	struct tk_archive_string_conv *opt_sconv;
+	struct tk_archive_string_conv *sconv_default;
 	int init_default_conversion;
 };
 
@@ -151,17 +151,17 @@ static const char template_header[] = {
 	0,0,0,0,0,0,0
 };
 
-static int      archive_write_gnutar_options(struct archive_write *,
+static int      tk_archive_write_gnutar_options(struct tk_archive_write *,
 		    const char *, const char *);
-static int	archive_format_gnutar_header(struct archive_write *, char h[512],
-		    struct archive_entry *, int tartype);
-static int      archive_write_gnutar_header(struct archive_write *,
-		    struct archive_entry *entry);
-static ssize_t	archive_write_gnutar_data(struct archive_write *a, const void *buff,
+static int	tk_archive_format_gnutar_header(struct tk_archive_write *, char h[512],
+		    struct tk_archive_entry *, int tartype);
+static int      tk_archive_write_gnutar_header(struct tk_archive_write *,
+		    struct tk_archive_entry *entry);
+static ssize_t	tk_archive_write_gnutar_data(struct tk_archive_write *a, const void *buff,
 		    size_t s);
-static int	archive_write_gnutar_free(struct archive_write *);
-static int	archive_write_gnutar_close(struct archive_write *);
-static int	archive_write_gnutar_finish_entry(struct archive_write *);
+static int	tk_archive_write_gnutar_free(struct tk_archive_write *);
+static int	tk_archive_write_gnutar_close(struct tk_archive_write *);
+static int	tk_archive_write_gnutar_finish_entry(struct tk_archive_write *);
 static int	format_256(int64_t, char *, int);
 static int	format_number(int64_t, char *, int size, int maxsize);
 static int	format_octal(int64_t, char *, int);
@@ -170,32 +170,32 @@ static int	format_octal(int64_t, char *, int);
  * Set output format to 'GNU tar' format.
  */
 int
-archive_write_set_format_gnutar(struct archive *_a)
+tk_archive_write_set_format_gnutar(struct archive *_a)
 {
-	struct archive_write *a = (struct archive_write *)_a;
+	struct tk_archive_write *a = (struct tk_archive_write *)_a;
 	struct gnutar *gnutar;
 
 	gnutar = (struct gnutar *)calloc(1, sizeof(*gnutar));
 	if (gnutar == NULL) {
-		archive_set_error(&a->archive, ENOMEM,
+		tk_archive_set_error(&a->archive, ENOMEM,
 		    "Can't allocate gnutar data");
 		return (ARCHIVE_FATAL);
 	}
 	a->format_data = gnutar;
 	a->format_name = "gnutar";
-	a->format_options = archive_write_gnutar_options;
-	a->format_write_header = archive_write_gnutar_header;
-	a->format_write_data = archive_write_gnutar_data;
-	a->format_close = archive_write_gnutar_close;
-	a->format_free = archive_write_gnutar_free;
-	a->format_finish_entry = archive_write_gnutar_finish_entry;
-	a->archive.archive_format = ARCHIVE_FORMAT_TAR_GNUTAR;
-	a->archive.archive_format_name = "GNU tar";
+	a->format_options = tk_archive_write_gnutar_options;
+	a->format_write_header = tk_archive_write_gnutar_header;
+	a->format_write_data = tk_archive_write_gnutar_data;
+	a->format_close = tk_archive_write_gnutar_close;
+	a->format_free = tk_archive_write_gnutar_free;
+	a->format_finish_entry = tk_archive_write_gnutar_finish_entry;
+	a->archive.tk_archive_format = ARCHIVE_FORMAT_TAR_GNUTAR;
+	a->archive.tk_archive_format_name = "GNU tar";
 	return (ARCHIVE_OK);
 }
 
 static int
-archive_write_gnutar_options(struct archive_write *a, const char *key,
+tk_archive_write_gnutar_options(struct tk_archive_write *a, const char *key,
     const char *val)
 {
 	struct gnutar *gnutar = (struct gnutar *)a->format_data;
@@ -203,11 +203,11 @@ archive_write_gnutar_options(struct archive_write *a, const char *key,
 
 	if (strcmp(key, "hdrcharset")  == 0) {
 		if (val == NULL || val[0] == 0)
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "%s: hdrcharset option needs a character-set name",
 			    a->format_name);
 		else {
-			gnutar->opt_sconv = archive_string_conversion_to_charset(
+			gnutar->opt_sconv = tk_archive_string_conversion_to_charset(
 			    &a->archive, val, 0);
 			if (gnutar->opt_sconv != NULL)
 				ret = ARCHIVE_OK;
@@ -224,13 +224,13 @@ archive_write_gnutar_options(struct archive_write *a, const char *key,
 }
 
 static int
-archive_write_gnutar_close(struct archive_write *a)
+tk_archive_write_gnutar_close(struct tk_archive_write *a)
 {
-	return (__archive_write_nulls(a, 512*2));
+	return (__tk_archive_write_nulls(a, 512*2));
 }
 
 static int
-archive_write_gnutar_free(struct archive_write *a)
+tk_archive_write_gnutar_free(struct tk_archive_write *a)
 {
 	struct gnutar *gnutar;
 
@@ -241,20 +241,20 @@ archive_write_gnutar_free(struct archive_write *a)
 }
 
 static int
-archive_write_gnutar_finish_entry(struct archive_write *a)
+tk_archive_write_gnutar_finish_entry(struct tk_archive_write *a)
 {
 	struct gnutar *gnutar;
 	int ret;
 
 	gnutar = (struct gnutar *)a->format_data;
-	ret = __archive_write_nulls(a, (size_t)
+	ret = __tk_archive_write_nulls(a, (size_t)
 	    (gnutar->entry_bytes_remaining + gnutar->entry_padding));
 	gnutar->entry_bytes_remaining = gnutar->entry_padding = 0;
 	return (ret);
 }
 
 static ssize_t
-archive_write_gnutar_data(struct archive_write *a, const void *buff, size_t s)
+tk_archive_write_gnutar_data(struct tk_archive_write *a, const void *buff, size_t s)
 {
 	struct gnutar *gnutar;
 	int ret;
@@ -262,7 +262,7 @@ archive_write_gnutar_data(struct archive_write *a, const void *buff, size_t s)
 	gnutar = (struct gnutar *)a->format_data;
 	if (s > gnutar->entry_bytes_remaining)
 		s = (size_t)gnutar->entry_bytes_remaining;
-	ret = __archive_write_output(a, buff, s);
+	ret = __tk_archive_write_output(a, buff, s);
 	gnutar->entry_bytes_remaining -= s;
 	if (ret != ARCHIVE_OK)
 		return (ret);
@@ -270,15 +270,15 @@ archive_write_gnutar_data(struct archive_write *a, const void *buff, size_t s)
 }
 
 static int
-archive_write_gnutar_header(struct archive_write *a,
-     struct archive_entry *entry)
+tk_archive_write_gnutar_header(struct tk_archive_write *a,
+     struct tk_archive_entry *entry)
 {
 	char buff[512];
 	int r, ret, ret2 = ARCHIVE_OK;
 	int tartype;
 	struct gnutar *gnutar;
-	struct archive_string_conv *sconv;
-	struct archive_entry *entry_main;
+	struct tk_archive_string_conv *sconv;
+	struct tk_archive_entry *entry_main;
 
 	gnutar = (struct gnutar *)a->format_data;
 
@@ -286,7 +286,7 @@ archive_write_gnutar_header(struct archive_write *a,
 	if (gnutar->opt_sconv == NULL) {
 		if (!gnutar->init_default_conversion) {
 			gnutar->sconv_default =
-			    archive_string_default_conversion_for_write(
+			    tk_archive_string_default_conversion_for_write(
 				&(a->archive));
 			gnutar->init_default_conversion = 1;
 		}
@@ -295,12 +295,12 @@ archive_write_gnutar_header(struct archive_write *a,
 		sconv = gnutar->opt_sconv;
 
 	/* Only regular files (not hardlinks) have data. */
-	if (archive_entry_hardlink(entry) != NULL ||
-	    archive_entry_symlink(entry) != NULL ||
-	    !(archive_entry_filetype(entry) == AE_IFREG))
-		archive_entry_set_size(entry, 0);
+	if (tk_archive_entry_hardlink(entry) != NULL ||
+	    tk_archive_entry_symlink(entry) != NULL ||
+	    !(tk_archive_entry_filetype(entry) == AE_IFREG))
+		tk_archive_entry_set_size(entry, 0);
 
-	if (AE_IFDIR == archive_entry_filetype(entry)) {
+	if (AE_IFDIR == tk_archive_entry_filetype(entry)) {
 		const char *p;
 		size_t path_length;
 		/*
@@ -310,45 +310,45 @@ archive_write_gnutar_header(struct archive_write *a,
 #if defined(_WIN32) && !defined(__CYGWIN__)
 		const wchar_t *wp;
 
-		wp = archive_entry_pathname_w(entry);
+		wp = tk_archive_entry_pathname_w(entry);
 		if (wp != NULL && wp[wcslen(wp) -1] != L'/') {
-			struct archive_wstring ws;
+			struct tk_archive_wstring ws;
 
-			archive_string_init(&ws);
+			tk_archive_string_init(&ws);
 			path_length = wcslen(wp);
-			if (archive_wstring_ensure(&ws,
+			if (tk_archive_wstring_ensure(&ws,
 			    path_length + 2) == NULL) {
-				archive_set_error(&a->archive, ENOMEM,
+				tk_archive_set_error(&a->archive, ENOMEM,
 				    "Can't allocate ustar data");
-				archive_wstring_free(&ws);
+				tk_archive_wstring_free(&ws);
 				return(ARCHIVE_FATAL);
 			}
 			/* Should we keep '\' ? */
 			if (wp[path_length -1] == L'\\')
 				path_length--;
-			archive_wstrncpy(&ws, wp, path_length);
-			archive_wstrappend_wchar(&ws, L'/');
-			archive_entry_copy_pathname_w(entry, ws.s);
-			archive_wstring_free(&ws);
+			tk_archive_wstrncpy(&ws, wp, path_length);
+			tk_archive_wstrappend_wchar(&ws, L'/');
+			tk_archive_entry_copy_pathname_w(entry, ws.s);
+			tk_archive_wstring_free(&ws);
 			p = NULL;
 		} else
 #endif
-			p = archive_entry_pathname(entry);
+			p = tk_archive_entry_pathname(entry);
 		/*
 		 * On Windows, this is a backup operation just in
 		 * case getting WCS failed. On POSIX, this is a
 		 * normal operation.
 		 */
 		if (p != NULL && p[strlen(p) - 1] != '/') {
-			struct archive_string as;
+			struct tk_archive_string as;
 
-			archive_string_init(&as);
+			tk_archive_string_init(&as);
 			path_length = strlen(p);
-			if (archive_string_ensure(&as,
+			if (tk_archive_string_ensure(&as,
 			    path_length + 2) == NULL) {
-				archive_set_error(&a->archive, ENOMEM,
+				tk_archive_set_error(&a->archive, ENOMEM,
 				    "Can't allocate ustar data");
-				archive_string_free(&as);
+				tk_archive_string_free(&as);
 				return(ARCHIVE_FATAL);
 			}
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -360,10 +360,10 @@ archive_write_gnutar_header(struct archive_write *a,
 				path_length--;
 			else
 #endif
-			archive_strncpy(&as, p, path_length);
-			archive_strappend_char(&as, '/');
-			archive_entry_copy_pathname(entry, as.s);
-			archive_string_free(&as);
+			tk_archive_strncpy(&as, p, path_length);
+			tk_archive_strappend_char(&as, '/');
+			tk_archive_entry_copy_pathname(entry, as.s);
+			tk_archive_string_free(&as);
 		}
 	}
 
@@ -372,7 +372,7 @@ archive_write_gnutar_header(struct archive_write *a,
 	 * are all slash '/', not the Windows path separator '\'. */
 	entry_main = __la_win_entry_in_posix_pathseparator(entry);
 	if (entry_main == NULL) {
-		archive_set_error(&a->archive, ENOMEM,
+		tk_archive_set_error(&a->archive, ENOMEM,
 		    "Can't allocate ustar data");
 		return(ARCHIVE_FATAL);
 	}
@@ -383,112 +383,112 @@ archive_write_gnutar_header(struct archive_write *a,
 #else
 	entry_main = NULL;
 #endif
-	r = archive_entry_pathname_l(entry, &(gnutar->pathname),
+	r = tk_archive_entry_pathname_l(entry, &(gnutar->pathname),
 	    &(gnutar->pathname_length), sconv);
 	if (r != 0) {
 		if (errno == ENOMEM) {
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate memory for Pathame");
 			ret = ARCHIVE_FATAL;
 			goto exit_write_header;
 		}
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
+		tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Can't translate pathname '%s' to %s",
-		    archive_entry_pathname(entry),
-		    archive_string_conversion_charset_name(sconv));
+		    tk_archive_entry_pathname(entry),
+		    tk_archive_string_conversion_charset_name(sconv));
 		ret2 = ARCHIVE_WARN;
 	}
-	r = archive_entry_uname_l(entry, &(gnutar->uname),
+	r = tk_archive_entry_uname_l(entry, &(gnutar->uname),
 	    &(gnutar->uname_length), sconv);
 	if (r != 0) {
 		if (errno == ENOMEM) {
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate memory for Uname");
 			ret = ARCHIVE_FATAL;
 			goto exit_write_header;
 		}
-		archive_set_error(&a->archive,
+		tk_archive_set_error(&a->archive,
 		    ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Can't translate uname '%s' to %s",
-		    archive_entry_uname(entry),
-		    archive_string_conversion_charset_name(sconv));
+		    tk_archive_entry_uname(entry),
+		    tk_archive_string_conversion_charset_name(sconv));
 		ret2 = ARCHIVE_WARN;
 	}
-	r = archive_entry_gname_l(entry, &(gnutar->gname),
+	r = tk_archive_entry_gname_l(entry, &(gnutar->gname),
 	    &(gnutar->gname_length), sconv);
 	if (r != 0) {
 		if (errno == ENOMEM) {
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate memory for Gname");
 			ret = ARCHIVE_FATAL;
 			goto exit_write_header;
 		}
-		archive_set_error(&a->archive,
+		tk_archive_set_error(&a->archive,
 		    ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Can't translate gname '%s' to %s",
-		    archive_entry_gname(entry),
-		    archive_string_conversion_charset_name(sconv));
+		    tk_archive_entry_gname(entry),
+		    tk_archive_string_conversion_charset_name(sconv));
 		ret2 = ARCHIVE_WARN;
 	}
 
 	/* If linkname is longer than 100 chars we need to add a 'K' header. */
-	r = archive_entry_hardlink_l(entry, &(gnutar->linkname),
+	r = tk_archive_entry_hardlink_l(entry, &(gnutar->linkname),
 	    &(gnutar->linkname_length), sconv);
 	if (r != 0) {
 		if (errno == ENOMEM) {
-			archive_set_error(&a->archive, ENOMEM,
+			tk_archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate memory for Linkname");
 			ret = ARCHIVE_FATAL;
 			goto exit_write_header;
 		}
-		archive_set_error(&a->archive,
+		tk_archive_set_error(&a->archive,
 		    ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Can't translate linkname '%s' to %s",
-		    archive_entry_hardlink(entry),
-		    archive_string_conversion_charset_name(sconv));
+		    tk_archive_entry_hardlink(entry),
+		    tk_archive_string_conversion_charset_name(sconv));
 		ret2 = ARCHIVE_WARN;
 	}
 	if (gnutar->linkname_length == 0) {
-		r = archive_entry_symlink_l(entry, &(gnutar->linkname),
+		r = tk_archive_entry_symlink_l(entry, &(gnutar->linkname),
 		    &(gnutar->linkname_length), sconv);
 		if (r != 0) {
 			if (errno == ENOMEM) {
-				archive_set_error(&a->archive, ENOMEM,
+				tk_archive_set_error(&a->archive, ENOMEM,
 				    "Can't allocate memory for Linkname");
 				ret = ARCHIVE_FATAL;
 				goto exit_write_header;
 			}
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "Can't translate linkname '%s' to %s",
-			    archive_entry_hardlink(entry),
-			    archive_string_conversion_charset_name(sconv));
+			    tk_archive_entry_hardlink(entry),
+			    tk_archive_string_conversion_charset_name(sconv));
 			ret2 = ARCHIVE_WARN;
 		}
 	}
 	if (gnutar->linkname_length > GNUTAR_linkname_size) {
 		size_t todo = gnutar->linkname_length;
-		struct archive_entry *temp = archive_entry_new2(&a->archive);
+		struct tk_archive_entry *temp = tk_archive_entry_new2(&a->archive);
 
 		/* Uname/gname here don't really matter since no one reads them;
 		 * these are the values that GNU tar happens to use on FreeBSD. */
-		archive_entry_set_uname(temp, "root");
-		archive_entry_set_gname(temp, "wheel");
+		tk_archive_entry_set_uname(temp, "root");
+		tk_archive_entry_set_gname(temp, "wheel");
 
-		archive_entry_set_pathname(temp, "././@LongLink");
-		archive_entry_set_size(temp, gnutar->linkname_length + 1);
-		ret = archive_format_gnutar_header(a, buff, temp, 'K');
+		tk_archive_entry_set_pathname(temp, "././@LongLink");
+		tk_archive_entry_set_size(temp, gnutar->linkname_length + 1);
+		ret = tk_archive_format_gnutar_header(a, buff, temp, 'K');
 		if (ret < ARCHIVE_WARN)
 			goto exit_write_header;
-		ret = __archive_write_output(a, buff, 512);
+		ret = __tk_archive_write_output(a, buff, 512);
 		if(ret < ARCHIVE_WARN)
 			goto exit_write_header;
-		archive_entry_free(temp);
+		tk_archive_entry_free(temp);
 		/* Write as many 512 bytes blocks as needed to write full name. */
-		ret = __archive_write_output(a, gnutar->linkname, todo);
+		ret = __tk_archive_write_output(a, gnutar->linkname, todo);
 		if(ret < ARCHIVE_WARN)
 			goto exit_write_header;
-		ret = __archive_write_nulls(a, 0x1ff & (-(ssize_t)todo));
+		ret = __tk_archive_write_nulls(a, 0x1ff & (-(ssize_t)todo));
 		if (ret < ARCHIVE_WARN)
 			goto exit_write_header;
 	}
@@ -497,35 +497,35 @@ archive_write_gnutar_header(struct archive_write *a,
 	if (gnutar->pathname_length > GNUTAR_name_size) {
 		const char *pathname = gnutar->pathname;
 		size_t todo = gnutar->pathname_length;
-		struct archive_entry *temp = archive_entry_new2(&a->archive);
+		struct tk_archive_entry *temp = tk_archive_entry_new2(&a->archive);
 
 		/* Uname/gname here don't really matter since no one reads them;
 		 * these are the values that GNU tar happens to use on FreeBSD. */
-		archive_entry_set_uname(temp, "root");
-		archive_entry_set_gname(temp, "wheel");
+		tk_archive_entry_set_uname(temp, "root");
+		tk_archive_entry_set_gname(temp, "wheel");
 
-		archive_entry_set_pathname(temp, "././@LongLink");
-		archive_entry_set_size(temp, gnutar->pathname_length + 1);
-		ret = archive_format_gnutar_header(a, buff, temp, 'L');
+		tk_archive_entry_set_pathname(temp, "././@LongLink");
+		tk_archive_entry_set_size(temp, gnutar->pathname_length + 1);
+		ret = tk_archive_format_gnutar_header(a, buff, temp, 'L');
 		if (ret < ARCHIVE_WARN)
 			goto exit_write_header;
-		ret = __archive_write_output(a, buff, 512);
+		ret = __tk_archive_write_output(a, buff, 512);
 		if(ret < ARCHIVE_WARN)
 			goto exit_write_header;
-		archive_entry_free(temp);
+		tk_archive_entry_free(temp);
 		/* Write as many 512 bytes blocks as needed to write full name. */
-		ret = __archive_write_output(a, pathname, todo);
+		ret = __tk_archive_write_output(a, pathname, todo);
 		if(ret < ARCHIVE_WARN)
 			goto exit_write_header;
-		ret = __archive_write_nulls(a, 0x1ff & (-(ssize_t)todo));
+		ret = __tk_archive_write_nulls(a, 0x1ff & (-(ssize_t)todo));
 		if (ret < ARCHIVE_WARN)
 			goto exit_write_header;
 	}
 
-	if (archive_entry_hardlink(entry) != NULL) {
+	if (tk_archive_entry_hardlink(entry) != NULL) {
 		tartype = '1';
 	} else
-		switch (archive_entry_filetype(entry)) {
+		switch (tk_archive_entry_filetype(entry)) {
 		case AE_IFREG: tartype = '0' ; break;
 		case AE_IFLNK: tartype = '2' ; break;
 		case AE_IFCHR: tartype = '3' ; break;
@@ -533,26 +533,26 @@ archive_write_gnutar_header(struct archive_write *a,
 		case AE_IFDIR: tartype = '5' ; break;
 		case AE_IFIFO: tartype = '6' ; break;
 		case AE_IFSOCK:
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "tar format cannot archive socket");
 			ret = ARCHIVE_FAILED;
 			goto exit_write_header;
 		default:
-			archive_set_error(&a->archive,
+			tk_archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "tar format cannot archive this (mode=0%lo)",
-			    (unsigned long)archive_entry_mode(entry));
+			    (unsigned long)tk_archive_entry_mode(entry));
 			ret = ARCHIVE_FAILED;
 			goto exit_write_header;
 		}
 
-	ret = archive_format_gnutar_header(a, buff, entry, tartype);
+	ret = tk_archive_format_gnutar_header(a, buff, entry, tartype);
 	if (ret < ARCHIVE_WARN)
 		goto exit_write_header;
 	if (ret2 < ret)
 		ret = ret2;
-	ret2 = __archive_write_output(a, buff, 512);
+	ret2 = __tk_archive_write_output(a, buff, 512);
 	if (ret2 < ARCHIVE_WARN) {
 		ret = ret2;
 		goto exit_write_header;
@@ -560,17 +560,17 @@ archive_write_gnutar_header(struct archive_write *a,
 	if (ret2 < ret)
 		ret = ret2;
 
-	gnutar->entry_bytes_remaining = archive_entry_size(entry);
+	gnutar->entry_bytes_remaining = tk_archive_entry_size(entry);
 	gnutar->entry_padding = 0x1ff & (-(int64_t)gnutar->entry_bytes_remaining);
 exit_write_header:
 	if (entry_main)
-		archive_entry_free(entry_main);
+		tk_archive_entry_free(entry_main);
 	return (ret);
 }
 
 static int
-archive_format_gnutar_header(struct archive_write *a, char h[512],
-    struct archive_entry *entry, int tartype)
+tk_archive_format_gnutar_header(struct tk_archive_write *a, char h[512],
+    struct tk_archive_entry *entry, int tartype)
 {
 	unsigned int checksum;
 	int i, ret;
@@ -595,7 +595,7 @@ archive_format_gnutar_header(struct archive_write *a, char h[512],
 	 */
 
 	if (tartype == 'K' || tartype == 'L') {
-		p = archive_entry_pathname(entry);
+		p = tk_archive_entry_pathname(entry);
 		copy_length = strlen(p);
 	} else {
 		p = gnutar->pathname;
@@ -614,7 +614,7 @@ archive_format_gnutar_header(struct archive_write *a, char h[512],
 
 	/* TODO: How does GNU tar handle unames longer than GNUTAR_uname_size? */
 	if (tartype == 'K' || tartype == 'L') {
-		p = archive_entry_uname(entry);
+		p = tk_archive_entry_uname(entry);
 		copy_length = strlen(p);
 	} else {
 		p = gnutar->uname;
@@ -628,7 +628,7 @@ archive_format_gnutar_header(struct archive_write *a, char h[512],
 
 	/* TODO: How does GNU tar handle gnames longer than GNUTAR_gname_size? */
 	if (tartype == 'K' || tartype == 'L') {
-		p = archive_entry_gname(entry);
+		p = tk_archive_entry_gname(entry);
 		copy_length = strlen(p);
 	} else {
 		p = gnutar->gname;
@@ -641,53 +641,53 @@ archive_format_gnutar_header(struct archive_write *a, char h[512],
 	}
 
 	/* By truncating the mode here, we ensure it always fits. */
-	format_octal(archive_entry_mode(entry) & 07777,
+	format_octal(tk_archive_entry_mode(entry) & 07777,
 	    h + GNUTAR_mode_offset, GNUTAR_mode_size);
 
 	/* TODO: How does GNU tar handle large UIDs? */
-	if (format_octal(archive_entry_uid(entry),
+	if (format_octal(tk_archive_entry_uid(entry),
 	    h + GNUTAR_uid_offset, GNUTAR_uid_size)) {
-		archive_set_error(&a->archive, ERANGE,
+		tk_archive_set_error(&a->archive, ERANGE,
 		    "Numeric user ID %jd too large",
-		    (intmax_t)archive_entry_uid(entry));
+		    (intmax_t)tk_archive_entry_uid(entry));
 		ret = ARCHIVE_FAILED;
 	}
 
 	/* TODO: How does GNU tar handle large GIDs? */
-	if (format_octal(archive_entry_gid(entry),
+	if (format_octal(tk_archive_entry_gid(entry),
 	    h + GNUTAR_gid_offset, GNUTAR_gid_size)) {
-		archive_set_error(&a->archive, ERANGE,
+		tk_archive_set_error(&a->archive, ERANGE,
 		    "Numeric group ID %jd too large",
-		    (intmax_t)archive_entry_gid(entry));
+		    (intmax_t)tk_archive_entry_gid(entry));
 		ret = ARCHIVE_FAILED;
 	}
 
 	/* GNU tar supports base-256 here, so should never overflow. */
-	if (format_number(archive_entry_size(entry), h + GNUTAR_size_offset,
+	if (format_number(tk_archive_entry_size(entry), h + GNUTAR_size_offset,
 		GNUTAR_size_size, GNUTAR_size_max_size)) {
-		archive_set_error(&a->archive, ERANGE,
+		tk_archive_set_error(&a->archive, ERANGE,
 		    "File size out of range");
 		ret = ARCHIVE_FAILED;
 	}
 
 	/* Shouldn't overflow before 2106, since mtime field is 33 bits. */
-	format_octal(archive_entry_mtime(entry),
+	format_octal(tk_archive_entry_mtime(entry),
 	    h + GNUTAR_mtime_offset, GNUTAR_mtime_size);
 
-	if (archive_entry_filetype(entry) == AE_IFBLK
-	    || archive_entry_filetype(entry) == AE_IFCHR) {
-		if (format_octal(archive_entry_rdevmajor(entry),
+	if (tk_archive_entry_filetype(entry) == AE_IFBLK
+	    || tk_archive_entry_filetype(entry) == AE_IFCHR) {
+		if (format_octal(tk_archive_entry_rdevmajor(entry),
 		    h + GNUTAR_rdevmajor_offset,
 			GNUTAR_rdevmajor_size)) {
-			archive_set_error(&a->archive, ERANGE,
+			tk_archive_set_error(&a->archive, ERANGE,
 			    "Major device number too large");
 			ret = ARCHIVE_FAILED;
 		}
 
-		if (format_octal(archive_entry_rdevminor(entry),
+		if (format_octal(tk_archive_entry_rdevminor(entry),
 		    h + GNUTAR_rdevminor_offset,
 			GNUTAR_rdevminor_size)) {
-			archive_set_error(&a->archive, ERANGE,
+			tk_archive_set_error(&a->archive, ERANGE,
 			    "Minor device number too large");
 			ret = ARCHIVE_FAILED;
 		}

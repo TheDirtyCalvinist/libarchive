@@ -32,9 +32,9 @@ __FBSDID("$FreeBSD$");
 #if ARCHIVE_VERSION_NUMBER < 4000000
 /* Deprecated; remove in libarchive 4.0 */
 int
-archive_read_support_compression_none(struct archive *a)
+tk_archive_read_support_compression_none(struct archive *a)
 {
-	return archive_read_support_filter_none(a);
+	return tk_archive_read_support_filter_none(a);
 }
 #endif
 
@@ -43,10 +43,10 @@ archive_read_support_compression_none(struct archive *a)
  * so this is now a no-op.
  */
 int
-archive_read_support_filter_none(struct archive *a)
+tk_archive_read_support_filter_none(struct archive *a)
 {
-	archive_check_magic(a, ARCHIVE_READ_MAGIC,
-	    ARCHIVE_STATE_NEW, "archive_read_support_filter_none");
+	tk_archive_check_magic(a, ARCHIVE_READ_MAGIC,
+	    ARCHIVE_STATE_NEW, "tk_archive_read_support_filter_none");
 
 	return (ARCHIVE_OK);
 }

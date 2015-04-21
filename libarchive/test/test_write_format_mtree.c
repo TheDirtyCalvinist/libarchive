@@ -52,42 +52,42 @@ static struct {
 static void
 test_write_format_mtree_sub(int use_set, int dironly)
 {
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	struct archive* a;
 	size_t used;
 	int i;
 
 	/* Create a mtree format archive. */
-	assert((a = archive_write_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_set_format_mtree(a));
+	assert((a = tk_archive_write_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_set_format_mtree(a));
 	if (use_set)
-		assertEqualIntA(a, ARCHIVE_OK, archive_write_set_format_option(a, NULL, "use-set", "1"));
+		assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_set_format_option(a, NULL, "use-set", "1"));
 	if (dironly)
-		assertEqualIntA(a, ARCHIVE_OK, archive_write_set_format_option(a, NULL, "dironly", "1"));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_open_memory(a, buff, sizeof(buff)-1, &used));
+		assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_set_format_option(a, NULL, "dironly", "1"));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_open_memory(a, buff, sizeof(buff)-1, &used));
 
 	/* Write entries */
 	for (i = 0; entries[i].path != NULL; i++) {
-		assert((ae = archive_entry_new()) != NULL);
-		archive_entry_set_mtime(ae, entries[i].mtime, 0);
-		assert(entries[i].mtime == archive_entry_mtime(ae));
-		archive_entry_set_mode(ae, entries[i].mode);
-		assert(entries[i].mode == archive_entry_mode(ae));
-		archive_entry_set_uid(ae, entries[i].uid);
-		assert(entries[i].uid == archive_entry_uid(ae));
-		archive_entry_set_gid(ae, entries[i].gid);
-		assert(entries[i].gid == archive_entry_gid(ae));
-		archive_entry_copy_pathname(ae, entries[i].path);
+		assert((ae = tk_archive_entry_new()) != NULL);
+		tk_archive_entry_set_mtime(ae, entries[i].mtime, 0);
+		assert(entries[i].mtime == tk_archive_entry_mtime(ae));
+		tk_archive_entry_set_mode(ae, entries[i].mode);
+		assert(entries[i].mode == tk_archive_entry_mode(ae));
+		tk_archive_entry_set_uid(ae, entries[i].uid);
+		assert(entries[i].uid == tk_archive_entry_uid(ae));
+		tk_archive_entry_set_gid(ae, entries[i].gid);
+		assert(entries[i].gid == tk_archive_entry_gid(ae));
+		tk_archive_entry_copy_pathname(ae, entries[i].path);
 		if ((entries[i].mode & AE_IFMT) != S_IFDIR)
-			archive_entry_set_size(ae, 8);
-		assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
+			tk_archive_entry_set_size(ae, 8);
+		assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_header(a, ae));
 		if ((entries[i].mode & AE_IFMT) != S_IFDIR)
 			assertEqualIntA(a, 8,
-			    archive_write_data(a, "Hello012", 15));
-		archive_entry_free(ae);
+			    tk_archive_write_data(a, "Hello012", 15));
+		tk_archive_entry_free(ae);
 	}
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-        assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_close(a));
+        assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a));
 
 	if (use_set) {
 		const char *p;
@@ -114,26 +114,26 @@ test_write_format_mtree_sub(int use_set, int dironly)
 	/*
 	 * Read the data and check it.
 	 */
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_open_memory(a, buff, used));
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_open_memory(a, buff, used));
 
 	/* Read entries */
 	for (i = 0; entries[i].path != NULL; i++) {
 		if (dironly && (entries[i].mode & AE_IFMT) != S_IFDIR)
 			continue;
-		assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-		assertEqualInt(entries[i].mtime, archive_entry_mtime(ae));
-		assertEqualInt(entries[i].mode, archive_entry_mode(ae));
-		assertEqualInt(entries[i].uid, archive_entry_uid(ae));
-		assertEqualInt(entries[i].gid, archive_entry_gid(ae));
-		assertEqualString(entries[i].path, archive_entry_pathname(ae));
+		assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+		assertEqualInt(entries[i].mtime, tk_archive_entry_mtime(ae));
+		assertEqualInt(entries[i].mode, tk_archive_entry_mode(ae));
+		assertEqualInt(entries[i].uid, tk_archive_entry_uid(ae));
+		assertEqualInt(entries[i].gid, tk_archive_entry_gid(ae));
+		assertEqualString(entries[i].path, tk_archive_entry_pathname(ae));
 		if ((entries[i].mode & AE_IFMT) != S_IFDIR)
-			assertEqualInt(8, archive_entry_size(ae));
+			assertEqualInt(8, tk_archive_entry_size(ae));
 	}
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 DEFINE_TEST(test_write_format_mtree)

@@ -54,9 +54,9 @@ static int64_t	memory_read_skip(struct archive *, void *, int64_t request);
 static ssize_t	memory_read(struct archive *, void *, const void **buff);
 
 int
-archive_read_open_memory(struct archive *a, void *buff, size_t size)
+tk_archive_read_open_memory(struct archive *a, void *buff, size_t size)
 {
-	return archive_read_open_memory2(a, buff, size, size);
+	return tk_archive_read_open_memory2(a, buff, size, size);
 }
 
 /*
@@ -65,27 +65,27 @@ archive_read_open_memory(struct archive *a, void *buff, size_t size)
  * test harnesses can exercise block operations inside the library.
  */
 int
-archive_read_open_memory2(struct archive *a, void *buff,
+tk_archive_read_open_memory2(struct archive *a, void *buff,
     size_t size, size_t read_size)
 {
 	struct read_memory_data *mine;
 
 	mine = (struct read_memory_data *)malloc(sizeof(*mine));
 	if (mine == NULL) {
-		archive_set_error(a, ENOMEM, "No memory");
+		tk_archive_set_error(a, ENOMEM, "No memory");
 		return (ARCHIVE_FATAL);
 	}
 	memset(mine, 0, sizeof(*mine));
 	mine->start = mine->p = (unsigned char *)buff;
 	mine->end = mine->start + size;
 	mine->read_size = read_size;
-	archive_read_set_open_callback(a, memory_read_open);
-	archive_read_set_read_callback(a, memory_read);
-	archive_read_set_seek_callback(a, memory_read_seek);
-	archive_read_set_skip_callback(a, memory_read_skip);
-	archive_read_set_close_callback(a, memory_read_close);
-	archive_read_set_callback_data(a, mine);
-	return (archive_read_open1(a));
+	tk_archive_read_set_open_callback(a, memory_read_open);
+	tk_archive_read_set_read_callback(a, memory_read);
+	tk_archive_read_set_seek_callback(a, memory_read_seek);
+	tk_archive_read_set_skip_callback(a, memory_read_skip);
+	tk_archive_read_set_close_callback(a, memory_read_close);
+	tk_archive_read_set_callback_data(a, mine);
+	return (tk_archive_read_open1(a));
 }
 
 /*

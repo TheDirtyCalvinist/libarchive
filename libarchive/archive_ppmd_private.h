@@ -59,13 +59,13 @@ typedef int Bool;
 
 typedef struct
 {
-  struct archive_read *a;
+  struct tk_archive_read *a;
   Byte (*Read)(void *p); /* reads one byte, returns 0 in case of EOF or error */
 } IByteIn;
 
 typedef struct
 {
-  struct archive_write *a;
+  struct tk_archive_write *a;
   void (*Write)(void *p, Byte b);
 } IByteOut;
 

@@ -72,7 +72,7 @@ unicode_to_utf8(char *p, uint32_t uc)
 }
 
 static void
-archive_be16enc(void *pp, uint16_t u)
+tk_archive_be16enc(void *pp, uint16_t u)
 {
         unsigned char *p = (unsigned char *)pp;
 
@@ -89,17 +89,17 @@ unicode_to_utf16be(char *p, uint32_t uc)
 		/* We have a code point that won't fit into a
 		 * wchar_t; convert it to a surrogate pair. */
 		uc -= 0x10000;
-		archive_be16enc(utf16, ((uc >> 10) & 0x3ff) + 0xD800);
-		archive_be16enc(utf16+2, (uc & 0x3ff) + 0xDC00);
+		tk_archive_be16enc(utf16, ((uc >> 10) & 0x3ff) + 0xD800);
+		tk_archive_be16enc(utf16+2, (uc & 0x3ff) + 0xDC00);
 		return (4);
 	} else {
-		archive_be16enc(utf16, uc);
+		tk_archive_be16enc(utf16, uc);
 		return (2);
 	}
 }
 
 static void
-archive_le16enc(void *pp, uint16_t u)
+tk_archive_le16enc(void *pp, uint16_t u)
 {
 	unsigned char *p = (unsigned char *)pp;
 
@@ -116,11 +116,11 @@ unicode_to_utf16le(char *p, uint32_t uc)
 		/* We have a code point that won't fit into a
 		 * wchar_t; convert it to a surrogate pair. */
 		uc -= 0x10000;
-		archive_le16enc(utf16, ((uc >> 10) & 0x3ff) + 0xD800);
-		archive_le16enc(utf16+2, (uc & 0x3ff) + 0xDC00);
+		tk_archive_le16enc(utf16, ((uc >> 10) & 0x3ff) + 0xD800);
+		tk_archive_le16enc(utf16+2, (uc & 0x3ff) + 0xDC00);
 		return (4);
 	} else {
-		archive_le16enc(utf16, uc);
+		tk_archive_le16enc(utf16, uc);
 		return (2);
 	}
 }
@@ -249,13 +249,13 @@ is_wc_unicode(void)
  * On other platforms, the characters to be Form C.
  */
 static void
-test_archive_string_normalization_nfc(const char *testdata)
+test_tk_archive_string_normalization_nfc(const char *testdata)
 {
 	struct archive *a, *a2;
-	struct archive_string utf8;
-	struct archive_mstring mstr;
-	struct archive_string_conv *f_sconv8, *t_sconv8;
-	struct archive_string_conv *f_sconv16be, *f_sconv16le;
+	struct tk_archive_string utf8;
+	struct tk_archive_mstring mstr;
+	struct tk_archive_string_conv *f_sconv8, *t_sconv8;
+	struct tk_archive_string_conv *f_sconv16be, *f_sconv16le;
 	FILE *fp;
 	char buff[512];
 	int line = 0;
@@ -272,32 +272,32 @@ test_archive_string_normalization_nfc(const char *testdata)
 		return;
 	}
 
-	archive_string_init(&utf8);
+	tk_archive_string_init(&utf8);
 	memset(&mstr, 0, sizeof(mstr));
 
 	/*
 	 * Create string conversion objects.
 	 */
-	assert((a = archive_read_new()) != NULL);
+	assert((a = tk_archive_read_new()) != NULL);
 	assertA(NULL != (f_sconv8 =
-	    archive_string_conversion_from_charset(a, "UTF-8", 0)));
+	    tk_archive_string_conversion_from_charset(a, "UTF-8", 0)));
 	assertA(NULL != (f_sconv16be =
-	    archive_string_conversion_from_charset(a, "UTF-16BE", 0)));
+	    tk_archive_string_conversion_from_charset(a, "UTF-16BE", 0)));
 	assertA(NULL != (f_sconv16le =
-	    archive_string_conversion_from_charset(a, "UTF-16LE", 0)));
-	assert((a2 = archive_write_new()) != NULL);
+	    tk_archive_string_conversion_from_charset(a, "UTF-16LE", 0)));
+	assert((a2 = tk_archive_write_new()) != NULL);
 	assertA(NULL != (t_sconv8 =
-	    archive_string_conversion_to_charset(a2, "UTF-8", 0)));
+	    tk_archive_string_conversion_to_charset(a2, "UTF-8", 0)));
 	if (f_sconv8 == NULL || f_sconv16be == NULL || f_sconv16le == NULL ||
 	    t_sconv8 == NULL) {
 		/* We cannot continue this test. */
-		assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+		assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 		return;
 	}
-	archive_string_conversion_set_opt(f_sconv8, sconv_opt);
-	archive_string_conversion_set_opt(f_sconv16be, sconv_opt);
-	archive_string_conversion_set_opt(f_sconv16le, sconv_opt);
-	archive_string_conversion_set_opt(t_sconv8, sconv_opt);
+	tk_archive_string_conversion_set_opt(f_sconv8, sconv_opt);
+	tk_archive_string_conversion_set_opt(f_sconv16be, sconv_opt);
+	tk_archive_string_conversion_set_opt(f_sconv16le, sconv_opt);
+	tk_archive_string_conversion_set_opt(t_sconv8, sconv_opt);
 
 	/* Open a test pattern file. */
 	assert((fp = fopen(testdata, "r")) != NULL);
@@ -355,7 +355,7 @@ test_archive_string_normalization_nfc(const char *testdata)
 			/*
 			 * Normalize an NFD string for import.
 			 */
-			assertEqualInt(0, archive_strcpy_l(
+			assertEqualInt(0, tk_archive_strcpy_l(
 			    &utf8, utf8_nfd, f_sconv8));
 			failure("NFD(%s) should be converted to NFC(%s):%d",
 			    nfd, nfc, line);
@@ -364,7 +364,7 @@ test_archive_string_normalization_nfc(const char *testdata)
 			/*
 			 * Normalize an NFC string for import.
 			 */
-			assertEqualInt(0, archive_strcpy_l(
+			assertEqualInt(0, tk_archive_strcpy_l(
 			    &utf8, utf8_nfc, f_sconv8));
 			failure("NFC(%s) should not be any changed:%d",
 			    nfc, line);
@@ -373,7 +373,7 @@ test_archive_string_normalization_nfc(const char *testdata)
 			/*
 			 * Copy an NFC string for export.
 			 */
-			assertEqualInt(0, archive_strcpy_l(
+			assertEqualInt(0, tk_archive_strcpy_l(
 			    &utf8, utf8_nfc, t_sconv8));
 			failure("NFC(%s) should not be any changed:%d",
 			    nfc, line);
@@ -382,7 +382,7 @@ test_archive_string_normalization_nfc(const char *testdata)
 			/*
 			 * Normalize an NFD string in UTF-16BE for import.
 			 */
-			assertEqualInt(0, archive_strncpy_l(
+			assertEqualInt(0, tk_archive_strncpy_l(
 			    &utf8, utf16be_nfd, 100000, f_sconv16be));
 			failure("NFD(%s) should be converted to NFC(%s):%d",
 			    nfd, nfc, line);
@@ -391,7 +391,7 @@ test_archive_string_normalization_nfc(const char *testdata)
 			/*
 			 * Normalize an NFD string in UTF-16LE for import.
 			 */
-			assertEqualInt(0, archive_strncpy_l(
+			assertEqualInt(0, tk_archive_strncpy_l(
 			    &utf8, utf16le_nfd, 100000, f_sconv16le));
 			failure("NFD(%s) should be converted to NFC(%s):%d",
 			    nfd, nfc, line);
@@ -409,10 +409,10 @@ test_archive_string_normalization_nfc(const char *testdata)
 			/*
 			 * Normalize an NFD string in UTF-8 for import.
 			 */
-			assertEqualInt(0, archive_mstring_copy_mbs_len_l(
+			assertEqualInt(0, tk_archive_mstring_copy_mbs_len_l(
 			    &mstr, utf8_nfd, 100000, f_sconv8));
 			assertEqualInt(0,
-			    archive_mstring_get_wcs(a, &mstr, &wp));
+			    tk_archive_mstring_get_wcs(a, &mstr, &wp));
 			failure("UTF-8 NFD(%s) should be converted "
 			    "to WCS NFC(%s):%d", nfd, nfc, line);
 			assertEqualWString(wc_nfc, wp);
@@ -420,10 +420,10 @@ test_archive_string_normalization_nfc(const char *testdata)
 			/*
 			 * Normalize an NFD string in UTF-16BE for import.
 			 */
-			assertEqualInt(0, archive_mstring_copy_mbs_len_l(
+			assertEqualInt(0, tk_archive_mstring_copy_mbs_len_l(
 			    &mstr, utf16be_nfd, 100000, f_sconv16be));
 			assertEqualInt(0,
-			    archive_mstring_get_wcs(a, &mstr, &wp));
+			    tk_archive_mstring_get_wcs(a, &mstr, &wp));
 			failure("UTF-8 NFD(%s) should be converted "
 			    "to WCS NFC(%s):%d", nfd, nfc, line);
 			assertEqualWString(wc_nfc, wp);
@@ -431,10 +431,10 @@ test_archive_string_normalization_nfc(const char *testdata)
 			/*
 			 * Normalize an NFD string in UTF-16LE for import.
 			 */
-			assertEqualInt(0, archive_mstring_copy_mbs_len_l(
+			assertEqualInt(0, tk_archive_mstring_copy_mbs_len_l(
 			    &mstr, utf16le_nfd, 100000, f_sconv16le));
 			assertEqualInt(0,
-			    archive_mstring_get_wcs(a, &mstr, &wp));
+			    tk_archive_mstring_get_wcs(a, &mstr, &wp));
 			failure("UTF-8 NFD(%s) should be converted "
 			    "to WCS NFC(%s):%d", nfd, nfc, line);
 			assertEqualWString(wc_nfc, wp);
@@ -443,8 +443,8 @@ test_archive_string_normalization_nfc(const char *testdata)
 			 * Copy an NFC wide-string for export.
 			 */
 			assertEqualInt(0,
-			    archive_mstring_copy_wcs(&mstr, wc_nfc));
-			assertEqualInt(0, archive_mstring_get_mbs_l(
+			    tk_archive_mstring_copy_wcs(&mstr, wc_nfc));
+			assertEqualInt(0, tk_archive_mstring_get_mbs_l(
 			    &mstr, &mp, &mplen, t_sconv8));
 			failure("WCS NFC(%s) should be UTF-8 NFC:%d"
 			    ,nfc, line);
@@ -452,21 +452,21 @@ test_archive_string_normalization_nfc(const char *testdata)
 		}
 	}
 
-	archive_string_free(&utf8);
-	archive_mstring_clean(&mstr);
+	tk_archive_string_free(&utf8);
+	tk_archive_mstring_clean(&mstr);
 	fclose(fp);
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
-	assertEqualInt(ARCHIVE_OK, archive_write_free(a2));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a2));
 }
 
 static void
-test_archive_string_normalization_mac_nfd(const char *testdata)
+test_tk_archive_string_normalization_mac_nfd(const char *testdata)
 {
 	struct archive *a, *a2;
-	struct archive_string utf8;
-	struct archive_mstring mstr;
-	struct archive_string_conv *f_sconv8, *t_sconv8;
-	struct archive_string_conv *f_sconv16be, *f_sconv16le;
+	struct tk_archive_string utf8;
+	struct tk_archive_mstring mstr;
+	struct tk_archive_string_conv *f_sconv8, *t_sconv8;
+	struct tk_archive_string_conv *f_sconv16be, *f_sconv16le;
 	FILE *fp;
 	char buff[512];
 	int line = 0;
@@ -483,32 +483,32 @@ test_archive_string_normalization_mac_nfd(const char *testdata)
 		return;
 	}
 
-	archive_string_init(&utf8);
+	tk_archive_string_init(&utf8);
 	memset(&mstr, 0, sizeof(mstr));
 
 	/*
 	 * Create string conversion objects.
 	 */
-	assert((a = archive_read_new()) != NULL);
+	assert((a = tk_archive_read_new()) != NULL);
 	assertA(NULL != (f_sconv8 =
-	    archive_string_conversion_from_charset(a, "UTF-8", 0)));
+	    tk_archive_string_conversion_from_charset(a, "UTF-8", 0)));
 	assertA(NULL != (f_sconv16be =
-	    archive_string_conversion_from_charset(a, "UTF-16BE", 0)));
+	    tk_archive_string_conversion_from_charset(a, "UTF-16BE", 0)));
 	assertA(NULL != (f_sconv16le =
-	    archive_string_conversion_from_charset(a, "UTF-16LE", 0)));
-	assert((a2 = archive_write_new()) != NULL);
+	    tk_archive_string_conversion_from_charset(a, "UTF-16LE", 0)));
+	assert((a2 = tk_archive_write_new()) != NULL);
 	assertA(NULL != (t_sconv8 =
-	    archive_string_conversion_to_charset(a2, "UTF-8", 0)));
+	    tk_archive_string_conversion_to_charset(a2, "UTF-8", 0)));
 	if (f_sconv8 == NULL || f_sconv16be == NULL || f_sconv16le == NULL ||
 	    t_sconv8 == NULL) {
 		/* We cannot continue this test. */
-		assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+		assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 		return;
 	}
-	archive_string_conversion_set_opt(f_sconv8, sconv_opt);
-	archive_string_conversion_set_opt(f_sconv16be, sconv_opt);
-	archive_string_conversion_set_opt(f_sconv16le, sconv_opt);
-	archive_string_conversion_set_opt(t_sconv8, sconv_opt);
+	tk_archive_string_conversion_set_opt(f_sconv8, sconv_opt);
+	tk_archive_string_conversion_set_opt(f_sconv16be, sconv_opt);
+	tk_archive_string_conversion_set_opt(f_sconv16le, sconv_opt);
+	tk_archive_string_conversion_set_opt(t_sconv8, sconv_opt);
 
 	/* Open a test pattern file. */
 	assert((fp = fopen(testdata, "r")) != NULL);
@@ -567,7 +567,7 @@ test_archive_string_normalization_mac_nfd(const char *testdata)
 			/*
 			 * Normalize an NFC string for import.
 			 */
-			assertEqualInt(0, archive_strcpy_l(
+			assertEqualInt(0, tk_archive_strcpy_l(
 			    &utf8, utf8_nfc, f_sconv8));
 			if (should_be_nfc) {
 				failure("NFC(%s) should not be converted to"
@@ -582,7 +582,7 @@ test_archive_string_normalization_mac_nfd(const char *testdata)
 			/*
 			 * Normalize an NFD string for import.
 			 */
-			assertEqualInt(0, archive_strcpy_l(
+			assertEqualInt(0, tk_archive_strcpy_l(
 			    &utf8, utf8_nfd, f_sconv8));
 			failure("NFD(%s) should not be any changed:%d",
 			    nfd, line);
@@ -591,7 +591,7 @@ test_archive_string_normalization_mac_nfd(const char *testdata)
 			/*
 			 * Copy an NFD string for export.
 			 */
-			assertEqualInt(0, archive_strcpy_l(
+			assertEqualInt(0, tk_archive_strcpy_l(
 			    &utf8, utf8_nfd, t_sconv8));
 			failure("NFD(%s) should not be any changed:%d",
 			    nfd, line);
@@ -600,7 +600,7 @@ test_archive_string_normalization_mac_nfd(const char *testdata)
 			/*
 			 * Normalize an NFC string in UTF-16BE for import.
 			 */
-			assertEqualInt(0, archive_strncpy_l(
+			assertEqualInt(0, tk_archive_strncpy_l(
 			    &utf8, utf16be_nfc, 100000, f_sconv16be));
 			if (should_be_nfc) {
 				failure("NFC(%s) should not be converted to"
@@ -615,7 +615,7 @@ test_archive_string_normalization_mac_nfd(const char *testdata)
 			/*
 			 * Normalize an NFC string in UTF-16LE for import.
 			 */
-			assertEqualInt(0, archive_strncpy_l(
+			assertEqualInt(0, tk_archive_strncpy_l(
 			    &utf8, utf16le_nfc, 100000, f_sconv16le));
 			if (should_be_nfc) {
 				failure("NFC(%s) should not be converted to"
@@ -639,10 +639,10 @@ test_archive_string_normalization_mac_nfd(const char *testdata)
 			/*
 			 * Normalize an NFD string in UTF-8 for import.
 			 */
-			assertEqualInt(0, archive_mstring_copy_mbs_len_l(
+			assertEqualInt(0, tk_archive_mstring_copy_mbs_len_l(
 			    &mstr, utf8_nfc, 100000, f_sconv8));
 			assertEqualInt(0,
-			    archive_mstring_get_wcs(a, &mstr, &wp));
+			    tk_archive_mstring_get_wcs(a, &mstr, &wp));
 			if (should_be_nfc) {
 				failure("UTF-8 NFC(%s) should not be converted "
 				    "to WCS NFD(%s):%d", nfc, nfd, line);
@@ -656,10 +656,10 @@ test_archive_string_normalization_mac_nfd(const char *testdata)
 			/*
 			 * Normalize an NFD string in UTF-16BE for import.
 			 */
-			assertEqualInt(0, archive_mstring_copy_mbs_len_l(
+			assertEqualInt(0, tk_archive_mstring_copy_mbs_len_l(
 			    &mstr, utf16be_nfc, 100000, f_sconv16be));
 			assertEqualInt(0,
-			    archive_mstring_get_wcs(a, &mstr, &wp));
+			    tk_archive_mstring_get_wcs(a, &mstr, &wp));
 			if (should_be_nfc) {
 				failure("UTF-16BE NFC(%s) should not be "
 				    "converted to WCS NFD(%s):%d",
@@ -674,10 +674,10 @@ test_archive_string_normalization_mac_nfd(const char *testdata)
 			/*
 			 * Normalize an NFD string in UTF-16LE for import.
 			 */
-			assertEqualInt(0, archive_mstring_copy_mbs_len_l(
+			assertEqualInt(0, tk_archive_mstring_copy_mbs_len_l(
 			    &mstr, utf16le_nfc, 100000, f_sconv16le));
 			assertEqualInt(0,
-			    archive_mstring_get_wcs(a, &mstr, &wp));
+			    tk_archive_mstring_get_wcs(a, &mstr, &wp));
 			if (should_be_nfc) {
 				failure("UTF-16LE NFC(%s) should not be "
 				    "converted to WCS NFD(%s):%d",
@@ -692,9 +692,9 @@ test_archive_string_normalization_mac_nfd(const char *testdata)
 			/*
 			 * Copy an NFD wide-string for export.
 			 */
-			assertEqualInt(0, archive_mstring_copy_wcs(
+			assertEqualInt(0, tk_archive_mstring_copy_wcs(
 			    &mstr, wc_nfd));
-			assertEqualInt(0, archive_mstring_get_mbs_l(
+			assertEqualInt(0, tk_archive_mstring_get_mbs_l(
 			    &mstr, &mp, &mplen, t_sconv8));
 			failure("WCS NFD(%s) should be UTF-8 NFD:%d"
 			    ,nfd, line);
@@ -702,87 +702,87 @@ test_archive_string_normalization_mac_nfd(const char *testdata)
 		}
 	}
 
-	archive_string_free(&utf8);
-	archive_mstring_clean(&mstr);
+	tk_archive_string_free(&utf8);
+	tk_archive_mstring_clean(&mstr);
 	fclose(fp);
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
-	assertEqualInt(ARCHIVE_OK, archive_write_free(a2));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_write_free(a2));
 }
 
 static void
-test_archive_string_canonicalization(void)
+test_tk_archive_string_canonicalization(void)
 {
 	struct archive *a;
-	struct archive_string_conv *sconv;
+	struct tk_archive_string_conv *sconv;
 
 	setlocale(LC_ALL, "en_US.UTF-8");
 
-	assert((a = archive_read_new()) != NULL);
+	assert((a = tk_archive_read_new()) != NULL);
 
 	assertA(NULL != (sconv =
-	    archive_string_conversion_to_charset(a, "UTF-8", 1)));
+	    tk_archive_string_conversion_to_charset(a, "UTF-8", 1)));
 	failure("Charset name should be UTF-8");
 	assertEqualString("UTF-8",
-	    archive_string_conversion_charset_name(sconv));
+	    tk_archive_string_conversion_charset_name(sconv));
 
 	assertA(NULL != (sconv =
-	    archive_string_conversion_to_charset(a, "UTF8", 1)));
+	    tk_archive_string_conversion_to_charset(a, "UTF8", 1)));
 	failure("Charset name should be UTF-8");
 	assertEqualString("UTF-8",
-	    archive_string_conversion_charset_name(sconv));
+	    tk_archive_string_conversion_charset_name(sconv));
 
 	assertA(NULL != (sconv =
-	    archive_string_conversion_to_charset(a, "utf8", 1)));
+	    tk_archive_string_conversion_to_charset(a, "utf8", 1)));
 	failure("Charset name should be UTF-8");
 	assertEqualString("UTF-8",
-	    archive_string_conversion_charset_name(sconv));
+	    tk_archive_string_conversion_charset_name(sconv));
 
 	assertA(NULL != (sconv =
-	    archive_string_conversion_to_charset(a, "UTF-16BE", 1)));
+	    tk_archive_string_conversion_to_charset(a, "UTF-16BE", 1)));
 	failure("Charset name should be UTF-16BE");
 	assertEqualString("UTF-16BE",
-	    archive_string_conversion_charset_name(sconv));
+	    tk_archive_string_conversion_charset_name(sconv));
 
 	assertA(NULL != (sconv =
-	    archive_string_conversion_to_charset(a, "UTF16BE", 1)));
+	    tk_archive_string_conversion_to_charset(a, "UTF16BE", 1)));
 	failure("Charset name should be UTF-16BE");
 	assertEqualString("UTF-16BE",
-	    archive_string_conversion_charset_name(sconv));
+	    tk_archive_string_conversion_charset_name(sconv));
 
 	assertA(NULL != (sconv =
-	    archive_string_conversion_to_charset(a, "utf16be", 1)));
+	    tk_archive_string_conversion_to_charset(a, "utf16be", 1)));
 	failure("Charset name should be UTF-16BE");
 	assertEqualString("UTF-16BE",
-	    archive_string_conversion_charset_name(sconv));
+	    tk_archive_string_conversion_charset_name(sconv));
 
 	assertA(NULL != (sconv =
-	    archive_string_conversion_to_charset(a, "UTF-16LE", 1)));
+	    tk_archive_string_conversion_to_charset(a, "UTF-16LE", 1)));
 	failure("Charset name should be UTF-16LE");
 	assertEqualString("UTF-16LE",
-	    archive_string_conversion_charset_name(sconv));
+	    tk_archive_string_conversion_charset_name(sconv));
 
 	assertA(NULL != (sconv =
-	    archive_string_conversion_to_charset(a, "UTF16LE", 1)));
+	    tk_archive_string_conversion_to_charset(a, "UTF16LE", 1)));
 	failure("Charset name should be UTF-16LE");
 	assertEqualString("UTF-16LE",
-	    archive_string_conversion_charset_name(sconv));
+	    tk_archive_string_conversion_charset_name(sconv));
 
 	assertA(NULL != (sconv =
-	    archive_string_conversion_to_charset(a, "utf16le", 1)));
+	    tk_archive_string_conversion_to_charset(a, "utf16le", 1)));
 	failure("Charset name should be UTF-16LE");
 	assertEqualString("UTF-16LE",
-	    archive_string_conversion_charset_name(sconv));
+	    tk_archive_string_conversion_charset_name(sconv));
 
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 
 }
 
-DEFINE_TEST(test_archive_string_conversion)
+DEFINE_TEST(test_tk_archive_string_conversion)
 {
 	static const char reffile[] = "test_archive_string_conversion.txt.Z";
 	static const char testdata[] = "testdata.txt";
 	struct archive *a;
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	char buff[512];
 	ssize_t size;
 	FILE *fp;
@@ -791,20 +791,20 @@ DEFINE_TEST(test_archive_string_conversion)
 	 * Extract a test pattern file.
 	 */
 	extract_reference_file(reffile);
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_raw(a));
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_raw(a));
         assertEqualIntA(a, ARCHIVE_OK,
-            archive_read_open_filename(a, reffile, 512));
+            tk_archive_read_open_filename(a, reffile, 512));
 
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
 	assert((fp = fopen(testdata, "w")) != NULL);
-	while ((size = archive_read_data(a, buff, 512)) > 0)
+	while ((size = tk_archive_read_data(a, buff, 512)) > 0)
 		fwrite(buff, 1, size, fp);
 	fclose(fp);
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 
-	test_archive_string_normalization_nfc(testdata);
-	test_archive_string_normalization_mac_nfd(testdata);
-	test_archive_string_canonicalization();
+	test_tk_archive_string_normalization_nfc(testdata);
+	test_tk_archive_string_normalization_mac_nfd(testdata);
+	test_tk_archive_string_canonicalization();
 }

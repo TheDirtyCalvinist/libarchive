@@ -277,8 +277,8 @@ extern wchar_t *__la_win_permissive_name(const char *name);
 extern wchar_t *__la_win_permissive_name_w(const wchar_t *wname);
 extern void __la_dosmaperr(unsigned long e);
 #define la_dosmaperr(e) __la_dosmaperr(e)
-extern struct archive_entry *__la_win_entry_in_posix_pathseparator(
-    struct archive_entry *);
+extern struct tk_archive_entry *__la_win_entry_in_posix_pathseparator(
+    struct tk_archive_entry *);
 
 #if defined(HAVE_WCRTOMB) && defined(__BORLANDC__)
 typedef int mbstate_t;

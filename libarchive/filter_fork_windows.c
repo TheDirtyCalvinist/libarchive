@@ -32,15 +32,15 @@
 #include "filter_fork.h"
 
 pid_t
-__archive_create_child(const char *cmd, int *child_stdin, int *child_stdout)
+__tk_archive_create_child(const char *cmd, int *child_stdin, int *child_stdout)
 {
 	HANDLE childStdout[2], childStdin[2],childStderr;
 	SECURITY_ATTRIBUTES secAtts;
 	STARTUPINFO staInfo;
 	PROCESS_INFORMATION childInfo;
-	struct archive_string cmdline;
-	struct archive_string fullpath;
-	struct archive_cmdline *acmd;
+	struct tk_archive_string cmdline;
+	struct tk_archive_string fullpath;
+	struct tk_archive_cmdline *acmd;
 	char *arg0, *ext;
 	int i, l;
 	DWORD fl, fl_old;
@@ -48,13 +48,13 @@ __archive_create_child(const char *cmd, int *child_stdin, int *child_stdout)
 	childStdout[0] = childStdout[1] = INVALID_HANDLE_VALUE;
 	childStdin[0] = childStdin[1] = INVALID_HANDLE_VALUE;
 	childStderr = INVALID_HANDLE_VALUE;
-	archive_string_init(&cmdline);
-	archive_string_init(&fullpath);
+	tk_archive_string_init(&cmdline);
+	tk_archive_string_init(&fullpath);
 
-	acmd = __archive_cmdline_allocate();
+	acmd = __tk_archive_cmdline_allocate();
 	if (acmd == NULL)
 		goto fail;
-	if (__archive_cmdline_parse(acmd, cmd) != ARCHIVE_OK)
+	if (__tk_archive_cmdline_parse(acmd, cmd) != ARCHIVE_OK)
 		goto fail;
 
 	/*
@@ -73,7 +73,7 @@ __archive_create_child(const char *cmd, int *child_stdin, int *child_stdout)
 
 	fl = MAX_PATH;
 	do {
-		if (archive_string_ensure(&fullpath, fl) == NULL)
+		if (tk_archive_string_ensure(&fullpath, fl) == NULL)
 			goto fail;
 		fl_old = fl;
 		fl = SearchPathA(NULL, acmd->path, ext, fl, fullpath.s,
@@ -90,7 +90,7 @@ __archive_create_child(const char *cmd, int *child_stdin, int *child_stdout)
 			continue;
 		l += (int)strlen(acmd->argv[i]) + 1;
 	}
-	if (archive_string_ensure(&cmdline, l + 1) == NULL)
+	if (tk_archive_string_ensure(&cmdline, l + 1) == NULL)
 		goto fail;
 	for (i = 0;  acmd->argv[i] != NULL; i++) {
 		if (i == 0) {
@@ -102,23 +102,23 @@ __archive_create_child(const char *cmd, int *child_stdin, int *child_stdout)
 			else
 				p = acmd->argv[i];
 			if ((sp = strchr(p, ' ')) != NULL)
-				archive_strappend_char(&cmdline, '"');
-			archive_strcat(&cmdline, p);
+				tk_archive_strappend_char(&cmdline, '"');
+			tk_archive_strcat(&cmdline, p);
 			if (sp != NULL)
-				archive_strappend_char(&cmdline, '"');
+				tk_archive_strappend_char(&cmdline, '"');
 		} else {
-			archive_strappend_char(&cmdline, ' ');
-			archive_strcat(&cmdline, acmd->argv[i]);
+			tk_archive_strappend_char(&cmdline, ' ');
+			tk_archive_strcat(&cmdline, acmd->argv[i]);
 		}
 	}
 	if (i <= 1) {
 		const char *sp;
 
 		if ((sp = strchr(arg0, ' ')) != NULL)
-			archive_strappend_char(&cmdline, '"');
-		archive_strcat(&cmdline, arg0);
+			tk_archive_strappend_char(&cmdline, '"');
+		tk_archive_strcat(&cmdline, arg0);
 		if (sp != NULL)
-			archive_strappend_char(&cmdline, '"');
+			tk_archive_strappend_char(&cmdline, '"');
 	}
 
 	secAtts.nLength = sizeof(SECURITY_ATTRIBUTES);
@@ -157,9 +157,9 @@ __archive_create_child(const char *cmd, int *child_stdin, int *child_stdout)
 	CloseHandle(childStdout[1]);
 	CloseHandle(childStdin[0]);
 
-	archive_string_free(&cmdline);
-	archive_string_free(&fullpath);
-	__archive_cmdline_free(acmd);
+	tk_archive_string_free(&cmdline);
+	tk_archive_string_free(&fullpath);
+	__tk_archive_cmdline_free(acmd);
 	return (childInfo.dwProcessId);
 
 fail:
@@ -173,14 +173,14 @@ fail:
 		CloseHandle(childStdin[1]);
 	if (childStderr != INVALID_HANDLE_VALUE)
 		CloseHandle(childStderr);
-	archive_string_free(&cmdline);
-	archive_string_free(&fullpath);
-	__archive_cmdline_free(acmd);
+	tk_archive_string_free(&cmdline);
+	tk_archive_string_free(&fullpath);
+	__tk_archive_cmdline_free(acmd);
 	return (-1);
 }
 
 void
-__archive_check_child(int in, int out)
+__tk_archive_check_child(int in, int out)
 {
 	(void)in; /* UNUSED */
 	(void)out; /* UNUSED */

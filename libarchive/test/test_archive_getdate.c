@@ -31,10 +31,10 @@ __FBSDID("$FreeBSD$");
  * Verify that the getdate() function works.
  */
 
-time_t __archive_get_date(time_t, const char *);
-#define get_date __archive_get_date
+time_t __tk_archive_get_date(time_t, const char *);
+#define get_date __tk_archive_get_date
 
-DEFINE_TEST(test_archive_getdate)
+DEFINE_TEST(test_tk_archive_getdate)
 {
 	time_t now = time(NULL);
 

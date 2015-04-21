@@ -32,13 +32,13 @@ struct contents {
 	const char *d;
 };
 
-struct contents archive_contents_sparse[] = {
+struct contents tk_archive_contents_sparse[] = {
 	{ 1000000, 1, "a" },
 	{ 2000000, 1, "a" },
 	{ 3145728, 0, NULL }
 };
 
-struct contents archive_contents_sparse2[] = {
+struct contents tk_archive_contents_sparse2[] = {
 	{ 1000000, 1, "a" },
 	{ 2000000, 1, "a" },
 	{ 3000000, 1, "a" },
@@ -141,7 +141,7 @@ struct contents archive_contents_sparse2[] = {
 	{ 99000001, 0, NULL }
 };
 
-struct contents archive_contents_nonsparse[] = {
+struct contents tk_archive_contents_nonsparse[] = {
 	{ 0, 1, "a" },
 	{ 1, 0, NULL }
 };
@@ -161,20 +161,20 @@ struct contents archive_contents_nonsparse[] = {
  *   * contains a single byte 'a'
  */
 
-struct archive_contents {
+struct tk_archive_contents {
 	const char *filename;
 	struct contents *contents;
 } files[] = {
-	{ "sparse", archive_contents_sparse },
-	{ "sparse2", archive_contents_sparse2 },
-	{ "non-sparse", archive_contents_nonsparse },
+	{ "sparse", tk_archive_contents_sparse },
+	{ "sparse2", tk_archive_contents_sparse2 },
+	{ "non-sparse", tk_archive_contents_nonsparse },
 	{ NULL, NULL }
 };
 
 static void
-verify_archive_file(const char *name, struct archive_contents *ac)
+verify_tk_archive_file(const char *name, struct tk_archive_contents *ac)
 {
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	int err;
 	/* data, size, offset of next expected block. */
 	struct contents expect;
@@ -185,24 +185,24 @@ verify_archive_file(const char *name, struct archive_contents *ac)
 
 	extract_reference_file(name);
 
-	assert((a = archive_read_new()) != NULL);
-	assert(0 == archive_read_support_filter_all(a));
-	assert(0 == archive_read_support_format_tar(a));
+	assert((a = tk_archive_read_new()) != NULL);
+	assert(0 == tk_archive_read_support_filter_all(a));
+	assert(0 == tk_archive_read_support_format_tar(a));
 	failure("Can't open %s", name);
-	assert(0 == archive_read_open_filename(a, name, 3));
+	assert(0 == tk_archive_read_open_filename(a, name, 3));
 
 	while (ac->filename != NULL) {
 		struct contents *cts = ac->contents;
 
-		if (!assertEqualIntA(a, 0, archive_read_next_header(a, &ae))) {
-			assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+		if (!assertEqualIntA(a, 0, tk_archive_read_next_header(a, &ae))) {
+			assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 			return;
 		}
 		failure("Name mismatch in archive %s", name);
-		assertEqualString(ac->filename, archive_entry_pathname(ae));
+		assertEqualString(ac->filename, tk_archive_entry_pathname(ae));
 
 		expect = *cts++;
-		while (0 == (err = archive_read_data_block(a,
+		while (0 == (err = tk_archive_read_data_block(a,
 				 &p, &actual.s, &actual.o))) {
 			actual.d = p;
 			while (actual.s > 0) {
@@ -233,7 +233,7 @@ verify_archive_file(const char *name, struct archive_contents *ac)
 					failure("%s: Unexpected trailing data",
 					    name);
 					assert(actual.o <= expect.o);
-					archive_read_free(a);
+					tk_archive_read_free(a);
 					return;
 				}
 				actual.d++;
@@ -251,19 +251,19 @@ verify_archive_file(const char *name, struct archive_contents *ac)
 		++ac;
 	}
 
-	err = archive_read_next_header(a, &ae);
+	err = tk_archive_read_next_header(a, &ae);
 	assertEqualIntA(a, ARCHIVE_EOF, err);
 
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 
 DEFINE_TEST(test_read_format_gtar_sparse)
 {
 	/* Two archives that use the "GNU tar sparse format". */
-	verify_archive_file("test_read_format_gtar_sparse_1_13.tar", files);
-	verify_archive_file("test_read_format_gtar_sparse_1_17.tar", files);
+	verify_tk_archive_file("test_read_format_gtar_sparse_1_13.tar", files);
+	verify_tk_archive_file("test_read_format_gtar_sparse_1_17.tar", files);
 
 	/*
 	 * libarchive < 1.9 doesn't support the newer --posix sparse formats
@@ -273,19 +273,19 @@ DEFINE_TEST(test_read_format_gtar_sparse)
 	/*
 	 * An archive created by GNU tar 1.17 using --posix --sparse-format=0.1
 	 */
-	verify_archive_file(
+	verify_tk_archive_file(
 		"test_read_format_gtar_sparse_1_17_posix00.tar",
 		files);
 	/*
 	 * An archive created by GNU tar 1.17 using --posix --sparse-format=0.1
 	 */
-	verify_archive_file(
+	verify_tk_archive_file(
 		"test_read_format_gtar_sparse_1_17_posix01.tar",
 		files);
 	/*
 	 * An archive created by GNU tar 1.17 using --posix --sparse-format=1.0
 	 */
-	verify_archive_file(
+	verify_tk_archive_file(
 		"test_read_format_gtar_sparse_1_17_posix10.tar",
 		files);
 	/*
@@ -298,7 +298,7 @@ DEFINE_TEST(test_read_format_gtar_sparse)
 	 * Dump the file, looking for "#!gnu-sparse-format" starting
 	 * at byte 0x600.
 	 */
-	verify_archive_file(
+	verify_tk_archive_file(
 		"test_read_format_gtar_sparse_1_17_posix10_modified.tar",
 		files);
 }

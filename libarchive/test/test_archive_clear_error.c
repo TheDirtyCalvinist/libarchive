@@ -26,17 +26,17 @@
 #include "test.h"
 __FBSDID("$FreeBSD$");
 
-DEFINE_TEST(test_archive_clear_error)
+DEFINE_TEST(test_tk_archive_clear_error)
 {
-	struct archive* a = archive_read_new();
+	struct archive* a = tk_archive_read_new();
 
-	archive_set_error(a, 12, "abcdefgh");
-	assertEqualInt(12, archive_errno(a));
-	assertEqualString("abcdefgh", archive_error_string(a));
+	tk_archive_set_error(a, 12, "abcdefgh");
+	assertEqualInt(12, tk_archive_errno(a));
+	assertEqualString("abcdefgh", tk_archive_error_string(a));
 
-	archive_clear_error(a);
-	assertEqualInt(0, archive_errno(a));
-	assertEqualString(NULL, archive_error_string(a));
+	tk_archive_clear_error(a);
+	assertEqualInt(0, tk_archive_errno(a));
+	assertEqualString(NULL, tk_archive_error_string(a));
 
-	archive_read_free(a);
+	tk_archive_read_free(a);
 }

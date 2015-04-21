@@ -45,22 +45,22 @@ __FBSDID("$FreeBSD$");
 static
 struct { const char *name; int (*setter)(struct archive *); } names[] =
 {
-	{ "b64encode",		archive_write_add_filter_b64encode },
-	{ "bzip2",		archive_write_add_filter_bzip2 },
-	{ "compress",		archive_write_add_filter_compress },
-	{ "grzip",		archive_write_add_filter_grzip },
-	{ "gzip",		archive_write_add_filter_gzip },
-	{ "lrzip",		archive_write_add_filter_lrzip },
-	{ "lzip",		archive_write_add_filter_lzip },
-	{ "lzma",		archive_write_add_filter_lzma },
-	{ "lzop",		archive_write_add_filter_lzop },
-	{ "uuencode",		archive_write_add_filter_uuencode },
-	{ "xz",			archive_write_add_filter_xz },
+	{ "b64encode",		tk_archive_write_add_filter_b64encode },
+	{ "bzip2",		tk_archive_write_add_filter_bzip2 },
+	{ "compress",		tk_archive_write_add_filter_compress },
+	{ "grzip",		tk_archive_write_add_filter_grzip },
+	{ "gzip",		tk_archive_write_add_filter_gzip },
+	{ "lrzip",		tk_archive_write_add_filter_lrzip },
+	{ "lzip",		tk_archive_write_add_filter_lzip },
+	{ "lzma",		tk_archive_write_add_filter_lzma },
+	{ "lzop",		tk_archive_write_add_filter_lzop },
+	{ "uuencode",		tk_archive_write_add_filter_uuencode },
+	{ "xz",			tk_archive_write_add_filter_xz },
 	{ NULL,			NULL }
 };
 
 int
-archive_write_add_filter_by_name(struct archive *a, const char *name)
+tk_archive_write_add_filter_by_name(struct archive *a, const char *name)
 {
 	int i;
 
@@ -69,7 +69,7 @@ archive_write_add_filter_by_name(struct archive *a, const char *name)
 			return ((names[i].setter)(a));
 	}
 
-	archive_set_error(a, EINVAL, "No such filter '%s'", name);
+	tk_archive_set_error(a, EINVAL, "No such filter '%s'", name);
 	a->state = ARCHIVE_STATE_FATAL;
 	return (ARCHIVE_FATAL);
 }

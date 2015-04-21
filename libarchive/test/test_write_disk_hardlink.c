@@ -44,18 +44,18 @@ __FBSDID("$FreeBSD: head/lib/libarchive/test/test_write_disk_hardlink.c 201247 2
 DEFINE_TEST(test_write_disk_hardlink)
 {
 #if defined(__HAIKU__)
-	skipping("archive_write_disk_hardlink; hardlinks are not supported on bfs");
+	skipping("tk_archive_write_disk_hardlink; hardlinks are not supported on bfs");
 #else
 	static const char data[]="abcdefghijklmnopqrstuvwxyz";
 	struct archive *ad;
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	int r;
 
 	/* Force the umask to something predictable. */
 	assertUmask(UMASK);
 
 	/* Write entries to disk. */
-	assert((ad = archive_write_disk_new()) != NULL);
+	assert((ad = tk_archive_write_disk_new()) != NULL);
 
 	/*
 	 * First, use a tar-like approach; a regular file, then
@@ -63,29 +63,29 @@ DEFINE_TEST(test_write_disk_hardlink)
 	 */
 
 	/* Regular file. */
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_copy_pathname(ae, "link1a");
-	archive_entry_set_mode(ae, S_IFREG | 0755);
-	archive_entry_set_size(ae, sizeof(data));
-	assertEqualIntA(ad, 0, archive_write_header(ad, ae));
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_copy_pathname(ae, "link1a");
+	tk_archive_entry_set_mode(ae, S_IFREG | 0755);
+	tk_archive_entry_set_size(ae, sizeof(data));
+	assertEqualIntA(ad, 0, tk_archive_write_header(ad, ae));
 	assertEqualInt(sizeof(data),
-	    archive_write_data(ad, data, sizeof(data)));
-	assertEqualIntA(ad, 0, archive_write_finish_entry(ad));
-	archive_entry_free(ae);
+	    tk_archive_write_data(ad, data, sizeof(data)));
+	assertEqualIntA(ad, 0, tk_archive_write_finish_entry(ad));
+	tk_archive_entry_free(ae);
 
 	/* Link.  Size of zero means this doesn't carry data. */
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_copy_pathname(ae, "link1b");
-	archive_entry_set_mode(ae, S_IFREG | 0642);
-	archive_entry_set_size(ae, 0);
-	archive_entry_copy_hardlink(ae, "link1a");
-	assertEqualIntA(ad, 0, r = archive_write_header(ad, ae));
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_copy_pathname(ae, "link1b");
+	tk_archive_entry_set_mode(ae, S_IFREG | 0642);
+	tk_archive_entry_set_size(ae, 0);
+	tk_archive_entry_copy_hardlink(ae, "link1a");
+	assertEqualIntA(ad, 0, r = tk_archive_write_header(ad, ae));
 	if (r >= ARCHIVE_WARN) {
 		assertEqualInt(ARCHIVE_WARN,
-		    archive_write_data(ad, data, sizeof(data)));
-		assertEqualIntA(ad, 0, archive_write_finish_entry(ad));
+		    tk_archive_write_data(ad, data, sizeof(data)));
+		assertEqualIntA(ad, 0, tk_archive_write_finish_entry(ad));
 	}
-	archive_entry_free(ae);
+	tk_archive_entry_free(ae);
 
 	/*
 	 * Repeat tar approach test, but use unset to mark the
@@ -93,29 +93,29 @@ DEFINE_TEST(test_write_disk_hardlink)
 	 */
 
 	/* Regular file. */
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_copy_pathname(ae, "link2a");
-	archive_entry_set_mode(ae, S_IFREG | 0755);
-	archive_entry_set_size(ae, sizeof(data));
-	assertEqualIntA(ad, 0, archive_write_header(ad, ae));
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_copy_pathname(ae, "link2a");
+	tk_archive_entry_set_mode(ae, S_IFREG | 0755);
+	tk_archive_entry_set_size(ae, sizeof(data));
+	assertEqualIntA(ad, 0, tk_archive_write_header(ad, ae));
 	assertEqualInt(sizeof(data),
-	    archive_write_data(ad, data, sizeof(data)));
-	assertEqualIntA(ad, 0, archive_write_finish_entry(ad));
-	archive_entry_free(ae);
+	    tk_archive_write_data(ad, data, sizeof(data)));
+	assertEqualIntA(ad, 0, tk_archive_write_finish_entry(ad));
+	tk_archive_entry_free(ae);
 
 	/* Link.  Unset size means this doesn't carry data. */
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_copy_pathname(ae, "link2b");
-	archive_entry_set_mode(ae, S_IFREG | 0642);
-	archive_entry_unset_size(ae);
-	archive_entry_copy_hardlink(ae, "link2a");
-	assertEqualIntA(ad, 0, r = archive_write_header(ad, ae));
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_copy_pathname(ae, "link2b");
+	tk_archive_entry_set_mode(ae, S_IFREG | 0642);
+	tk_archive_entry_unset_size(ae);
+	tk_archive_entry_copy_hardlink(ae, "link2a");
+	assertEqualIntA(ad, 0, r = tk_archive_write_header(ad, ae));
 	if (r >= ARCHIVE_WARN) {
 		assertEqualInt(ARCHIVE_WARN,
-		    archive_write_data(ad, data, sizeof(data)));
-		assertEqualIntA(ad, 0, archive_write_finish_entry(ad));
+		    tk_archive_write_data(ad, data, sizeof(data)));
+		assertEqualIntA(ad, 0, tk_archive_write_finish_entry(ad));
 	}
-	archive_entry_free(ae);
+	tk_archive_entry_free(ae);
 
 	/*
 	 * Second, try an old-cpio-like approach; a regular file, then
@@ -123,28 +123,28 @@ DEFINE_TEST(test_write_disk_hardlink)
 	 */
 
 	/* Regular file. */
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_copy_pathname(ae, "link3a");
-	archive_entry_set_mode(ae, S_IFREG | 0600);
-	archive_entry_set_size(ae, sizeof(data));
-	assertEqualIntA(ad, 0, archive_write_header(ad, ae));
-	assertEqualInt(sizeof(data), archive_write_data(ad, data, sizeof(data)));
-	assertEqualIntA(ad, 0, archive_write_finish_entry(ad));
-	archive_entry_free(ae);
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_copy_pathname(ae, "link3a");
+	tk_archive_entry_set_mode(ae, S_IFREG | 0600);
+	tk_archive_entry_set_size(ae, sizeof(data));
+	assertEqualIntA(ad, 0, tk_archive_write_header(ad, ae));
+	assertEqualInt(sizeof(data), tk_archive_write_data(ad, data, sizeof(data)));
+	assertEqualIntA(ad, 0, tk_archive_write_finish_entry(ad));
+	tk_archive_entry_free(ae);
 
 	/* Link. */
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_copy_pathname(ae, "link3b");
-	archive_entry_set_mode(ae, S_IFREG | 0755);
-	archive_entry_set_size(ae, sizeof(data));
-	archive_entry_copy_hardlink(ae, "link3a");
-	assertEqualIntA(ad, 0, r = archive_write_header(ad, ae));
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_copy_pathname(ae, "link3b");
+	tk_archive_entry_set_mode(ae, S_IFREG | 0755);
+	tk_archive_entry_set_size(ae, sizeof(data));
+	tk_archive_entry_copy_hardlink(ae, "link3a");
+	assertEqualIntA(ad, 0, r = tk_archive_write_header(ad, ae));
 	if (r > ARCHIVE_WARN) {
 		assertEqualInt(sizeof(data),
-		    archive_write_data(ad, data, sizeof(data)));
-		assertEqualIntA(ad, 0, archive_write_finish_entry(ad));
+		    tk_archive_write_data(ad, data, sizeof(data)));
+		assertEqualIntA(ad, 0, tk_archive_write_finish_entry(ad));
 	}
-	archive_entry_free(ae);
+	tk_archive_entry_free(ae);
 
 	/*
 	 * Finally, try a new-cpio-like approach, where the initial
@@ -152,29 +152,29 @@ DEFINE_TEST(test_write_disk_hardlink)
 	 */
 
 	/* Regular file. */
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_copy_pathname(ae, "link4a");
-	archive_entry_set_mode(ae, S_IFREG | 0600);
-	archive_entry_set_size(ae, 0);
-	assertEqualIntA(ad, 0, archive_write_header(ad, ae));
-	assertEqualInt(ARCHIVE_WARN, archive_write_data(ad, data, 1));
-	assertEqualIntA(ad, 0, archive_write_finish_entry(ad));
-	archive_entry_free(ae);
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_copy_pathname(ae, "link4a");
+	tk_archive_entry_set_mode(ae, S_IFREG | 0600);
+	tk_archive_entry_set_size(ae, 0);
+	assertEqualIntA(ad, 0, tk_archive_write_header(ad, ae));
+	assertEqualInt(ARCHIVE_WARN, tk_archive_write_data(ad, data, 1));
+	assertEqualIntA(ad, 0, tk_archive_write_finish_entry(ad));
+	tk_archive_entry_free(ae);
 
 	/* Link. */
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_copy_pathname(ae, "link4b");
-	archive_entry_set_mode(ae, S_IFREG | 0755);
-	archive_entry_set_size(ae, sizeof(data));
-	archive_entry_copy_hardlink(ae, "link4a");
-	assertEqualIntA(ad, 0, r = archive_write_header(ad, ae));
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_copy_pathname(ae, "link4b");
+	tk_archive_entry_set_mode(ae, S_IFREG | 0755);
+	tk_archive_entry_set_size(ae, sizeof(data));
+	tk_archive_entry_copy_hardlink(ae, "link4a");
+	assertEqualIntA(ad, 0, r = tk_archive_write_header(ad, ae));
 	if (r > ARCHIVE_FAILED) {
 		assertEqualInt(sizeof(data),
-		    archive_write_data(ad, data, sizeof(data)));
-		assertEqualIntA(ad, 0, archive_write_finish_entry(ad));
+		    tk_archive_write_data(ad, data, sizeof(data)));
+		assertEqualIntA(ad, 0, tk_archive_write_finish_entry(ad));
 	}
-	archive_entry_free(ae);
-	assertEqualInt(0, archive_write_free(ad));
+	tk_archive_entry_free(ae);
+	assertEqualInt(0, tk_archive_write_free(ad));
 
 	/* Test the entries on disk. */
 

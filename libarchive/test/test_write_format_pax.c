@@ -31,7 +31,7 @@ DEFINE_TEST(test_write_format_pax)
 {
 	size_t buffsize = 1000000;
 	char *buff;
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	struct archive *a;
 	size_t used;
 	int i;
@@ -42,61 +42,61 @@ DEFINE_TEST(test_write_format_pax)
 	assert(buff != NULL);
 
 	/* Create a new archive in memory. */
-	assert((a = archive_write_new()) != NULL);
-	assertA(0 == archive_write_set_format_pax(a));
-	assertA(0 == archive_write_add_filter_none(a));
-	assertA(0 == archive_write_open_memory(a, buff, buffsize, &used));
+	assert((a = tk_archive_write_new()) != NULL);
+	assertA(0 == tk_archive_write_set_format_pax(a));
+	assertA(0 == tk_archive_write_add_filter_none(a));
+	assertA(0 == tk_archive_write_open_memory(a, buff, buffsize, &used));
 
 	/*
 	 * "file" has a bunch of attributes and 8 bytes of data.
 	 */
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_set_atime(ae, 2, 20);
-	archive_entry_set_birthtime(ae, 3, 30);
-	archive_entry_set_ctime(ae, 4, 40);
-	archive_entry_set_mtime(ae, 5, 50);
-	archive_entry_copy_pathname(ae, "file");
-	archive_entry_set_mode(ae, S_IFREG | 0755);
-	archive_entry_set_size(ae, 8);
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
-	archive_entry_free(ae);
-	assertEqualIntA(a, 8, archive_write_data(a, "12345678", 9));
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_atime(ae, 2, 20);
+	tk_archive_entry_set_birthtime(ae, 3, 30);
+	tk_archive_entry_set_ctime(ae, 4, 40);
+	tk_archive_entry_set_mtime(ae, 5, 50);
+	tk_archive_entry_copy_pathname(ae, "file");
+	tk_archive_entry_set_mode(ae, S_IFREG | 0755);
+	tk_archive_entry_set_size(ae, 8);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_header(a, ae));
+	tk_archive_entry_free(ae);
+	assertEqualIntA(a, 8, tk_archive_write_data(a, "12345678", 9));
 
 	/*
 	 * "file2" is similar but has birthtime later than mtime.
 	 */
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_set_atime(ae, 2, 20);
-	archive_entry_set_birthtime(ae, 8, 80);
-	archive_entry_set_ctime(ae, 4, 40);
-	archive_entry_set_mtime(ae, 5, 50);
-	archive_entry_copy_pathname(ae, "file2");
-	archive_entry_set_mode(ae, S_IFREG | 0755);
-	archive_entry_set_size(ae, 8);
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
-	archive_entry_free(ae);
-	assertEqualIntA(a, 8, archive_write_data(a, "12345678", 9));
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_atime(ae, 2, 20);
+	tk_archive_entry_set_birthtime(ae, 8, 80);
+	tk_archive_entry_set_ctime(ae, 4, 40);
+	tk_archive_entry_set_mtime(ae, 5, 50);
+	tk_archive_entry_copy_pathname(ae, "file2");
+	tk_archive_entry_set_mode(ae, S_IFREG | 0755);
+	tk_archive_entry_set_size(ae, 8);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_header(a, ae));
+	tk_archive_entry_free(ae);
+	assertEqualIntA(a, 8, tk_archive_write_data(a, "12345678", 9));
 
 	/*
 	 * "file3" is sparse file and has hole size of which is
 	 * 1024000 bytes, and has 8 bytes data after the hole.
 	 */
-	assert((ae = archive_entry_new()) != NULL);
-	archive_entry_set_atime(ae, 2, 20);
-	archive_entry_set_birthtime(ae, 3, 30);
-	archive_entry_set_ctime(ae, 4, 40);
-	archive_entry_set_mtime(ae, 5, 50);
-	archive_entry_copy_pathname(ae, "file3");
-	archive_entry_set_mode(ae, S_IFREG | 0755);
-	archive_entry_set_size(ae, 1024008);
-	archive_entry_sparse_add_entry(ae, 1024000, 8);
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_header(a, ae));
-	archive_entry_free(ae);
+	assert((ae = tk_archive_entry_new()) != NULL);
+	tk_archive_entry_set_atime(ae, 2, 20);
+	tk_archive_entry_set_birthtime(ae, 3, 30);
+	tk_archive_entry_set_ctime(ae, 4, 40);
+	tk_archive_entry_set_mtime(ae, 5, 50);
+	tk_archive_entry_copy_pathname(ae, "file3");
+	tk_archive_entry_set_mode(ae, S_IFREG | 0755);
+	tk_archive_entry_set_size(ae, 1024008);
+	tk_archive_entry_sparse_add_entry(ae, 1024000, 8);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_header(a, ae));
+	tk_archive_entry_free(ae);
 	memset(nulls, 0, sizeof(nulls));
 	for (i = 0; i < 1024000; i += 1024)
 		/* write hole data, which won't be stored into an archive file. */
-		assertEqualIntA(a, 1024, archive_write_data(a, nulls, 1024));
-	assertEqualIntA(a, 8, archive_write_data(a, "12345678", 9));
+		assertEqualIntA(a, 1024, tk_archive_write_data(a, nulls, 1024));
+	assertEqualIntA(a, 8, tk_archive_write_data(a, "12345678", 9));
 
 	/*
 	 * XXX TODO XXX Archive directory, other file types.
@@ -105,95 +105,95 @@ DEFINE_TEST(test_write_format_pax)
 	 */
 
 	/* Close out the archive. */
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_free(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_close(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_free(a));
 
 	/*
 	 *
 	 * Now, read the data back.
 	 *
 	 */
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, 0, archive_read_support_format_all(a));
-	assertEqualIntA(a, 0, archive_read_support_filter_all(a));
-	assertEqualIntA(a, 0, archive_read_open_memory(a, buff, used));
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, 0, tk_archive_read_support_format_all(a));
+	assertEqualIntA(a, 0, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, 0, tk_archive_read_open_memory(a, buff, used));
 
 	/*
 	 * Read "file"
 	 */
-	assertEqualIntA(a, 0, archive_read_next_header(a, &ae));
-	assertEqualInt(2, archive_entry_atime(ae));
-	assertEqualInt(20, archive_entry_atime_nsec(ae));
-	assertEqualInt(3, archive_entry_birthtime(ae));
-	assertEqualInt(30, archive_entry_birthtime_nsec(ae));
-	assertEqualInt(4, archive_entry_ctime(ae));
-	assertEqualInt(40, archive_entry_ctime_nsec(ae));
-	assertEqualInt(5, archive_entry_mtime(ae));
-	assertEqualInt(50, archive_entry_mtime_nsec(ae));
-	assertEqualString("file", archive_entry_pathname(ae));
-	assert((S_IFREG | 0755) == archive_entry_mode(ae));
-	assertEqualInt(8, archive_entry_size(ae));
-	assertEqualIntA(a, 8, archive_read_data(a, buff2, 10));
+	assertEqualIntA(a, 0, tk_archive_read_next_header(a, &ae));
+	assertEqualInt(2, tk_archive_entry_atime(ae));
+	assertEqualInt(20, tk_archive_entry_atime_nsec(ae));
+	assertEqualInt(3, tk_archive_entry_birthtime(ae));
+	assertEqualInt(30, tk_archive_entry_birthtime_nsec(ae));
+	assertEqualInt(4, tk_archive_entry_ctime(ae));
+	assertEqualInt(40, tk_archive_entry_ctime_nsec(ae));
+	assertEqualInt(5, tk_archive_entry_mtime(ae));
+	assertEqualInt(50, tk_archive_entry_mtime_nsec(ae));
+	assertEqualString("file", tk_archive_entry_pathname(ae));
+	assert((S_IFREG | 0755) == tk_archive_entry_mode(ae));
+	assertEqualInt(8, tk_archive_entry_size(ae));
+	assertEqualIntA(a, 8, tk_archive_read_data(a, buff2, 10));
 	assertEqualMem(buff2, "12345678", 8);
 
 	/*
 	 * Read "file2"
 	 */
-	assertEqualIntA(a, 0, archive_read_next_header(a, &ae));
-	assert(archive_entry_atime_is_set(ae));
-	assertEqualInt(2, archive_entry_atime(ae));
-	assertEqualInt(20, archive_entry_atime_nsec(ae));
+	assertEqualIntA(a, 0, tk_archive_read_next_header(a, &ae));
+	assert(tk_archive_entry_atime_is_set(ae));
+	assertEqualInt(2, tk_archive_entry_atime(ae));
+	assertEqualInt(20, tk_archive_entry_atime_nsec(ae));
 	/* Birthtime > mtime above, so it doesn't get stored at all. */
-	assert(!archive_entry_birthtime_is_set(ae));
-	assertEqualInt(0, archive_entry_birthtime(ae));
-	assertEqualInt(0, archive_entry_birthtime_nsec(ae));
-	assert(archive_entry_ctime_is_set(ae));
-	assertEqualInt(4, archive_entry_ctime(ae));
-	assertEqualInt(40, archive_entry_ctime_nsec(ae));
-	assert(archive_entry_mtime_is_set(ae));
-	assertEqualInt(5, archive_entry_mtime(ae));
-	assertEqualInt(50, archive_entry_mtime_nsec(ae));
-	assertEqualString("file2", archive_entry_pathname(ae));
-	assert((S_IFREG | 0755) == archive_entry_mode(ae));
-	assertEqualInt(8, archive_entry_size(ae));
-	assertEqualIntA(a, 8, archive_read_data(a, buff2, 10));
+	assert(!tk_archive_entry_birthtime_is_set(ae));
+	assertEqualInt(0, tk_archive_entry_birthtime(ae));
+	assertEqualInt(0, tk_archive_entry_birthtime_nsec(ae));
+	assert(tk_archive_entry_ctime_is_set(ae));
+	assertEqualInt(4, tk_archive_entry_ctime(ae));
+	assertEqualInt(40, tk_archive_entry_ctime_nsec(ae));
+	assert(tk_archive_entry_mtime_is_set(ae));
+	assertEqualInt(5, tk_archive_entry_mtime(ae));
+	assertEqualInt(50, tk_archive_entry_mtime_nsec(ae));
+	assertEqualString("file2", tk_archive_entry_pathname(ae));
+	assert((S_IFREG | 0755) == tk_archive_entry_mode(ae));
+	assertEqualInt(8, tk_archive_entry_size(ae));
+	assertEqualIntA(a, 8, tk_archive_read_data(a, buff2, 10));
 	assertEqualMem(buff2, "12345678", 8);
 
 	/*
 	 * Read "file3"
 	 */
-	assertEqualIntA(a, 0, archive_read_next_header(a, &ae));
-	assertEqualInt(2, archive_entry_atime(ae));
-	assertEqualInt(20, archive_entry_atime_nsec(ae));
-	assertEqualInt(3, archive_entry_birthtime(ae));
-	assertEqualInt(30, archive_entry_birthtime_nsec(ae));
-	assertEqualInt(4, archive_entry_ctime(ae));
-	assertEqualInt(40, archive_entry_ctime_nsec(ae));
-	assertEqualInt(5, archive_entry_mtime(ae));
-	assertEqualInt(50, archive_entry_mtime_nsec(ae));
-	assertEqualString("file3", archive_entry_pathname(ae));
-	assert((S_IFREG | 0755) == archive_entry_mode(ae));
-	assertEqualInt(1024008, archive_entry_size(ae));
-	assertEqualInt(1, archive_entry_sparse_reset(ae));
+	assertEqualIntA(a, 0, tk_archive_read_next_header(a, &ae));
+	assertEqualInt(2, tk_archive_entry_atime(ae));
+	assertEqualInt(20, tk_archive_entry_atime_nsec(ae));
+	assertEqualInt(3, tk_archive_entry_birthtime(ae));
+	assertEqualInt(30, tk_archive_entry_birthtime_nsec(ae));
+	assertEqualInt(4, tk_archive_entry_ctime(ae));
+	assertEqualInt(40, tk_archive_entry_ctime_nsec(ae));
+	assertEqualInt(5, tk_archive_entry_mtime(ae));
+	assertEqualInt(50, tk_archive_entry_mtime_nsec(ae));
+	assertEqualString("file3", tk_archive_entry_pathname(ae));
+	assert((S_IFREG | 0755) == tk_archive_entry_mode(ae));
+	assertEqualInt(1024008, tk_archive_entry_size(ae));
+	assertEqualInt(1, tk_archive_entry_sparse_reset(ae));
 	assertEqualInt(ARCHIVE_OK,
-	    archive_entry_sparse_next(ae, &offset, &length));
+	    tk_archive_entry_sparse_next(ae, &offset, &length));
 	assertEqualInt(1024000, offset);
 	assertEqualInt(8, length);
 	for (i = 0; i < 1024000; i += 1024) {
 		int j;
-		assertEqualIntA(a, 1024, archive_read_data(a, nulls, 1024));
+		assertEqualIntA(a, 1024, tk_archive_read_data(a, nulls, 1024));
 		for (j = 0; j < 1024; j++)
 			assertEqualInt(0, nulls[j]);
 	}
-	assertEqualIntA(a, 8, archive_read_data(a, buff2, 10));
+	assertEqualIntA(a, 8, tk_archive_read_data(a, buff2, 10));
 	assertEqualMem(buff2, "12345678", 8);
 
 	/*
 	 * Verify the end of the archive.
 	 */
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_free(a));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_free(a));
 
 	free(buff);
 }

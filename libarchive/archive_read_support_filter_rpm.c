@@ -55,33 +55,33 @@ struct rpm {
 };
 #define RPM_LEAD_SIZE	96	/* Size of 'Lead' section. */
 
-static int	rpm_bidder_bid(struct archive_read_filter_bidder *,
-		    struct archive_read_filter *);
-static int	rpm_bidder_init(struct archive_read_filter *);
+static int	rpm_bidder_bid(struct tk_archive_read_filter_bidder *,
+		    struct tk_archive_read_filter *);
+static int	rpm_bidder_init(struct tk_archive_read_filter *);
 
-static ssize_t	rpm_filter_read(struct archive_read_filter *,
+static ssize_t	rpm_filter_read(struct tk_archive_read_filter *,
 		    const void **);
-static int	rpm_filter_close(struct archive_read_filter *);
+static int	rpm_filter_close(struct tk_archive_read_filter *);
 
 #if ARCHIVE_VERSION_NUMBER < 4000000
 /* Deprecated; remove in libarchive 4.0 */
 int
-archive_read_support_compression_rpm(struct archive *a)
+tk_archive_read_support_compression_rpm(struct archive *a)
 {
-	return archive_read_support_filter_rpm(a);
+	return tk_archive_read_support_filter_rpm(a);
 }
 #endif
 
 int
-archive_read_support_filter_rpm(struct archive *_a)
+tk_archive_read_support_filter_rpm(struct archive *_a)
 {
-	struct archive_read *a = (struct archive_read *)_a;
-	struct archive_read_filter_bidder *bidder;
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
+	struct tk_archive_read_filter_bidder *bidder;
 
-	archive_check_magic(_a, ARCHIVE_READ_MAGIC,
-	    ARCHIVE_STATE_NEW, "archive_read_support_filter_rpm");
+	tk_archive_check_magic(_a, ARCHIVE_READ_MAGIC,
+	    ARCHIVE_STATE_NEW, "tk_archive_read_support_filter_rpm");
 
-	if (__archive_read_get_bidder(a, &bidder) != ARCHIVE_OK)
+	if (__tk_archive_read_get_bidder(a, &bidder) != ARCHIVE_OK)
 		return (ARCHIVE_FATAL);
 
 	bidder->data = NULL;
@@ -94,8 +94,8 @@ archive_read_support_filter_rpm(struct archive *_a)
 }
 
 static int
-rpm_bidder_bid(struct archive_read_filter_bidder *self,
-    struct archive_read_filter *filter)
+rpm_bidder_bid(struct tk_archive_read_filter_bidder *self,
+    struct tk_archive_read_filter *filter)
 {
 	const unsigned char *b;
 	ssize_t avail;
@@ -103,7 +103,7 @@ rpm_bidder_bid(struct archive_read_filter_bidder *self,
 
 	(void)self; /* UNUSED */
 
-	b = __archive_read_filter_ahead(filter, 8, &avail);
+	b = __tk_archive_read_filter_ahead(filter, 8, &avail);
 	if (b == NULL)
 		return (0);
 
@@ -134,7 +134,7 @@ rpm_bidder_bid(struct archive_read_filter_bidder *self,
 }
 
 static int
-rpm_bidder_init(struct archive_read_filter *self)
+rpm_bidder_init(struct tk_archive_read_filter *self)
 {
 	struct rpm   *rpm;
 
@@ -146,7 +146,7 @@ rpm_bidder_init(struct archive_read_filter *self)
 
 	rpm = (struct rpm *)calloc(sizeof(*rpm), 1);
 	if (rpm == NULL) {
-		archive_set_error(&self->archive->archive, ENOMEM,
+		tk_archive_set_error(&self->archive->archive, ENOMEM,
 		    "Can't allocate data for rpm");
 		return (ARCHIVE_FATAL);
 	}
@@ -158,7 +158,7 @@ rpm_bidder_init(struct archive_read_filter *self)
 }
 
 static ssize_t
-rpm_filter_read(struct archive_read_filter *self, const void **buff)
+rpm_filter_read(struct tk_archive_read_filter *self, const void **buff)
 {
 	struct rpm *rpm;
 	const unsigned char *b;
@@ -174,7 +174,7 @@ rpm_filter_read(struct archive_read_filter *self, const void **buff)
 	used = 0;
 	do {
 		if (b == NULL) {
-			b = __archive_read_filter_ahead(self->upstream, 1,
+			b = __tk_archive_read_filter_ahead(self->upstream, 1,
 			    &avail_in);
 			if (b == NULL) {
 				if (avail_in < 0)
@@ -213,7 +213,7 @@ rpm_filter_read(struct archive_read_filter *self, const void **buff)
 				    rpm->header[2] != 0xe8 ||
 				    rpm->header[3] != 0x01) {
 					if (rpm->first_header) {
-						archive_set_error(
+						tk_archive_set_error(
 						    &self->archive->archive,
 						    ARCHIVE_ERRNO_FILE_FORMAT,
 						    "Unrecoginized rpm header");
@@ -225,8 +225,8 @@ rpm_filter_read(struct archive_read_filter *self, const void **buff)
 					break;
 				}
 				/* Calculate 'Header' length. */
-				section = archive_be32dec(rpm->header+8);
-				bytes = archive_be32dec(rpm->header+12);
+				section = tk_archive_be32dec(rpm->header+8);
+				bytes = tk_archive_be32dec(rpm->header+12);
 				rpm->hlen = 16 + section * 16 + bytes;
 				rpm->state = ST_HEADER_DATA;
 				rpm->first_header = 0;
@@ -263,7 +263,7 @@ rpm_filter_read(struct archive_read_filter *self, const void **buff)
 		}
 		if (used == (size_t)avail_in) {
 			rpm->total_in += used;
-			__archive_read_filter_consume(self->upstream, used);
+			__tk_archive_read_filter_consume(self->upstream, used);
 			b = NULL;
 			used = 0;
 		}
@@ -271,13 +271,13 @@ rpm_filter_read(struct archive_read_filter *self, const void **buff)
 
 	if (used > 0 && b != NULL) {
 		rpm->total_in += used;
-		__archive_read_filter_consume(self->upstream, used);
+		__tk_archive_read_filter_consume(self->upstream, used);
 	}
 	return (total);
 }
 
 static int
-rpm_filter_close(struct archive_read_filter *self)
+rpm_filter_close(struct tk_archive_read_filter *self)
 {
 	struct rpm *rpm;
 

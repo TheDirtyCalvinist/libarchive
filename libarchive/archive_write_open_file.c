@@ -56,17 +56,17 @@ static int	file_open(struct archive *, void *);
 static ssize_t	file_write(struct archive *, void *, const void *buff, size_t);
 
 int
-archive_write_open_FILE(struct archive *a, FILE *f)
+tk_archive_write_open_FILE(struct archive *a, FILE *f)
 {
 	struct write_FILE_data *mine;
 
 	mine = (struct write_FILE_data *)malloc(sizeof(*mine));
 	if (mine == NULL) {
-		archive_set_error(a, ENOMEM, "No memory");
+		tk_archive_set_error(a, ENOMEM, "No memory");
 		return (ARCHIVE_FATAL);
 	}
 	mine->f = f;
-	return (archive_write_open(a, mine,
+	return (tk_archive_write_open(a, mine,
 		    file_open, file_write, file_close));
 }
 
@@ -91,7 +91,7 @@ file_write(struct archive *a, void *client_data, const void *buff, size_t length
 		if (bytesWritten <= 0) {
 			if (errno == EINTR)
 				continue;
-			archive_set_error(a, errno, "Write error");
+			tk_archive_set_error(a, errno, "Write error");
 			return (-1);
 		}
 		return (bytesWritten);

@@ -31,44 +31,44 @@ static void write_test(void);
 static void
 read_test(const char *name)
 {
-	struct archive* a = archive_read_new();
+	struct archive* a = tk_archive_read_new();
 	int r;
 
-	r = archive_read_support_filter_bzip2(a);
+	r = tk_archive_read_support_filter_bzip2(a);
 	if((ARCHIVE_WARN == r && !canBzip2()) || ARCHIVE_WARN > r) {
 		skipping("bzip2 unsupported");
 		return;
 	}
 
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
 
 	extract_reference_file(name);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_open_filename(a, name, 2));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_open_filename(a, name, 2));
 	/* bzip2 and none */
-	assertEqualInt(2, archive_filter_count(a));
+	assertEqualInt(2, tk_archive_filter_count(a));
 	
-	archive_read_free(a);
+	tk_archive_read_free(a);
 }
 
 static void
 write_test(void)
 {
 	char buff[4096];
-	struct archive* a = archive_write_new();
+	struct archive* a = tk_archive_write_new();
 	int r;
 
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_set_format_ustar(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_set_bytes_per_block(a, 10));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_set_format_ustar(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_set_bytes_per_block(a, 10));
 
-	r = archive_write_add_filter_bzip2(a);
+	r = tk_archive_write_add_filter_bzip2(a);
 	if((ARCHIVE_WARN == r && !canBzip2()) || ARCHIVE_WARN > r) {
 		skipping("bzip2 unsupported");
 		return;
 	}
-	assertEqualIntA(a, ARCHIVE_OK, archive_write_open_memory(a, buff, 4096, 0));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_write_open_memory(a, buff, 4096, 0));
 	/* bzip2 and none */
-	assertEqualInt(2, archive_filter_count(a));
-	archive_write_free(a);
+	assertEqualInt(2, tk_archive_filter_count(a));
+	tk_archive_write_free(a);
 }
 
 DEFINE_TEST(test_filter_count)

@@ -379,9 +379,9 @@ strip_components(const char *p, int elements)
  * TODO: Support pax-style regex path rewrites.
  */
 int
-edit_pathname(struct bsdtar *bsdtar, struct archive_entry *entry)
+edit_pathname(struct bsdtar *bsdtar, struct tk_archive_entry *entry)
 {
-	const char *name = archive_entry_pathname(entry);
+	const char *name = tk_archive_entry_pathname(entry);
 #if defined(HAVE_REGEX_H) || defined(HAVE_PCREPOSIX_H)
 	char *subst_name;
 	int r;
@@ -392,34 +392,34 @@ edit_pathname(struct bsdtar *bsdtar, struct archive_entry *entry)
 		return 1;
 	}
 	if (r == 1) {
-		archive_entry_copy_pathname(entry, subst_name);
+		tk_archive_entry_copy_pathname(entry, subst_name);
 		if (*subst_name == '\0') {
 			free(subst_name);
 			return -1;
 		} else
 			free(subst_name);
-		name = archive_entry_pathname(entry);
+		name = tk_archive_entry_pathname(entry);
 	}
 
-	if (archive_entry_hardlink(entry)) {
-		r = apply_substitution(bsdtar, archive_entry_hardlink(entry), &subst_name, 0, 1);
+	if (tk_archive_entry_hardlink(entry)) {
+		r = apply_substitution(bsdtar, tk_archive_entry_hardlink(entry), &subst_name, 0, 1);
 		if (r == -1) {
 			lafe_warnc(0, "Invalid substitution, skipping entry");
 			return 1;
 		}
 		if (r == 1) {
-			archive_entry_copy_hardlink(entry, subst_name);
+			tk_archive_entry_copy_hardlink(entry, subst_name);
 			free(subst_name);
 		}
 	}
-	if (archive_entry_symlink(entry) != NULL) {
-		r = apply_substitution(bsdtar, archive_entry_symlink(entry), &subst_name, 1, 0);
+	if (tk_archive_entry_symlink(entry) != NULL) {
+		r = apply_substitution(bsdtar, tk_archive_entry_symlink(entry), &subst_name, 1, 0);
 		if (r == -1) {
 			lafe_warnc(0, "Invalid substitution, skipping entry");
 			return 1;
 		}
 		if (r == 1) {
-			archive_entry_copy_symlink(entry, subst_name);
+			tk_archive_entry_copy_symlink(entry, subst_name);
 			free(subst_name);
 		}
 	}
@@ -427,7 +427,7 @@ edit_pathname(struct bsdtar *bsdtar, struct archive_entry *entry)
 
 	/* Strip leading dir names as per --strip-components option. */
 	if (bsdtar->strip_components > 0) {
-		const char *linkname = archive_entry_hardlink(entry);
+		const char *linkname = tk_archive_entry_hardlink(entry);
 
 		name = strip_components(name, bsdtar->strip_components);
 		if (name == NULL)
@@ -438,7 +438,7 @@ edit_pathname(struct bsdtar *bsdtar, struct archive_entry *entry)
 			    bsdtar->strip_components);
 			if (linkname == NULL)
 				return (1);
-			archive_entry_copy_hardlink(entry, linkname);
+			tk_archive_entry_copy_hardlink(entry, linkname);
 		}
 	}
 
@@ -511,9 +511,9 @@ edit_pathname(struct bsdtar *bsdtar, struct archive_entry *entry)
 	}
 
 	/* Safely replace name in archive_entry. */
-	if (name != archive_entry_pathname(entry)) {
+	if (name != tk_archive_entry_pathname(entry)) {
 		char *q = strdup(name);
-		archive_entry_copy_pathname(entry, q);
+		tk_archive_entry_copy_pathname(entry, q);
 		free(q);
 	}
 	return (0);

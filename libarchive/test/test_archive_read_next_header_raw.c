@@ -33,32 +33,32 @@ static const char data[sizeof(DATA)] = DATA;
 static void
 test(int skip_explicitely)
 {
-	struct archive* a = archive_read_new();
-	struct archive_entry* e;
+	struct archive* a = tk_archive_read_new();
+	struct tk_archive_entry* e;
 
-	assertEqualInt(ARCHIVE_OK, archive_read_support_format_raw(a));
-	assertEqualInt(0, archive_errno(a));
-	assertEqualString(NULL, archive_error_string(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_support_format_raw(a));
+	assertEqualInt(0, tk_archive_errno(a));
+	assertEqualString(NULL, tk_archive_error_string(a));
 
-	assertEqualInt(ARCHIVE_OK, archive_read_open_memory(a,
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_open_memory(a,
 	    (void *)(uintptr_t) data, sizeof(data)));
-	assertEqualString(NULL, archive_error_string(a));
+	assertEqualString(NULL, tk_archive_error_string(a));
 
-	assertEqualInt(ARCHIVE_OK, archive_read_next_header(a, &e));
-	assertEqualInt(0, archive_errno(a));
-	assertEqualString(NULL, archive_error_string(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_next_header(a, &e));
+	assertEqualInt(0, tk_archive_errno(a));
+	assertEqualString(NULL, tk_archive_error_string(a));
 
 	if (skip_explicitely)
-		assertEqualInt(ARCHIVE_OK, archive_read_data_skip(a));
+		assertEqualInt(ARCHIVE_OK, tk_archive_read_data_skip(a));
 
-	assertEqualInt(ARCHIVE_EOF, archive_read_next_header(a, &e));
-	assertEqualInt(0, archive_errno(a));
-	assertEqualString(NULL, archive_error_string(a));
+	assertEqualInt(ARCHIVE_EOF, tk_archive_read_next_header(a, &e));
+	assertEqualInt(0, tk_archive_errno(a));
+	assertEqualString(NULL, tk_archive_error_string(a));
 
-	archive_read_free(a);
+	tk_archive_read_free(a);
 }
 
-DEFINE_TEST(test_archive_read_next_header_raw)
+DEFINE_TEST(test_tk_archive_read_next_header_raw)
 {
 	test(1);
 	test(0);

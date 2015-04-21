@@ -48,28 +48,28 @@ __FBSDID("$FreeBSD$");
 #define LRZIP_HEADER_MAGIC "LRZI"
 #define LRZIP_HEADER_MAGIC_LEN 4
 
-static int	lrzip_bidder_bid(struct archive_read_filter_bidder *,
-		    struct archive_read_filter *);
-static int	lrzip_bidder_init(struct archive_read_filter *);
+static int	lrzip_bidder_bid(struct tk_archive_read_filter_bidder *,
+		    struct tk_archive_read_filter *);
+static int	lrzip_bidder_init(struct tk_archive_read_filter *);
 
 
 static int
-lrzip_reader_free(struct archive_read_filter_bidder *self)
+lrzip_reader_free(struct tk_archive_read_filter_bidder *self)
 {
 	(void)self; /* UNUSED */
 	return (ARCHIVE_OK);
 }
 
 int
-archive_read_support_filter_lrzip(struct archive *_a)
+tk_archive_read_support_filter_lrzip(struct archive *_a)
 {
-	struct archive_read *a = (struct archive_read *)_a;
-	struct archive_read_filter_bidder *reader;
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
+	struct tk_archive_read_filter_bidder *reader;
 
-	archive_check_magic(_a, ARCHIVE_READ_MAGIC,
-	    ARCHIVE_STATE_NEW, "archive_read_support_filter_lrzip");
+	tk_archive_check_magic(_a, ARCHIVE_READ_MAGIC,
+	    ARCHIVE_STATE_NEW, "tk_archive_read_support_filter_lrzip");
 
-	if (__archive_read_get_bidder(a, &reader) != ARCHIVE_OK)
+	if (__tk_archive_read_get_bidder(a, &reader) != ARCHIVE_OK)
 		return (ARCHIVE_FATAL);
 
 	reader->data = NULL;
@@ -79,7 +79,7 @@ archive_read_support_filter_lrzip(struct archive *_a)
 	reader->options = NULL;
 	reader->free = lrzip_reader_free;
 	/* This filter always uses an external program. */
-	archive_set_error(_a, ARCHIVE_ERRNO_MISC,
+	tk_archive_set_error(_a, ARCHIVE_ERRNO_MISC,
 	    "Using external lrzip program for lrzip decompression");
 	return (ARCHIVE_WARN);
 }
@@ -88,8 +88,8 @@ archive_read_support_filter_lrzip(struct archive *_a)
  * Bidder just verifies the header and returns the number of verified bits.
  */
 static int
-lrzip_bidder_bid(struct archive_read_filter_bidder *self,
-    struct archive_read_filter *filter)
+lrzip_bidder_bid(struct tk_archive_read_filter_bidder *self,
+    struct tk_archive_read_filter *filter)
 {
 	const unsigned char *p;
 	ssize_t avail, len;
@@ -99,7 +99,7 @@ lrzip_bidder_bid(struct archive_read_filter_bidder *self,
 	/* Start by looking at the first six bytes of the header, which
 	 * is all fixed layout. */
 	len = 6;
-	p = __archive_read_filter_ahead(filter, len, &avail);
+	p = __tk_archive_read_filter_ahead(filter, len, &avail);
 	if (p == NULL || avail == 0)
 		return (0);
 
@@ -118,11 +118,11 @@ lrzip_bidder_bid(struct archive_read_filter_bidder *self,
 }
 
 static int
-lrzip_bidder_init(struct archive_read_filter *self)
+lrzip_bidder_init(struct tk_archive_read_filter *self)
 {
 	int r;
 
-	r = __archive_read_program(self, "lrzip -d -q");
+	r = __tk_archive_read_program(self, "lrzip -d -q");
 	/* Note: We set the format here even if __archive_read_program()
 	 * above fails.  We do, after all, know what the format is
 	 * even if we weren't able to read it. */

@@ -31,59 +31,59 @@ __FBSDID("$FreeBSD: head/lib/libarchive/test/test_read_format_raw.c 191594 2009-
 DEFINE_TEST(test_read_format_raw)
 {
 	char buff[512];
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	struct archive *a;
 	const char *reffile1 = "test_read_format_raw.data";
 	const char *reffile2 = "test_read_format_raw.data.Z";
 
 	/* First, try pulling data out of an uninterpretable file. */
 	extract_reference_file(reffile1);
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_raw(a));
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_raw(a));
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_open_filename(a, reffile1, 512));
+	    tk_archive_read_open_filename(a, reffile1, 512));
 
 	/* First (and only!) Entry */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualString("data", archive_entry_pathname(ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualString("data", tk_archive_entry_pathname(ae));
 	/* Most fields should be unset (unknown) */
-	assert(!archive_entry_size_is_set(ae));
-	assert(!archive_entry_atime_is_set(ae));
-	assert(!archive_entry_ctime_is_set(ae));
-	assert(!archive_entry_mtime_is_set(ae));
-	assertEqualInt(4, archive_read_data(a, buff, 32));
+	assert(!tk_archive_entry_size_is_set(ae));
+	assert(!tk_archive_entry_atime_is_set(ae));
+	assert(!tk_archive_entry_ctime_is_set(ae));
+	assert(!tk_archive_entry_mtime_is_set(ae));
+	assertEqualInt(4, tk_archive_read_data(a, buff, 32));
 	assertEqualMem(buff, "foo\n", 4);
 
 	/* Test EOF */
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 
 
 	/* Second, try the same with a compressed file. */
 	extract_reference_file(reffile2);
-	assert((a = archive_read_new()) != NULL);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_raw(a));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	assert((a = tk_archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_filter_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_raw(a));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_support_format_all(a));
 	assertEqualIntA(a, ARCHIVE_OK,
-	    archive_read_open_filename(a, reffile2, 1));
+	    tk_archive_read_open_filename(a, reffile2, 1));
 
 	/* First (and only!) Entry */
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
-	assertEqualString("data", archive_entry_pathname(ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_next_header(a, &ae));
+	assertEqualString("data", tk_archive_entry_pathname(ae));
 	/* Most fields should be unset (unknown) */
-	assert(!archive_entry_size_is_set(ae));
-	assert(!archive_entry_atime_is_set(ae));
-	assert(!archive_entry_ctime_is_set(ae));
-	assert(!archive_entry_mtime_is_set(ae));
-	assertEqualInt(4, archive_read_data(a, buff, 32));
+	assert(!tk_archive_entry_size_is_set(ae));
+	assert(!tk_archive_entry_atime_is_set(ae));
+	assert(!tk_archive_entry_ctime_is_set(ae));
+	assert(!tk_archive_entry_mtime_is_set(ae));
+	assertEqualInt(4, tk_archive_read_data(a, buff, 32));
 	assertEqualMem(buff, "foo\n", 4);
 
 	/* Test EOF */
-	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assertEqualIntA(a, ARCHIVE_EOF, tk_archive_read_next_header(a, &ae));
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }

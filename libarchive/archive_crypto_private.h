@@ -153,105 +153,105 @@ typedef struct {
 
 /* typedefs */
 #if defined(ARCHIVE_CRYPTO_MD5_LIBC)
-typedef MD5_CTX archive_md5_ctx;
+typedef MD5_CTX tk_archive_md5_ctx;
 #elif defined(ARCHIVE_CRYPTO_MD5_LIBMD)
-typedef MD5_CTX archive_md5_ctx;
+typedef MD5_CTX tk_archive_md5_ctx;
 #elif defined(ARCHIVE_CRYPTO_MD5_LIBSYSTEM)
-typedef CC_MD5_CTX archive_md5_ctx;
+typedef CC_MD5_CTX tk_archive_md5_ctx;
 #elif defined(ARCHIVE_CRYPTO_MD5_NETTLE)
-typedef struct md5_ctx archive_md5_ctx;
+typedef struct md5_ctx tk_archive_md5_ctx;
 #elif defined(ARCHIVE_CRYPTO_MD5_OPENSSL)
-typedef EVP_MD_CTX archive_md5_ctx;
+typedef EVP_MD_CTX tk_archive_md5_ctx;
 #elif defined(ARCHIVE_CRYPTO_MD5_WIN)
-typedef Digest_CTX archive_md5_ctx;
+typedef Digest_CTX tk_archive_md5_ctx;
 #else
-typedef unsigned char archive_md5_ctx;
+typedef unsigned char tk_archive_md5_ctx;
 #endif
 
 #if defined(ARCHIVE_CRYPTO_RMD160_LIBC)
-typedef RMD160_CTX archive_rmd160_ctx;
+typedef RMD160_CTX tk_archive_rmd160_ctx;
 #elif defined(ARCHIVE_CRYPTO_RMD160_LIBMD)
-typedef RIPEMD160_CTX archive_rmd160_ctx;
+typedef RIPEMD160_CTX tk_archive_rmd160_ctx;
 #elif defined(ARCHIVE_CRYPTO_RMD160_NETTLE)
-typedef struct ripemd160_ctx archive_rmd160_ctx;
+typedef struct ripemd160_ctx tk_archive_rmd160_ctx;
 #elif defined(ARCHIVE_CRYPTO_RMD160_OPENSSL)
-typedef EVP_MD_CTX archive_rmd160_ctx;
+typedef EVP_MD_CTX tk_archive_rmd160_ctx;
 #else
-typedef unsigned char archive_rmd160_ctx;
+typedef unsigned char tk_archive_rmd160_ctx;
 #endif
 
 #if defined(ARCHIVE_CRYPTO_SHA1_LIBC)
-typedef SHA1_CTX archive_sha1_ctx;
+typedef SHA1_CTX tk_archive_sha1_ctx;
 #elif defined(ARCHIVE_CRYPTO_SHA1_LIBMD)
-typedef SHA1_CTX archive_sha1_ctx;
+typedef SHA1_CTX tk_archive_sha1_ctx;
 #elif defined(ARCHIVE_CRYPTO_SHA1_LIBSYSTEM)
-typedef CC_SHA1_CTX archive_sha1_ctx;
+typedef CC_SHA1_CTX tk_archive_sha1_ctx;
 #elif defined(ARCHIVE_CRYPTO_SHA1_NETTLE)
-typedef struct sha1_ctx archive_sha1_ctx;
+typedef struct sha1_ctx tk_archive_sha1_ctx;
 #elif defined(ARCHIVE_CRYPTO_SHA1_OPENSSL)
-typedef EVP_MD_CTX archive_sha1_ctx;
+typedef EVP_MD_CTX tk_archive_sha1_ctx;
 #elif defined(ARCHIVE_CRYPTO_SHA1_WIN)
-typedef Digest_CTX archive_sha1_ctx;
+typedef Digest_CTX tk_archive_sha1_ctx;
 #else
-typedef unsigned char archive_sha1_ctx;
+typedef unsigned char tk_archive_sha1_ctx;
 #endif
 
 #if defined(ARCHIVE_CRYPTO_SHA256_LIBC)
-typedef SHA256_CTX archive_sha256_ctx;
+typedef SHA256_CTX tk_archive_sha256_ctx;
 #elif defined(ARCHIVE_CRYPTO_SHA256_LIBC2)
-typedef SHA256_CTX archive_sha256_ctx;
+typedef SHA256_CTX tk_archive_sha256_ctx;
 #elif defined(ARCHIVE_CRYPTO_SHA256_LIBC3)
-typedef SHA2_CTX archive_sha256_ctx;
+typedef SHA2_CTX tk_archive_sha256_ctx;
 #elif defined(ARCHIVE_CRYPTO_SHA256_LIBMD)
-typedef SHA256_CTX archive_sha256_ctx;
+typedef SHA256_CTX tk_archive_sha256_ctx;
 #elif defined(ARCHIVE_CRYPTO_SHA256_LIBSYSTEM)
-typedef CC_SHA256_CTX archive_sha256_ctx;
+typedef CC_SHA256_CTX tk_archive_sha256_ctx;
 #elif defined(ARCHIVE_CRYPTO_SHA256_NETTLE)
-typedef struct sha256_ctx archive_sha256_ctx;
+typedef struct sha256_ctx tk_archive_sha256_ctx;
 #elif defined(ARCHIVE_CRYPTO_SHA256_OPENSSL)
-typedef EVP_MD_CTX archive_sha256_ctx;
+typedef EVP_MD_CTX tk_archive_sha256_ctx;
 #elif defined(ARCHIVE_CRYPTO_SHA256_WIN)
-typedef Digest_CTX archive_sha256_ctx;
+typedef Digest_CTX tk_archive_sha256_ctx;
 #else
-typedef unsigned char archive_sha256_ctx;
+typedef unsigned char tk_archive_sha256_ctx;
 #endif
 
 #if defined(ARCHIVE_CRYPTO_SHA384_LIBC)
-typedef SHA384_CTX archive_sha384_ctx;
+typedef SHA384_CTX tk_archive_sha384_ctx;
 #elif defined(ARCHIVE_CRYPTO_SHA384_LIBC2)
-typedef SHA384_CTX archive_sha384_ctx;
+typedef SHA384_CTX tk_archive_sha384_ctx;
 #elif defined(ARCHIVE_CRYPTO_SHA384_LIBC3)
-typedef SHA2_CTX archive_sha384_ctx;
+typedef SHA2_CTX tk_archive_sha384_ctx;
 #elif defined(ARCHIVE_CRYPTO_SHA384_LIBSYSTEM)
-typedef CC_SHA512_CTX archive_sha384_ctx;
+typedef CC_SHA512_CTX tk_archive_sha384_ctx;
 #elif defined(ARCHIVE_CRYPTO_SHA384_NETTLE)
-typedef struct sha384_ctx archive_sha384_ctx;
+typedef struct sha384_ctx tk_archive_sha384_ctx;
 #elif defined(ARCHIVE_CRYPTO_SHA384_OPENSSL)
-typedef EVP_MD_CTX archive_sha384_ctx;
+typedef EVP_MD_CTX tk_archive_sha384_ctx;
 #elif defined(ARCHIVE_CRYPTO_SHA384_WIN)
-typedef Digest_CTX archive_sha384_ctx;
+typedef Digest_CTX tk_archive_sha384_ctx;
 #else
-typedef unsigned char archive_sha384_ctx;
+typedef unsigned char tk_archive_sha384_ctx;
 #endif
 
 #if defined(ARCHIVE_CRYPTO_SHA512_LIBC)
-typedef SHA512_CTX archive_sha512_ctx;
+typedef SHA512_CTX tk_archive_sha512_ctx;
 #elif defined(ARCHIVE_CRYPTO_SHA512_LIBC2)
-typedef SHA512_CTX archive_sha512_ctx;
+typedef SHA512_CTX tk_archive_sha512_ctx;
 #elif defined(ARCHIVE_CRYPTO_SHA512_LIBC3)
-typedef SHA2_CTX archive_sha512_ctx;
+typedef SHA2_CTX tk_archive_sha512_ctx;
 #elif defined(ARCHIVE_CRYPTO_SHA512_LIBMD)
-typedef SHA512_CTX archive_sha512_ctx;
+typedef SHA512_CTX tk_archive_sha512_ctx;
 #elif defined(ARCHIVE_CRYPTO_SHA512_LIBSYSTEM)
-typedef CC_SHA512_CTX archive_sha512_ctx;
+typedef CC_SHA512_CTX tk_archive_sha512_ctx;
 #elif defined(ARCHIVE_CRYPTO_SHA512_NETTLE)
-typedef struct sha512_ctx archive_sha512_ctx;
+typedef struct sha512_ctx tk_archive_sha512_ctx;
 #elif defined(ARCHIVE_CRYPTO_SHA512_OPENSSL)
-typedef EVP_MD_CTX archive_sha512_ctx;
+typedef EVP_MD_CTX tk_archive_sha512_ctx;
 #elif defined(ARCHIVE_CRYPTO_SHA512_WIN)
-typedef Digest_CTX archive_sha512_ctx;
+typedef Digest_CTX tk_archive_sha512_ctx;
 #else
-typedef unsigned char archive_sha512_ctx;
+typedef unsigned char tk_archive_sha512_ctx;
 #endif
 
 /* defines */
@@ -263,24 +263,24 @@ typedef unsigned char archive_sha512_ctx;
   defined(ARCHIVE_CRYPTO_MD5_WIN)
 #define ARCHIVE_HAS_MD5
 #endif
-#define archive_md5_init(ctx)\
-  __archive_crypto.md5init(ctx)
-#define archive_md5_final(ctx, md)\
-  __archive_crypto.md5final(ctx, md)
-#define archive_md5_update(ctx, buf, n)\
-  __archive_crypto.md5update(ctx, buf, n)
+#define tk_archive_md5_init(ctx)\
+  __tk_archive_crypto.md5init(ctx)
+#define tk_archive_md5_final(ctx, md)\
+  __tk_archive_crypto.md5final(ctx, md)
+#define tk_archive_md5_update(ctx, buf, n)\
+  __tk_archive_crypto.md5update(ctx, buf, n)
 
 #if defined(ARCHIVE_CRYPTO_RMD160_LIBC) ||\
   defined(ARCHIVE_CRYPTO_RMD160_NETTLE) ||\
   defined(ARCHIVE_CRYPTO_RMD160_OPENSSL)
 #define ARCHIVE_HAS_RMD160
 #endif
-#define archive_rmd160_init(ctx)\
-  __archive_crypto.rmd160init(ctx)
-#define archive_rmd160_final(ctx, md)\
-  __archive_crypto.rmd160final(ctx, md)
-#define archive_rmd160_update(ctx, buf, n)\
-  __archive_crypto.rmd160update(ctx, buf, n)
+#define tk_archive_rmd160_init(ctx)\
+  __tk_archive_crypto.rmd160init(ctx)
+#define tk_archive_rmd160_final(ctx, md)\
+  __tk_archive_crypto.rmd160final(ctx, md)
+#define tk_archive_rmd160_update(ctx, buf, n)\
+  __tk_archive_crypto.rmd160update(ctx, buf, n)
 
 #if defined(ARCHIVE_CRYPTO_SHA1_LIBC) ||\
   defined(ARCHIVE_CRYPTO_SHA1_LIBMD) ||	\
@@ -290,12 +290,12 @@ typedef unsigned char archive_sha512_ctx;
   defined(ARCHIVE_CRYPTO_SHA1_WIN)
 #define ARCHIVE_HAS_SHA1
 #endif
-#define archive_sha1_init(ctx)\
-  __archive_crypto.sha1init(ctx)
-#define archive_sha1_final(ctx, md)\
-  __archive_crypto.sha1final(ctx, md)
-#define archive_sha1_update(ctx, buf, n)\
-  __archive_crypto.sha1update(ctx, buf, n)
+#define tk_archive_sha1_init(ctx)\
+  __tk_archive_crypto.sha1init(ctx)
+#define tk_archive_sha1_final(ctx, md)\
+  __tk_archive_crypto.sha1final(ctx, md)
+#define tk_archive_sha1_update(ctx, buf, n)\
+  __tk_archive_crypto.sha1update(ctx, buf, n)
 
 #if defined(ARCHIVE_CRYPTO_SHA256_LIBC) ||\
   defined(ARCHIVE_CRYPTO_SHA256_LIBC2) ||\
@@ -307,12 +307,12 @@ typedef unsigned char archive_sha512_ctx;
   defined(ARCHIVE_CRYPTO_SHA256_WIN)
 #define ARCHIVE_HAS_SHA256
 #endif
-#define archive_sha256_init(ctx)\
-  __archive_crypto.sha256init(ctx)
-#define archive_sha256_final(ctx, md)\
-  __archive_crypto.sha256final(ctx, md)
-#define archive_sha256_update(ctx, buf, n)\
-  __archive_crypto.sha256update(ctx, buf, n)
+#define tk_archive_sha256_init(ctx)\
+  __tk_archive_crypto.sha256init(ctx)
+#define tk_archive_sha256_final(ctx, md)\
+  __tk_archive_crypto.sha256final(ctx, md)
+#define tk_archive_sha256_update(ctx, buf, n)\
+  __tk_archive_crypto.sha256update(ctx, buf, n)
 
 #if defined(ARCHIVE_CRYPTO_SHA384_LIBC) ||\
   defined(ARCHIVE_CRYPTO_SHA384_LIBC2) ||\
@@ -323,12 +323,12 @@ typedef unsigned char archive_sha512_ctx;
   defined(ARCHIVE_CRYPTO_SHA384_WIN)
 #define ARCHIVE_HAS_SHA384
 #endif
-#define archive_sha384_init(ctx)\
-  __archive_crypto.sha384init(ctx)
-#define archive_sha384_final(ctx, md)\
-  __archive_crypto.sha384final(ctx, md)
-#define archive_sha384_update(ctx, buf, n)\
-  __archive_crypto.sha384update(ctx, buf, n)
+#define tk_archive_sha384_init(ctx)\
+  __tk_archive_crypto.sha384init(ctx)
+#define tk_archive_sha384_final(ctx, md)\
+  __tk_archive_crypto.sha384final(ctx, md)
+#define tk_archive_sha384_update(ctx, buf, n)\
+  __tk_archive_crypto.sha384update(ctx, buf, n)
 
 #if defined(ARCHIVE_CRYPTO_SHA512_LIBC) ||\
   defined(ARCHIVE_CRYPTO_SHA512_LIBC2) ||\
@@ -340,37 +340,37 @@ typedef unsigned char archive_sha512_ctx;
   defined(ARCHIVE_CRYPTO_SHA512_WIN)
 #define ARCHIVE_HAS_SHA512
 #endif
-#define archive_sha512_init(ctx)\
-  __archive_crypto.sha512init(ctx)
-#define archive_sha512_final(ctx, md)\
-  __archive_crypto.sha512final(ctx, md)
-#define archive_sha512_update(ctx, buf, n)\
-  __archive_crypto.sha512update(ctx, buf, n)
+#define tk_archive_sha512_init(ctx)\
+  __tk_archive_crypto.sha512init(ctx)
+#define tk_archive_sha512_final(ctx, md)\
+  __tk_archive_crypto.sha512final(ctx, md)
+#define tk_archive_sha512_update(ctx, buf, n)\
+  __tk_archive_crypto.sha512update(ctx, buf, n)
 
 /* Minimal interface to crypto functionality for internal use in libarchive */
-struct archive_crypto
+struct tk_archive_crypto
 {
   /* Message Digest */
-  int (*md5init)(archive_md5_ctx *ctx);
-  int (*md5update)(archive_md5_ctx *, const void *, size_t);
-  int (*md5final)(archive_md5_ctx *, void *);
-  int (*rmd160init)(archive_rmd160_ctx *);
-  int (*rmd160update)(archive_rmd160_ctx *, const void *, size_t);
-  int (*rmd160final)(archive_rmd160_ctx *, void *);
-  int (*sha1init)(archive_sha1_ctx *);
-  int (*sha1update)(archive_sha1_ctx *, const void *, size_t);
-  int (*sha1final)(archive_sha1_ctx *, void *);
-  int (*sha256init)(archive_sha256_ctx *);
-  int (*sha256update)(archive_sha256_ctx *, const void *, size_t);
-  int (*sha256final)(archive_sha256_ctx *, void *);
-  int (*sha384init)(archive_sha384_ctx *);
-  int (*sha384update)(archive_sha384_ctx *, const void *, size_t);
-  int (*sha384final)(archive_sha384_ctx *, void *);
-  int (*sha512init)(archive_sha512_ctx *);
-  int (*sha512update)(archive_sha512_ctx *, const void *, size_t);
-  int (*sha512final)(archive_sha512_ctx *, void *);
+  int (*md5init)(tk_archive_md5_ctx *ctx);
+  int (*md5update)(tk_archive_md5_ctx *, const void *, size_t);
+  int (*md5final)(tk_archive_md5_ctx *, void *);
+  int (*rmd160init)(tk_archive_rmd160_ctx *);
+  int (*rmd160update)(tk_archive_rmd160_ctx *, const void *, size_t);
+  int (*rmd160final)(tk_archive_rmd160_ctx *, void *);
+  int (*sha1init)(tk_archive_sha1_ctx *);
+  int (*sha1update)(tk_archive_sha1_ctx *, const void *, size_t);
+  int (*sha1final)(tk_archive_sha1_ctx *, void *);
+  int (*sha256init)(tk_archive_sha256_ctx *);
+  int (*sha256update)(tk_archive_sha256_ctx *, const void *, size_t);
+  int (*sha256final)(tk_archive_sha256_ctx *, void *);
+  int (*sha384init)(tk_archive_sha384_ctx *);
+  int (*sha384update)(tk_archive_sha384_ctx *, const void *, size_t);
+  int (*sha384final)(tk_archive_sha384_ctx *, void *);
+  int (*sha512init)(tk_archive_sha512_ctx *);
+  int (*sha512update)(tk_archive_sha512_ctx *, const void *, size_t);
+  int (*sha512final)(tk_archive_sha512_ctx *, void *);
 };
 
-extern const struct archive_crypto __archive_crypto;
+extern const struct tk_archive_crypto __tk_archive_crypto;
 
 #endif

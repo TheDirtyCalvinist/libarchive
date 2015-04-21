@@ -53,71 +53,71 @@ test_splitted_file(void)
   };
   const char test_txt[] = "test text document\r\n";
   int size = sizeof(test_txt)-1;
-  struct archive_entry *ae;
+  struct tk_archive_entry *ae;
   struct archive *a;
 
   extract_reference_files(reffiles);
-  assert((a = archive_read_new()) != NULL);
-  assertA(0 == archive_read_support_filter_all(a));
-  assertA(0 == archive_read_support_format_all(a));
-  assertA(0 == archive_read_open_filenames(a, reffiles, 10240));
+  assert((a = tk_archive_read_new()) != NULL);
+  assertA(0 == tk_archive_read_support_filter_all(a));
+  assertA(0 == tk_archive_read_support_format_all(a));
+  assertA(0 == tk_archive_read_open_filenames(a, reffiles, 10240));
 
   /* First header. */
-  assertA(0 == archive_read_next_header(a, &ae));
-  assertEqualString("test.txt", archive_entry_pathname(ae));
-  assertA((int)archive_entry_mtime(ae));
-  assertA((int)archive_entry_ctime(ae));
-  assertA((int)archive_entry_atime(ae));
-  assertEqualInt(20, archive_entry_size(ae));
-  assertEqualInt(33188, archive_entry_mode(ae));
-  assertA(size == archive_read_data(a, buff, size));
+  assertA(0 == tk_archive_read_next_header(a, &ae));
+  assertEqualString("test.txt", tk_archive_entry_pathname(ae));
+  assertA((int)tk_archive_entry_mtime(ae));
+  assertA((int)tk_archive_entry_ctime(ae));
+  assertA((int)tk_archive_entry_atime(ae));
+  assertEqualInt(20, tk_archive_entry_size(ae));
+  assertEqualInt(33188, tk_archive_entry_mode(ae));
+  assertA(size == tk_archive_read_data(a, buff, size));
   assertEqualMem(buff, test_txt, size);
 
   /* Second header. */
-  assertA(0 == archive_read_next_header(a, &ae));
-  assertEqualString("testlink", archive_entry_pathname(ae));
-  assertA((int)archive_entry_mtime(ae));
-  assertA((int)archive_entry_ctime(ae));
-  assertA((int)archive_entry_atime(ae));
-  assertEqualInt(0, archive_entry_size(ae));
-  assertEqualInt(41471, archive_entry_mode(ae));
-  assertEqualString("test.txt", archive_entry_symlink(ae));
-  assertEqualIntA(a, 0, archive_read_data(a, buff, sizeof(buff)));
+  assertA(0 == tk_archive_read_next_header(a, &ae));
+  assertEqualString("testlink", tk_archive_entry_pathname(ae));
+  assertA((int)tk_archive_entry_mtime(ae));
+  assertA((int)tk_archive_entry_ctime(ae));
+  assertA((int)tk_archive_entry_atime(ae));
+  assertEqualInt(0, tk_archive_entry_size(ae));
+  assertEqualInt(41471, tk_archive_entry_mode(ae));
+  assertEqualString("test.txt", tk_archive_entry_symlink(ae));
+  assertEqualIntA(a, 0, tk_archive_read_data(a, buff, sizeof(buff)));
 
   /* Third header. */
-  assertA(0 == archive_read_next_header(a, &ae));
-  assertEqualString("testdir/test.txt", archive_entry_pathname(ae));
-  assertA((int)archive_entry_mtime(ae));
-  assertA((int)archive_entry_ctime(ae));
-  assertA((int)archive_entry_atime(ae));
-  assertEqualInt(20, archive_entry_size(ae));
-  assertEqualInt(33188, archive_entry_mode(ae));
-  assertA(size == archive_read_data(a, buff, size));
+  assertA(0 == tk_archive_read_next_header(a, &ae));
+  assertEqualString("testdir/test.txt", tk_archive_entry_pathname(ae));
+  assertA((int)tk_archive_entry_mtime(ae));
+  assertA((int)tk_archive_entry_ctime(ae));
+  assertA((int)tk_archive_entry_atime(ae));
+  assertEqualInt(20, tk_archive_entry_size(ae));
+  assertEqualInt(33188, tk_archive_entry_mode(ae));
+  assertA(size == tk_archive_read_data(a, buff, size));
   assertEqualMem(buff, test_txt, size);
 
   /* Fourth header. */
-  assertA(0 == archive_read_next_header(a, &ae));
-  assertEqualString("testdir", archive_entry_pathname(ae));
-  assertA((int)archive_entry_mtime(ae));
-  assertA((int)archive_entry_ctime(ae));
-  assertA((int)archive_entry_atime(ae));
-  assertEqualInt(0, archive_entry_size(ae));
-  assertEqualInt(16877, archive_entry_mode(ae));
+  assertA(0 == tk_archive_read_next_header(a, &ae));
+  assertEqualString("testdir", tk_archive_entry_pathname(ae));
+  assertA((int)tk_archive_entry_mtime(ae));
+  assertA((int)tk_archive_entry_ctime(ae));
+  assertA((int)tk_archive_entry_atime(ae));
+  assertEqualInt(0, tk_archive_entry_size(ae));
+  assertEqualInt(16877, tk_archive_entry_mode(ae));
 
   /* Fifth header. */
-  assertA(0 == archive_read_next_header(a, &ae));
-  assertEqualString("testemptydir", archive_entry_pathname(ae));
-  assertA((int)archive_entry_mtime(ae));
-  assertA((int)archive_entry_ctime(ae));
-  assertA((int)archive_entry_atime(ae));
-  assertEqualInt(0, archive_entry_size(ae));
-  assertEqualInt(16877, archive_entry_mode(ae));
+  assertA(0 == tk_archive_read_next_header(a, &ae));
+  assertEqualString("testemptydir", tk_archive_entry_pathname(ae));
+  assertA((int)tk_archive_entry_mtime(ae));
+  assertA((int)tk_archive_entry_ctime(ae));
+  assertA((int)tk_archive_entry_atime(ae));
+  assertEqualInt(0, tk_archive_entry_size(ae));
+  assertEqualInt(16877, tk_archive_entry_mode(ae));
 
   /* Test EOF */
-  assertA(1 == archive_read_next_header(a, &ae));
-  assertEqualInt(5, archive_file_count(a));
-  assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
-  assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+  assertA(1 == tk_archive_read_next_header(a, &ae));
+  assertEqualInt(5, tk_archive_file_count(a));
+  assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_close(a));
+  assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 static void
@@ -135,37 +135,37 @@ test_large_splitted_file(void)
   const char test_txt[] = "gin-bottom: 0in\"><BR>\n</P>\n</BODY>\n</HTML>";
   int size = 241647978, offset = 0;
   char buff[64];
-  struct archive_entry *ae;
+  struct tk_archive_entry *ae;
   struct archive *a;
 
   extract_reference_files(reffiles);
-  assert((a = archive_read_new()) != NULL);
-  assertA(0 == archive_read_support_filter_all(a));
-  assertA(0 == archive_read_support_format_all(a));
-  assertA(0 == archive_read_open_filenames(a, reffiles, 10240));
+  assert((a = tk_archive_read_new()) != NULL);
+  assertA(0 == tk_archive_read_support_filter_all(a));
+  assertA(0 == tk_archive_read_support_format_all(a));
+  assertA(0 == tk_archive_read_open_filenames(a, reffiles, 10240));
 
   /* First header. */
-  assertA(0 == archive_read_next_header(a, &ae));
+  assertA(0 == tk_archive_read_next_header(a, &ae));
   assertEqualString("ppmd_lzss_conversion_test.txt",
-                    archive_entry_pathname(ae));
-  assertA((int)archive_entry_mtime(ae));
-  assertA((int)archive_entry_ctime(ae));
-  assertA((int)archive_entry_atime(ae));
-  assertEqualInt(size, archive_entry_size(ae));
-  assertEqualInt(33188, archive_entry_mode(ae));
+                    tk_archive_entry_pathname(ae));
+  assertA((int)tk_archive_entry_mtime(ae));
+  assertA((int)tk_archive_entry_ctime(ae));
+  assertA((int)tk_archive_entry_atime(ae));
+  assertEqualInt(size, tk_archive_entry_size(ae));
+  assertEqualInt(33188, tk_archive_entry_mode(ae));
   while (offset + (int)sizeof(buff) < size)
   {
-    assertA(sizeof(buff) == archive_read_data(a, buff, sizeof(buff)));
+    assertA(sizeof(buff) == tk_archive_read_data(a, buff, sizeof(buff)));
     offset += sizeof(buff);
   }
-  assertA(size - offset == archive_read_data(a, buff, size - offset));
+  assertA(size - offset == tk_archive_read_data(a, buff, size - offset));
   assertEqualMem(buff, test_txt, size - offset);
 
   /* Test EOF */
-  assertA(1 == archive_read_next_header(a, &ae));
-  assertEqualInt(1, archive_file_count(a));
-  assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
-  assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+  assertA(1 == tk_archive_read_next_header(a, &ae));
+  assertEqualInt(1, tk_archive_file_count(a));
+  assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_close(a));
+  assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 #define BLOCK_SIZE 10240
@@ -206,7 +206,7 @@ file_skip(struct archive *a, void *data, int64_t request)
   int64_t result = lseek(mydata->fd, SEEK_CUR, request);
   if (result >= 0)
     return result;
-  archive_set_error(a, errno, "Error seeking in '%s'", mydata->filename);
+  tk_archive_set_error(a, errno, "Error seeking in '%s'", mydata->filename);
   return -1;
 }
 static int
@@ -268,103 +268,103 @@ test_customized_multiple_data_objects(void)
   };
   const char test_txt[] = "test text document\r\n";
   int size = sizeof(test_txt)-1;
-  struct archive_entry *ae;
+  struct tk_archive_entry *ae;
   struct archive *a;
   struct mydata *mydata;
   const char *filename = *reffiles;
   int i;
 
   extract_reference_files(reffiles);
-  assert((a = archive_read_new()) != NULL);
-  assertA(0 == archive_read_support_filter_all(a));
-  assertA(0 == archive_read_support_format_all(a));
+  assert((a = tk_archive_read_new()) != NULL);
+  assertA(0 == tk_archive_read_support_filter_all(a));
+  assertA(0 == tk_archive_read_support_format_all(a));
 
   for (i = 0; filename != NULL;)
   {
     assert((mydata = (struct mydata *)calloc(1, sizeof(*mydata))) != NULL);
     if (mydata == NULL) {
-      assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+      assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
       return;
     }
     assert((mydata->filename =
       (char *)calloc(1, strlen(filename) + 1)) != NULL);
     if (mydata->filename == NULL) {
       free(mydata);
-      assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+      assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
       return;
     }
     strcpy(mydata->filename, filename);
     mydata->fd = -1;
     filename = reffiles[++i];
-    assertA(0 == archive_read_append_callback_data(a, mydata));
+    assertA(0 == tk_archive_read_append_callback_data(a, mydata));
   }
-	assertA(0 == archive_read_set_open_callback(a, file_open));
-	assertA(0 == archive_read_set_read_callback(a, file_read));
-	assertA(0 == archive_read_set_skip_callback(a, file_skip));
-	assertA(0 == archive_read_set_close_callback(a, file_close));
-	assertA(0 == archive_read_set_switch_callback(a, file_switch));
-  assertA(0 == archive_read_set_seek_callback(a, file_seek));
-  assertA(0 == archive_read_open1(a));
+	assertA(0 == tk_archive_read_set_open_callback(a, file_open));
+	assertA(0 == tk_archive_read_set_read_callback(a, file_read));
+	assertA(0 == tk_archive_read_set_skip_callback(a, file_skip));
+	assertA(0 == tk_archive_read_set_close_callback(a, file_close));
+	assertA(0 == tk_archive_read_set_switch_callback(a, file_switch));
+  assertA(0 == tk_archive_read_set_seek_callback(a, file_seek));
+  assertA(0 == tk_archive_read_open1(a));
 
   /* First header. */
-  assertA(0 == archive_read_next_header(a, &ae));
-  assertEqualString("test.txt", archive_entry_pathname(ae));
-  assertA((int)archive_entry_mtime(ae));
-  assertA((int)archive_entry_ctime(ae));
-  assertA((int)archive_entry_atime(ae));
-  assertEqualInt(20, archive_entry_size(ae));
-  assertEqualInt(33188, archive_entry_mode(ae));
-  assertA(size == archive_read_data(a, buff, size));
+  assertA(0 == tk_archive_read_next_header(a, &ae));
+  assertEqualString("test.txt", tk_archive_entry_pathname(ae));
+  assertA((int)tk_archive_entry_mtime(ae));
+  assertA((int)tk_archive_entry_ctime(ae));
+  assertA((int)tk_archive_entry_atime(ae));
+  assertEqualInt(20, tk_archive_entry_size(ae));
+  assertEqualInt(33188, tk_archive_entry_mode(ae));
+  assertA(size == tk_archive_read_data(a, buff, size));
   assertEqualMem(buff, test_txt, size);
 
   /* Second header. */
-  assertA(0 == archive_read_next_header(a, &ae));
-  assertEqualString("testlink", archive_entry_pathname(ae));
-  assertA((int)archive_entry_mtime(ae));
-  assertA((int)archive_entry_ctime(ae));
-  assertA((int)archive_entry_atime(ae));
-  assertEqualInt(0, archive_entry_size(ae));
-  assertEqualInt(41471, archive_entry_mode(ae));
-  assertEqualString("test.txt", archive_entry_symlink(ae));
-  assertEqualIntA(a, 0, archive_read_data(a, buff, sizeof(buff)));
+  assertA(0 == tk_archive_read_next_header(a, &ae));
+  assertEqualString("testlink", tk_archive_entry_pathname(ae));
+  assertA((int)tk_archive_entry_mtime(ae));
+  assertA((int)tk_archive_entry_ctime(ae));
+  assertA((int)tk_archive_entry_atime(ae));
+  assertEqualInt(0, tk_archive_entry_size(ae));
+  assertEqualInt(41471, tk_archive_entry_mode(ae));
+  assertEqualString("test.txt", tk_archive_entry_symlink(ae));
+  assertEqualIntA(a, 0, tk_archive_read_data(a, buff, sizeof(buff)));
 
   /* Third header. */
-  assertA(0 == archive_read_next_header(a, &ae));
-  assertEqualString("testdir/test.txt", archive_entry_pathname(ae));
-  assertA((int)archive_entry_mtime(ae));
-  assertA((int)archive_entry_ctime(ae));
-  assertA((int)archive_entry_atime(ae));
-  assertEqualInt(20, archive_entry_size(ae));
-  assertEqualInt(33188, archive_entry_mode(ae));
-  assertA(size == archive_read_data(a, buff, size));
+  assertA(0 == tk_archive_read_next_header(a, &ae));
+  assertEqualString("testdir/test.txt", tk_archive_entry_pathname(ae));
+  assertA((int)tk_archive_entry_mtime(ae));
+  assertA((int)tk_archive_entry_ctime(ae));
+  assertA((int)tk_archive_entry_atime(ae));
+  assertEqualInt(20, tk_archive_entry_size(ae));
+  assertEqualInt(33188, tk_archive_entry_mode(ae));
+  assertA(size == tk_archive_read_data(a, buff, size));
   assertEqualMem(buff, test_txt, size);
 
   /* Fourth header. */
-  assertA(0 == archive_read_next_header(a, &ae));
-  assertEqualString("testdir", archive_entry_pathname(ae));
-  assertA((int)archive_entry_mtime(ae));
-  assertA((int)archive_entry_ctime(ae));
-  assertA((int)archive_entry_atime(ae));
-  assertEqualInt(0, archive_entry_size(ae));
-  assertEqualInt(16877, archive_entry_mode(ae));
+  assertA(0 == tk_archive_read_next_header(a, &ae));
+  assertEqualString("testdir", tk_archive_entry_pathname(ae));
+  assertA((int)tk_archive_entry_mtime(ae));
+  assertA((int)tk_archive_entry_ctime(ae));
+  assertA((int)tk_archive_entry_atime(ae));
+  assertEqualInt(0, tk_archive_entry_size(ae));
+  assertEqualInt(16877, tk_archive_entry_mode(ae));
 
   /* Fifth header. */
-  assertA(0 == archive_read_next_header(a, &ae));
-  assertEqualString("testemptydir", archive_entry_pathname(ae));
-  assertA((int)archive_entry_mtime(ae));
-  assertA((int)archive_entry_ctime(ae));
-  assertA((int)archive_entry_atime(ae));
-  assertEqualInt(0, archive_entry_size(ae));
-  assertEqualInt(16877, archive_entry_mode(ae));
+  assertA(0 == tk_archive_read_next_header(a, &ae));
+  assertEqualString("testemptydir", tk_archive_entry_pathname(ae));
+  assertA((int)tk_archive_entry_mtime(ae));
+  assertA((int)tk_archive_entry_ctime(ae));
+  assertA((int)tk_archive_entry_atime(ae));
+  assertEqualInt(0, tk_archive_entry_size(ae));
+  assertEqualInt(16877, tk_archive_entry_mode(ae));
 
   /* Test EOF */
-  assertA(1 == archive_read_next_header(a, &ae));
-  assertEqualInt(5, archive_file_count(a));
-  assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
-  assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+  assertA(1 == tk_archive_read_next_header(a, &ae));
+  assertEqualInt(5, tk_archive_file_count(a));
+  assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_close(a));
+  assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
-DEFINE_TEST(test_archive_read_multiple_data_objects)
+DEFINE_TEST(test_tk_archive_read_multiple_data_objects)
 {
   test_splitted_file();
   test_large_splitted_file();

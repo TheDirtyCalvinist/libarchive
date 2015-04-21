@@ -62,24 +62,24 @@ __FBSDID("$FreeBSD$");
 #if ARCHIVE_VERSION_NUMBER < 4000000
 /* Deprecated; remove in libarchive 4.0 */
 int
-archive_read_support_compression_program(struct archive *a, const char *cmd)
+tk_archive_read_support_compression_program(struct archive *a, const char *cmd)
 {
-	return archive_read_support_filter_program(a, cmd);
+	return tk_archive_read_support_filter_program(a, cmd);
 }
 
 int
-archive_read_support_compression_program_signature(struct archive *a,
+tk_archive_read_support_compression_program_signature(struct archive *a,
     const char *cmd, const void *signature, size_t signature_len)
 {
-	return archive_read_support_filter_program_signature(a,
+	return tk_archive_read_support_filter_program_signature(a,
 	    cmd, signature, signature_len);
 }
 #endif
 
 int
-archive_read_support_filter_program(struct archive *a, const char *cmd)
+tk_archive_read_support_filter_program(struct archive *a, const char *cmd)
 {
-	return (archive_read_support_filter_program_signature(a, cmd, NULL, 0));
+	return (tk_archive_read_support_filter_program_signature(a, cmd, NULL, 0));
 }
 
 /*
@@ -95,16 +95,16 @@ struct program_bidder {
 	int inhibit;
 };
 
-static int	program_bidder_bid(struct archive_read_filter_bidder *,
-		    struct archive_read_filter *upstream);
-static int	program_bidder_init(struct archive_read_filter *);
-static int	program_bidder_free(struct archive_read_filter_bidder *);
+static int	program_bidder_bid(struct tk_archive_read_filter_bidder *,
+		    struct tk_archive_read_filter *upstream);
+static int	program_bidder_init(struct tk_archive_read_filter *);
+static int	program_bidder_free(struct tk_archive_read_filter_bidder *);
 
 /*
  * The actual filter needs to track input and output data.
  */
 struct program_filter {
-	struct archive_string description;
+	struct tk_archive_string description;
 #if defined(_WIN32) && !defined(__CYGWIN__)
 	HANDLE		 child;
 #else
@@ -118,13 +118,13 @@ struct program_filter {
 	size_t		 out_buf_len;
 };
 
-static ssize_t	program_filter_read(struct archive_read_filter *,
+static ssize_t	program_filter_read(struct tk_archive_read_filter *,
 		    const void **);
-static int	program_filter_close(struct archive_read_filter *);
+static int	program_filter_close(struct tk_archive_read_filter *);
 static void	free_state(struct program_bidder *);
 
 static int
-set_bidder_signature(struct archive_read_filter_bidder *bidder,
+set_bidder_signature(struct tk_archive_read_filter_bidder *bidder,
     struct program_bidder *state, const void *signature, size_t signature_len)
 {
 
@@ -146,17 +146,17 @@ set_bidder_signature(struct archive_read_filter_bidder *bidder,
 }
 
 int
-archive_read_support_filter_program_signature(struct archive *_a,
+tk_archive_read_support_filter_program_signature(struct archive *_a,
     const char *cmd, const void *signature, size_t signature_len)
 {
-	struct archive_read *a = (struct archive_read *)_a;
-	struct archive_read_filter_bidder *bidder;
+	struct tk_archive_read *a = (struct tk_archive_read *)_a;
+	struct tk_archive_read_filter_bidder *bidder;
 	struct program_bidder *state;
 
 	/*
 	 * Get a bidder object from the read core.
 	 */
-	if (__archive_read_get_bidder(a, &bidder) != ARCHIVE_OK)
+	if (__tk_archive_read_get_bidder(a, &bidder) != ARCHIVE_OK)
 		return (ARCHIVE_FATAL);
 
 	/*
@@ -172,12 +172,12 @@ archive_read_support_filter_program_signature(struct archive *_a,
 	return set_bidder_signature(bidder, state, signature, signature_len);
 memerr:
 	free_state(state);
-	archive_set_error(_a, ENOMEM, "Can't allocate memory");
+	tk_archive_set_error(_a, ENOMEM, "Can't allocate memory");
 	return (ARCHIVE_FATAL);
 }
 
 static int
-program_bidder_free(struct archive_read_filter_bidder *self)
+program_bidder_free(struct tk_archive_read_filter_bidder *self)
 {
 	struct program_bidder *state = (struct program_bidder *)self->data;
 
@@ -203,15 +203,15 @@ free_state(struct program_bidder *state)
  * we're called, then never bid again.
  */
 static int
-program_bidder_bid(struct archive_read_filter_bidder *self,
-    struct archive_read_filter *upstream)
+program_bidder_bid(struct tk_archive_read_filter_bidder *self,
+    struct tk_archive_read_filter *upstream)
 {
 	struct program_bidder *state = self->data;
 	const char *p;
 
 	/* If we have a signature, use that to match. */
 	if (state->signature_len > 0) {
-		p = __archive_read_filter_ahead(upstream,
+		p = __tk_archive_read_filter_ahead(upstream,
 		    state->signature_len, NULL);
 		if (p == NULL)
 			return (0);
@@ -236,7 +236,7 @@ program_bidder_bid(struct archive_read_filter_bidder *self,
  * (including error message if the child came to a bad end).
  */
 static int
-child_stop(struct archive_read_filter *self, struct program_filter *state)
+child_stop(struct tk_archive_read_filter *self, struct program_filter *state)
 {
 	/* Close our side of the I/O with the child. */
 	if (state->child_stdin != -1) {
@@ -262,7 +262,7 @@ child_stop(struct archive_read_filter *self, struct program_filter *state)
 
 	if (state->waitpid_return < 0) {
 		/* waitpid() failed?  This is ugly. */
-		archive_set_error(&self->archive->archive, ARCHIVE_ERRNO_MISC,
+		tk_archive_set_error(&self->archive->archive, ARCHIVE_ERRNO_MISC,
 		    "Child process exited badly");
 		return (ARCHIVE_WARN);
 	}
@@ -279,7 +279,7 @@ child_stop(struct archive_read_filter *self, struct program_filter *state)
 		if (WTERMSIG(state->exit_status) == SIGPIPE)
 			return (ARCHIVE_OK);
 #endif
-		archive_set_error(&self->archive->archive, ARCHIVE_ERRNO_MISC,
+		tk_archive_set_error(&self->archive->archive, ARCHIVE_ERRNO_MISC,
 		    "Child process exited with signal %d",
 		    WTERMSIG(state->exit_status));
 		return (ARCHIVE_WARN);
@@ -290,7 +290,7 @@ child_stop(struct archive_read_filter *self, struct program_filter *state)
 		if (WEXITSTATUS(state->exit_status) == 0)
 			return (ARCHIVE_OK);
 
-		archive_set_error(&self->archive->archive,
+		tk_archive_set_error(&self->archive->archive,
 		    ARCHIVE_ERRNO_MISC,
 		    "Child process exited with status %d",
 		    WEXITSTATUS(state->exit_status));
@@ -304,7 +304,7 @@ child_stop(struct archive_read_filter *self, struct program_filter *state)
  * Use select() to decide whether the child is ready for read or write.
  */
 static ssize_t
-child_read(struct archive_read_filter *self, char *buf, size_t buf_len)
+child_read(struct tk_archive_read_filter *self, char *buf, size_t buf_len)
 {
 	struct program_filter *state = self->data;
 	ssize_t ret, requested, avail;
@@ -352,13 +352,13 @@ child_read(struct archive_read_filter *self, char *buf, size_t buf_len)
 
 		if (state->child_stdin == -1) {
 			/* Block until child has some I/O ready. */
-			__archive_check_child(state->child_stdin,
+			__tk_archive_check_child(state->child_stdin,
 			    state->child_stdout);
 			continue;
 		}
 
 		/* Get some more data from upstream. */
-		p = __archive_read_filter_ahead(self->upstream, 1, &avail);
+		p = __tk_archive_read_filter_ahead(self->upstream, 1, &avail);
 		if (p == NULL) {
 			close(state->child_stdin);
 			state->child_stdin = -1;
@@ -374,10 +374,10 @@ child_read(struct archive_read_filter *self, char *buf, size_t buf_len)
 
 		if (ret > 0) {
 			/* Consume whatever we managed to write. */
-			__archive_read_filter_consume(self->upstream, ret);
+			__tk_archive_read_filter_consume(self->upstream, ret);
 		} else if (ret == -1 && errno == EAGAIN) {
 			/* Block until child has some I/O ready. */
-			__archive_check_child(state->child_stdin,
+			__tk_archive_check_child(state->child_stdin,
 			    state->child_stdout);
 		} else {
 			/* Write failed. */
@@ -394,7 +394,7 @@ child_read(struct archive_read_filter *self, char *buf, size_t buf_len)
 }
 
 int
-__archive_read_program(struct archive_read_filter *self, const char *cmd)
+__tk_archive_read_program(struct tk_archive_read_filter *self, const char *cmd)
 {
 	struct program_filter	*state;
 	static const size_t out_buf_len = 65536;
@@ -407,18 +407,18 @@ __archive_read_program(struct archive_read_filter *self, const char *cmd)
 	state = (struct program_filter *)calloc(1, sizeof(*state));
 	out_buf = (char *)malloc(out_buf_len);
 	if (state == NULL || out_buf == NULL ||
-	    archive_string_ensure(&state->description, l) == NULL) {
-		archive_set_error(&self->archive->archive, ENOMEM,
+	    tk_archive_string_ensure(&state->description, l) == NULL) {
+		tk_archive_set_error(&self->archive->archive, ENOMEM,
 		    "Can't allocate input data");
 		if (state != NULL) {
-			archive_string_free(&state->description);
+			tk_archive_string_free(&state->description);
 			free(state);
 		}
 		free(out_buf);
 		return (ARCHIVE_FATAL);
 	}
-	archive_strcpy(&state->description, prefix);
-	archive_strcat(&state->description, cmd);
+	tk_archive_strcpy(&state->description, prefix);
+	tk_archive_strcat(&state->description, cmd);
 
 	self->code = ARCHIVE_FILTER_PROGRAM;
 	self->name = state->description.s;
@@ -426,12 +426,12 @@ __archive_read_program(struct archive_read_filter *self, const char *cmd)
 	state->out_buf = out_buf;
 	state->out_buf_len = out_buf_len;
 
-	child = __archive_create_child(cmd, &state->child_stdin,
+	child = __tk_archive_create_child(cmd, &state->child_stdin,
 	    &state->child_stdout);
 	if (child == -1) {
 		free(state->out_buf);
 		free(state);
-		archive_set_error(&self->archive->archive, EINVAL,
+		tk_archive_set_error(&self->archive->archive, EINVAL,
 		    "Can't initialize filter; unable to run program \"%s\"",
 		    cmd);
 		return (ARCHIVE_FATAL);
@@ -442,7 +442,7 @@ __archive_read_program(struct archive_read_filter *self, const char *cmd)
 		child_stop(self, state);
 		free(state->out_buf);
 		free(state);
-		archive_set_error(&self->archive->archive, EINVAL,
+		tk_archive_set_error(&self->archive->archive, EINVAL,
 		    "Can't initialize filter; unable to run program \"%s\"",
 		    cmd);
 		return (ARCHIVE_FATAL);
@@ -461,16 +461,16 @@ __archive_read_program(struct archive_read_filter *self, const char *cmd)
 }
 
 static int
-program_bidder_init(struct archive_read_filter *self)
+program_bidder_init(struct tk_archive_read_filter *self)
 {
 	struct program_bidder   *bidder_state;
 
 	bidder_state = (struct program_bidder *)self->bidder->data;
-	return (__archive_read_program(self, bidder_state->cmd));
+	return (__tk_archive_read_program(self, bidder_state->cmd));
 }
 
 static ssize_t
-program_filter_read(struct archive_read_filter *self, const void **buff)
+program_filter_read(struct tk_archive_read_filter *self, const void **buff)
 {
 	struct program_filter *state;
 	ssize_t bytes;
@@ -499,7 +499,7 @@ program_filter_read(struct archive_read_filter *self, const void **buff)
 }
 
 static int
-program_filter_close(struct archive_read_filter *self)
+program_filter_close(struct tk_archive_read_filter *self)
 {
 	struct program_filter	*state;
 	int e;
@@ -509,7 +509,7 @@ program_filter_close(struct archive_read_filter *self)
 
 	/* Release our private data. */
 	free(state->out_buf);
-	archive_string_free(&state->description);
+	tk_archive_string_free(&state->description);
 	free(state);
 
 	return (e);

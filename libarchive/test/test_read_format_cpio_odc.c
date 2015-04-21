@@ -48,17 +48,17 @@ static unsigned char archive[] = {
 
 DEFINE_TEST(test_read_format_cpio_odc)
 {
-	struct archive_entry *ae;
+	struct tk_archive_entry *ae;
 	struct archive *a;
-	assert((a = archive_read_new()) != NULL);
-	assertA(0 == archive_read_support_filter_all(a));
-	assertA(0 == archive_read_support_format_all(a));
-	assertA(0 == archive_read_open_memory(a, archive, sizeof(archive)));
-	assertEqualIntA(a, 0, archive_read_next_header(a, &ae));
-	assertA(archive_filter_code(a, 0) == ARCHIVE_FILTER_NONE);
-	assertA(archive_format(a) == ARCHIVE_FORMAT_CPIO_POSIX);
-	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
-	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
+	assert((a = tk_archive_read_new()) != NULL);
+	assertA(0 == tk_archive_read_support_filter_all(a));
+	assertA(0 == tk_archive_read_support_format_all(a));
+	assertA(0 == tk_archive_read_open_memory(a, archive, sizeof(archive)));
+	assertEqualIntA(a, 0, tk_archive_read_next_header(a, &ae));
+	assertA(tk_archive_filter_code(a, 0) == ARCHIVE_FILTER_NONE);
+	assertA(tk_archive_format(a) == ARCHIVE_FORMAT_CPIO_POSIX);
+	assertEqualIntA(a, ARCHIVE_OK, tk_archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, tk_archive_read_free(a));
 }
 
 

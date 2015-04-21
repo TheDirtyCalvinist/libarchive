@@ -1146,7 +1146,7 @@ static void Ppmd7_EncodeSymbol(CPpmd7 *p, CPpmd7z_RangeEnc *rc, int symbol)
   }
 }
 
-const IPpmd7 __archive_ppmd7_functions =
+const IPpmd7 __tk_archive_ppmd7_functions =
 {
   &Ppmd7_Construct,
   &Ppmd7_Alloc,

@@ -46,7 +46,7 @@ __FBSDID("$FreeBSD: head/lib/libarchive/archive_write_set_format_shar.c 189438 2
 struct shar {
 	int			 dump;
 	int			 end_of_line;
-	struct archive_entry	*entry;
+	struct tk_archive_entry	*entry;
 	int			 has_data;
 	char			*last_dir;
 
@@ -55,43 +55,43 @@ struct shar {
 	size_t			 outpos;
 
 	int			 wrote_header;
-	struct archive_string	 work;
-	struct archive_string	 quoted_name;
+	struct tk_archive_string	 work;
+	struct tk_archive_string	 quoted_name;
 };
 
-static int	archive_write_shar_close(struct archive_write *);
-static int	archive_write_shar_free(struct archive_write *);
-static int	archive_write_shar_header(struct archive_write *,
-		    struct archive_entry *);
-static ssize_t	archive_write_shar_data_sed(struct archive_write *,
+static int	tk_archive_write_shar_close(struct tk_archive_write *);
+static int	tk_archive_write_shar_free(struct tk_archive_write *);
+static int	tk_archive_write_shar_header(struct tk_archive_write *,
+		    struct tk_archive_entry *);
+static ssize_t	tk_archive_write_shar_data_sed(struct tk_archive_write *,
 		    const void * buff, size_t);
-static ssize_t	archive_write_shar_data_uuencode(struct archive_write *,
+static ssize_t	tk_archive_write_shar_data_uuencode(struct tk_archive_write *,
 		    const void * buff, size_t);
-static int	archive_write_shar_finish_entry(struct archive_write *);
+static int	tk_archive_write_shar_finish_entry(struct tk_archive_write *);
 
 /*
  * Copy the given string to the buffer, quoting all shell meta characters
  * found.
  */
 static void
-shar_quote(struct archive_string *buf, const char *str, int in_shell)
+shar_quote(struct tk_archive_string *buf, const char *str, int in_shell)
 {
 	static const char meta[] = "\n \t'`\";&<>()|*?{}[]\\$!#^~";
 	size_t len;
 
 	while (*str != '\0') {
 		if ((len = strcspn(str, meta)) != 0) {
-			archive_strncat(buf, str, len);
+			tk_archive_strncat(buf, str, len);
 			str += len;
 		} else if (*str == '\n') {
 			if (in_shell)
-				archive_strcat(buf, "\"\n\"");
+				tk_archive_strcat(buf, "\"\n\"");
 			else
-				archive_strcat(buf, "\\n");
+				tk_archive_strcat(buf, "\\n");
 			++str;
 		} else {
-			archive_strappend_char(buf, '\\');
-			archive_strappend_char(buf, *str);
+			tk_archive_strappend_char(buf, '\\');
+			tk_archive_strappend_char(buf, *str);
 			++str;
 		}
 	}
@@ -101,13 +101,13 @@ shar_quote(struct archive_string *buf, const char *str, int in_shell)
  * Set output format to 'shar' format.
  */
 int
-archive_write_set_format_shar(struct archive *_a)
+tk_archive_write_set_format_shar(struct archive *_a)
 {
-	struct archive_write *a = (struct archive_write *)_a;
+	struct tk_archive_write *a = (struct tk_archive_write *)_a;
 	struct shar *shar;
 
-	archive_check_magic(_a, ARCHIVE_WRITE_MAGIC,
-	    ARCHIVE_STATE_NEW, "archive_write_set_format_shar");
+	tk_archive_check_magic(_a, ARCHIVE_WRITE_MAGIC,
+	    ARCHIVE_STATE_NEW, "tk_archive_write_set_format_shar");
 
 	/* If someone else was already registered, unregister them. */
 	if (a->format_free != NULL)
@@ -115,21 +115,21 @@ archive_write_set_format_shar(struct archive *_a)
 
 	shar = (struct shar *)malloc(sizeof(*shar));
 	if (shar == NULL) {
-		archive_set_error(&a->archive, ENOMEM, "Can't allocate shar data");
+		tk_archive_set_error(&a->archive, ENOMEM, "Can't allocate shar data");
 		return (ARCHIVE_FATAL);
 	}
 	memset(shar, 0, sizeof(*shar));
-	archive_string_init(&shar->work);
-	archive_string_init(&shar->quoted_name);
+	tk_archive_string_init(&shar->work);
+	tk_archive_string_init(&shar->quoted_name);
 	a->format_data = shar;
 	a->format_name = "shar";
-	a->format_write_header = archive_write_shar_header;
-	a->format_close = archive_write_shar_close;
-	a->format_free = archive_write_shar_free;
-	a->format_write_data = archive_write_shar_data_sed;
-	a->format_finish_entry = archive_write_shar_finish_entry;
-	a->archive.archive_format = ARCHIVE_FORMAT_SHAR_BASE;
-	a->archive.archive_format_name = "shar";
+	a->format_write_header = tk_archive_write_shar_header;
+	a->format_close = tk_archive_write_shar_close;
+	a->format_free = tk_archive_write_shar_free;
+	a->format_write_data = tk_archive_write_shar_data_sed;
+	a->format_finish_entry = tk_archive_write_shar_finish_entry;
+	a->archive.tk_archive_format = ARCHIVE_FORMAT_SHAR_BASE;
+	a->archive.tk_archive_format_name = "shar";
 	return (ARCHIVE_OK);
 }
 
@@ -140,22 +140,22 @@ archive_write_set_format_shar(struct archive *_a)
  * and other extended file information.
  */
 int
-archive_write_set_format_shar_dump(struct archive *_a)
+tk_archive_write_set_format_shar_dump(struct archive *_a)
 {
-	struct archive_write *a = (struct archive_write *)_a;
+	struct tk_archive_write *a = (struct tk_archive_write *)_a;
 	struct shar *shar;
 
-	archive_write_set_format_shar(&a->archive);
+	tk_archive_write_set_format_shar(&a->archive);
 	shar = (struct shar *)a->format_data;
 	shar->dump = 1;
-	a->format_write_data = archive_write_shar_data_uuencode;
-	a->archive.archive_format = ARCHIVE_FORMAT_SHAR_DUMP;
-	a->archive.archive_format_name = "shar dump";
+	a->format_write_data = tk_archive_write_shar_data_uuencode;
+	a->archive.tk_archive_format = ARCHIVE_FORMAT_SHAR_DUMP;
+	a->archive.tk_archive_format_name = "shar dump";
 	return (ARCHIVE_OK);
 }
 
 static int
-archive_write_shar_header(struct archive_write *a, struct archive_entry *entry)
+tk_archive_write_shar_header(struct tk_archive_write *a, struct tk_archive_entry *entry)
 {
 	const char *linkname;
 	const char *name;
@@ -164,24 +164,24 @@ archive_write_shar_header(struct archive_write *a, struct archive_entry *entry)
 
 	shar = (struct shar *)a->format_data;
 	if (!shar->wrote_header) {
-		archive_strcat(&shar->work, "#!/bin/sh\n");
-		archive_strcat(&shar->work, "# This is a shell archive\n");
+		tk_archive_strcat(&shar->work, "#!/bin/sh\n");
+		tk_archive_strcat(&shar->work, "# This is a shell archive\n");
 		shar->wrote_header = 1;
 	}
 
 	/* Save the entry for the closing. */
 	if (shar->entry)
-		archive_entry_free(shar->entry);
-	shar->entry = archive_entry_clone(entry);
-	name = archive_entry_pathname(entry);
+		tk_archive_entry_free(shar->entry);
+	shar->entry = tk_archive_entry_clone(entry);
+	name = tk_archive_entry_pathname(entry);
 
 	/* Handle some preparatory issues. */
-	switch(archive_entry_filetype(entry)) {
+	switch(tk_archive_entry_filetype(entry)) {
 	case AE_IFREG:
 		/* Only regular files have non-zero size. */
 		break;
 	case AE_IFDIR:
-		archive_entry_set_size(entry, 0);
+		tk_archive_entry_set_size(entry, 0);
 		/* Don't bother trying to recreate '.' */
 		if (strcmp(name, ".") == 0  ||  strcmp(name, "./") == 0)
 			return (ARCHIVE_OK);
@@ -190,25 +190,25 @@ archive_write_shar_header(struct archive_write *a, struct archive_entry *entry)
 	case AE_IFCHR:
 	case AE_IFBLK:
 		/* All other file types have zero size in the archive. */
-		archive_entry_set_size(entry, 0);
+		tk_archive_entry_set_size(entry, 0);
 		break;
 	default:
-		archive_entry_set_size(entry, 0);
-		if (archive_entry_hardlink(entry) == NULL &&
-		    archive_entry_symlink(entry) == NULL) {
-			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+		tk_archive_entry_set_size(entry, 0);
+		if (tk_archive_entry_hardlink(entry) == NULL &&
+		    tk_archive_entry_symlink(entry) == NULL) {
+			tk_archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "shar format cannot archive this");
 			return (ARCHIVE_WARN);
 		}
 	}
 
-	archive_string_empty(&shar->quoted_name);
+	tk_archive_string_empty(&shar->quoted_name);
 	shar_quote(&shar->quoted_name, name, 1);
 
 	/* Stock preparation for all file types. */
-	archive_string_sprintf(&shar->work, "echo x %s\n", shar->quoted_name.s);
+	tk_archive_string_sprintf(&shar->work, "echo x %s\n", shar->quoted_name.s);
 
-	if (archive_entry_filetype(entry) != AE_IFDIR) {
+	if (tk_archive_entry_filetype(entry) != AE_IFDIR) {
 		/* Try to create the dir. */
 		p = strdup(name);
 		pp = strrchr(p, '/');
@@ -221,9 +221,9 @@ archive_write_shar_header(struct archive_write *a, struct archive_entry *entry)
 				/* Don't try to "mkdir ." */
 				free(p);
 			} else if (shar->last_dir == NULL) {
-				archive_strcat(&shar->work, "mkdir -p ");
+				tk_archive_strcat(&shar->work, "mkdir -p ");
 				shar_quote(&shar->work, p, 1);
-				archive_strcat(&shar->work,
+				tk_archive_strcat(&shar->work,
 				    " > /dev/null 2>&1\n");
 				shar->last_dir = p;
 			} else if (strcmp(p, shar->last_dir) == 0) {
@@ -234,9 +234,9 @@ archive_write_shar_header(struct archive_write *a, struct archive_entry *entry)
 				/* We've already created a subdir. */
 				free(p);
 			} else {
-				archive_strcat(&shar->work, "mkdir -p ");
+				tk_archive_strcat(&shar->work, "mkdir -p ");
 				shar_quote(&shar->work, p, 1);
-				archive_strcat(&shar->work,
+				tk_archive_strcat(&shar->work,
 				    " > /dev/null 2>&1\n");
 				shar->last_dir = p;
 			}
@@ -247,36 +247,36 @@ archive_write_shar_header(struct archive_write *a, struct archive_entry *entry)
 
 	/* Handle file-type specific issues. */
 	shar->has_data = 0;
-	if ((linkname = archive_entry_hardlink(entry)) != NULL) {
-		archive_strcat(&shar->work, "ln -f ");
+	if ((linkname = tk_archive_entry_hardlink(entry)) != NULL) {
+		tk_archive_strcat(&shar->work, "ln -f ");
 		shar_quote(&shar->work, linkname, 1);
-		archive_string_sprintf(&shar->work, " %s\n",
+		tk_archive_string_sprintf(&shar->work, " %s\n",
 		    shar->quoted_name.s);
-	} else if ((linkname = archive_entry_symlink(entry)) != NULL) {
-		archive_strcat(&shar->work, "ln -fs ");
+	} else if ((linkname = tk_archive_entry_symlink(entry)) != NULL) {
+		tk_archive_strcat(&shar->work, "ln -fs ");
 		shar_quote(&shar->work, linkname, 1);
-		archive_string_sprintf(&shar->work, " %s\n",
+		tk_archive_string_sprintf(&shar->work, " %s\n",
 		    shar->quoted_name.s);
 	} else {
-		switch(archive_entry_filetype(entry)) {
+		switch(tk_archive_entry_filetype(entry)) {
 		case AE_IFREG:
-			if (archive_entry_size(entry) == 0) {
+			if (tk_archive_entry_size(entry) == 0) {
 				/* More portable than "touch." */
-				archive_string_sprintf(&shar->work,
+				tk_archive_string_sprintf(&shar->work,
 				    "test -e \"%s\" || :> \"%s\"\n",
 				    shar->quoted_name.s, shar->quoted_name.s);
 			} else {
 				if (shar->dump) {
-					unsigned int mode = archive_entry_mode(entry) & 0777;
-					archive_string_sprintf(&shar->work,
+					unsigned int mode = tk_archive_entry_mode(entry) & 0777;
+					tk_archive_string_sprintf(&shar->work,
 					    "uudecode -p > %s << 'SHAR_END'\n",
 					    shar->quoted_name.s);
-					archive_string_sprintf(&shar->work,
+					tk_archive_string_sprintf(&shar->work,
 					    "begin %o ", mode);
 					shar_quote(&shar->work, name, 0);
-					archive_strcat(&shar->work, "\n");
+					tk_archive_strcat(&shar->work, "\n");
 				} else {
-					archive_string_sprintf(&shar->work,
+					tk_archive_string_sprintf(&shar->work,
 					    "sed 's/^X//' > %s << 'SHAR_END'\n",
 					    shar->quoted_name.s);
 				}
@@ -286,7 +286,7 @@ archive_write_shar_header(struct archive_write *a, struct archive_entry *entry)
 			}
 			break;
 		case AE_IFDIR:
-			archive_string_sprintf(&shar->work,
+			tk_archive_string_sprintf(&shar->work,
 			    "mkdir -p %s > /dev/null 2>&1\n",
 			    shar->quoted_name.s);
 			/* Record that we just created this directory. */
@@ -304,20 +304,20 @@ archive_write_shar_header(struct archive_write *a, struct archive_entry *entry)
 			 */
 			break;
 		case AE_IFIFO:
-			archive_string_sprintf(&shar->work,
+			tk_archive_string_sprintf(&shar->work,
 			    "mkfifo %s\n", shar->quoted_name.s);
 			break;
 		case AE_IFCHR:
-			archive_string_sprintf(&shar->work,
+			tk_archive_string_sprintf(&shar->work,
 			    "mknod %s c %ju %ju\n", shar->quoted_name.s,
-			    (uintmax_t)archive_entry_rdevmajor(entry),
-			    (uintmax_t)archive_entry_rdevminor(entry));
+			    (uintmax_t)tk_archive_entry_rdevmajor(entry),
+			    (uintmax_t)tk_archive_entry_rdevminor(entry));
 			break;
 		case AE_IFBLK:
-			archive_string_sprintf(&shar->work,
+			tk_archive_string_sprintf(&shar->work,
 			    "mknod %s b %ju %ju\n", shar->quoted_name.s,
-			    (uintmax_t)archive_entry_rdevmajor(entry),
-			    (uintmax_t)archive_entry_rdevminor(entry));
+			    (uintmax_t)tk_archive_entry_rdevmajor(entry),
+			    (uintmax_t)tk_archive_entry_rdevminor(entry));
 			break;
 		default:
 			return (ARCHIVE_WARN);
@@ -328,7 +328,7 @@ archive_write_shar_header(struct archive_write *a, struct archive_entry *entry)
 }
 
 static ssize_t
-archive_write_shar_data_sed(struct archive_write *a, const void *buff, size_t n)
+tk_archive_write_shar_data_sed(struct tk_archive_write *a, const void *buff, size_t n)
 {
 	static const size_t ensured = 65533;
 	struct shar *shar;
@@ -350,17 +350,17 @@ archive_write_shar_data_sed(struct archive_write *a, const void *buff, size_t n)
 	 * twice before entering the loop, so make sure three additional
 	 * bytes can be written.
 	 */
-	if (archive_string_ensure(&shar->work, ensured + 3) == NULL) {
-		archive_set_error(&a->archive, ENOMEM, "Out of memory");
+	if (tk_archive_string_ensure(&shar->work, ensured + 3) == NULL) {
+		tk_archive_set_error(&a->archive, ENOMEM, "Out of memory");
 		return (ARCHIVE_FATAL);
 	}
 
 	if (shar->work.length > ensured) {
-		ret = __archive_write_output(a, shar->work.s,
+		ret = __tk_archive_write_output(a, shar->work.s,
 		    shar->work.length);
 		if (ret != ARCHIVE_OK)
 			return (ARCHIVE_FATAL);
-		archive_string_empty(&shar->work);
+		tk_archive_string_empty(&shar->work);
 	}
 	buf = shar->work.s + shar->work.length;
 	buf_end = shar->work.s + ensured;
@@ -380,11 +380,11 @@ archive_write_shar_data_sed(struct archive_write *a, const void *buff, size_t n)
 
 		if (buf >= buf_end) {
 			shar->work.length = buf - shar->work.s;
-			ret = __archive_write_output(a, shar->work.s,
+			ret = __tk_archive_write_output(a, shar->work.s,
 			    shar->work.length);
 			if (ret != ARCHIVE_OK)
 				return (ARCHIVE_FATAL);
-			archive_string_empty(&shar->work);
+			tk_archive_string_empty(&shar->work);
 			buf = shar->work.s;
 		}
 	}
@@ -410,15 +410,15 @@ uuencode_group(const char _in[3], char out[4])
 }
 
 static int
-_uuencode_line(struct archive_write *a, struct shar *shar, const char *inbuf, size_t len)
+_uuencode_line(struct tk_archive_write *a, struct shar *shar, const char *inbuf, size_t len)
 {
 	char *buf;
 	size_t alloc_len;
 
 	/* len <= 45 -> expanded to 60 + len byte + new line */
 	alloc_len = shar->work.length + 62;
-	if (archive_string_ensure(&shar->work, alloc_len) == NULL) {
-		archive_set_error(&a->archive, ENOMEM, "Out of memory");
+	if (tk_archive_string_ensure(&shar->work, alloc_len) == NULL) {
+		tk_archive_set_error(&a->archive, ENOMEM, "Out of memory");
 		return (ARCHIVE_FATAL);
 	}
 
@@ -443,7 +443,7 @@ _uuencode_line(struct archive_write *a, struct shar *shar, const char *inbuf, si
 	}
 	*buf++ = '\n';
 	if ((buf - shar->work.s) > (ptrdiff_t)(shar->work.length + 62)) {
-		archive_set_error(&a->archive,
+		tk_archive_set_error(&a->archive,
 		    ARCHIVE_ERRNO_MISC, "Buffer overflow");
 		return (ARCHIVE_FATAL);
 	}
@@ -459,7 +459,7 @@ _uuencode_line(struct archive_write *a, struct shar *shar, const char *inbuf, si
 	} while (0)
 
 static ssize_t
-archive_write_shar_data_uuencode(struct archive_write *a, const void *buff,
+tk_archive_write_shar_data_uuencode(struct tk_archive_write *a, const void *buff,
     size_t length)
 {
 	struct shar *shar;
@@ -495,11 +495,11 @@ archive_write_shar_data_uuencode(struct archive_write *a, const void *buff,
 
 		if (shar->work.length < 65536)
 			continue;
-		ret = __archive_write_output(a, shar->work.s,
+		ret = __tk_archive_write_output(a, shar->work.s,
 		    shar->work.length);
 		if (ret != ARCHIVE_OK)
 			return (ARCHIVE_FATAL);
-		archive_string_empty(&shar->work);
+		tk_archive_string_empty(&shar->work);
 	}
 	if (n != 0) {
 		memcpy(shar->outbuff, src, n);
@@ -509,7 +509,7 @@ archive_write_shar_data_uuencode(struct archive_write *a, const void *buff,
 }
 
 static int
-archive_write_shar_finish_entry(struct archive_write *a)
+tk_archive_write_shar_finish_entry(struct tk_archive_write *a)
 {
 	const char *g, *p, *u;
 	struct shar *shar;
@@ -525,39 +525,39 @@ archive_write_shar_finish_entry(struct archive_write *a)
 			if (shar->outpos > 0)
 				uuencode_line(a, shar, shar->outbuff,
 				    shar->outpos);
-			archive_strcat(&shar->work, "`\nend\n");
-			archive_strcat(&shar->work, "SHAR_END\n");
+			tk_archive_strcat(&shar->work, "`\nend\n");
+			tk_archive_strcat(&shar->work, "SHAR_END\n");
 		}
 		/* Restore file mode, owner, flags. */
 		/*
 		 * TODO: Don't immediately restore mode for
 		 * directories; defer that to end of script.
 		 */
-		archive_string_sprintf(&shar->work, "chmod %o ",
-		    (unsigned int)(archive_entry_mode(shar->entry) & 07777));
-		shar_quote(&shar->work, archive_entry_pathname(shar->entry), 1);
-		archive_strcat(&shar->work, "\n");
+		tk_archive_string_sprintf(&shar->work, "chmod %o ",
+		    (unsigned int)(tk_archive_entry_mode(shar->entry) & 07777));
+		shar_quote(&shar->work, tk_archive_entry_pathname(shar->entry), 1);
+		tk_archive_strcat(&shar->work, "\n");
 
-		u = archive_entry_uname(shar->entry);
-		g = archive_entry_gname(shar->entry);
+		u = tk_archive_entry_uname(shar->entry);
+		g = tk_archive_entry_gname(shar->entry);
 		if (u != NULL || g != NULL) {
-			archive_strcat(&shar->work, "chown ");
+			tk_archive_strcat(&shar->work, "chown ");
 			if (u != NULL)
 				shar_quote(&shar->work, u, 1);
 			if (g != NULL) {
-				archive_strcat(&shar->work, ":");
+				tk_archive_strcat(&shar->work, ":");
 				shar_quote(&shar->work, g, 1);
 			}
 			shar_quote(&shar->work,
-			    archive_entry_pathname(shar->entry), 1);
-			archive_strcat(&shar->work, "\n");
+			    tk_archive_entry_pathname(shar->entry), 1);
+			tk_archive_strcat(&shar->work, "\n");
 		}
 
-		if ((p = archive_entry_fflags_text(shar->entry)) != NULL) {
-			archive_string_sprintf(&shar->work, "chflags %s ", p);
+		if ((p = tk_archive_entry_fflags_text(shar->entry)) != NULL) {
+			tk_archive_string_sprintf(&shar->work, "chflags %s ", p);
 			shar_quote(&shar->work,
-			    archive_entry_pathname(shar->entry), 1);
-			archive_strcat(&shar->work, "\n");
+			    tk_archive_entry_pathname(shar->entry), 1);
+			tk_archive_strcat(&shar->work, "\n");
 		}
 
 		/* TODO: restore ACLs */
@@ -566,27 +566,27 @@ archive_write_shar_finish_entry(struct archive_write *a)
 		if (shar->has_data) {
 			/* Finish sed-encoded data:  ensure last line ends. */
 			if (!shar->end_of_line)
-				archive_strappend_char(&shar->work, '\n');
-			archive_strcat(&shar->work, "SHAR_END\n");
+				tk_archive_strappend_char(&shar->work, '\n');
+			tk_archive_strcat(&shar->work, "SHAR_END\n");
 		}
 	}
 
-	archive_entry_free(shar->entry);
+	tk_archive_entry_free(shar->entry);
 	shar->entry = NULL;
 
 	if (shar->work.length < 65536)
 		return (ARCHIVE_OK);
 
-	ret = __archive_write_output(a, shar->work.s, shar->work.length);
+	ret = __tk_archive_write_output(a, shar->work.s, shar->work.length);
 	if (ret != ARCHIVE_OK)
 		return (ARCHIVE_FATAL);
-	archive_string_empty(&shar->work);
+	tk_archive_string_empty(&shar->work);
 
 	return (ARCHIVE_OK);
 }
 
 static int
-archive_write_shar_close(struct archive_write *a)
+tk_archive_write_shar_close(struct tk_archive_write *a)
 {
 	struct shar *shar;
 	int ret;
@@ -607,14 +607,14 @@ archive_write_shar_close(struct archive_write *a)
 	if (shar->wrote_header == 0)
 		return (ARCHIVE_OK);
 
-	archive_strcat(&shar->work, "exit\n");
+	tk_archive_strcat(&shar->work, "exit\n");
 
-	ret = __archive_write_output(a, shar->work.s, shar->work.length);
+	ret = __tk_archive_write_output(a, shar->work.s, shar->work.length);
 	if (ret != ARCHIVE_OK)
 		return (ARCHIVE_FATAL);
 
 	/* Shar output is never padded. */
-	archive_write_set_bytes_in_last_block(&a->archive, 1);
+	tk_archive_write_set_bytes_in_last_block(&a->archive, 1);
 	/*
 	 * TODO: shar should also suppress padding of
 	 * uncompressed data within gzip/bzip2 streams.
@@ -624,7 +624,7 @@ archive_write_shar_close(struct archive_write *a)
 }
 
 static int
-archive_write_shar_free(struct archive_write *a)
+tk_archive_write_shar_free(struct tk_archive_write *a)
 {
 	struct shar *shar;
 
@@ -632,10 +632,10 @@ archive_write_shar_free(struct archive_write *a)
 	if (shar == NULL)
 		return (ARCHIVE_OK);
 
-	archive_entry_free(shar->entry);
+	tk_archive_entry_free(shar->entry);
 	free(shar->last_dir);
-	archive_string_free(&(shar->work));
-	archive_string_free(&(shar->quoted_name));
+	tk_archive_string_free(&(shar->work));
+	tk_archive_string_free(&(shar->quoted_name));
 	free(shar);
 	a->format_data = NULL;
 	return (ARCHIVE_OK);
